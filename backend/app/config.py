@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
     # CORS settings
-    CORS_ORIGINS: list = ["*"]
+    CORS_ORIGINS: list = os.getenv("CORS_ORIGINS", "*").split(",")
     
     # Diagnostic tool settings
     PROBE_TIMEOUT: int = 5  # seconds

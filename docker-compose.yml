@@ -14,7 +14,6 @@ services:
     environment:
       - SECRET_KEY=${SECRET_KEY:-super-secret-key-change-in-production}
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
-      - CORS_ORIGINS=http://localhost,http://frontend,https://probeops.com,https://www.probeops.com
     volumes:
       - ./backend:/app
     networks:
