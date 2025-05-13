@@ -12,7 +12,7 @@ from app.diagnostics.tools import run_ping, run_traceroute, run_dns_lookup
 router = APIRouter()
 
 
-@router.get("/diagnostics/ping", response_model=schemas.DiagnosticResponse)
+@router.get("/ping", response_model=schemas.DiagnosticResponse)
 async def ping_target(
     target: str = Query(..., description="Hostname or IP address to ping"),
     count: int = Query(4, description="Number of packets to send"),
@@ -40,7 +40,7 @@ async def ping_target(
     return diagnostic
 
 
-@router.get("/diagnostics/traceroute", response_model=schemas.DiagnosticResponse)
+@router.get("/traceroute", response_model=schemas.DiagnosticResponse)
 async def traceroute_target(
     target: str = Query(..., description="Hostname or IP address to trace"),
     max_hops: int = Query(30, description="Maximum number of hops"),
@@ -68,7 +68,7 @@ async def traceroute_target(
     return diagnostic
 
 
-@router.get("/diagnostics/dns", response_model=schemas.DiagnosticResponse)
+@router.get("/dns", response_model=schemas.DiagnosticResponse)
 async def dns_lookup(
     target: str = Query(..., description="Hostname to look up"),
     record_type: str = Query("A", description="DNS record type (A, AAAA, MX, etc.)"),
@@ -96,7 +96,7 @@ async def dns_lookup(
     return diagnostic
 
 
-@router.get("/diagnostics/history", response_model=List[schemas.DiagnosticResponse])
+@router.get("/history", response_model=List[schemas.DiagnosticResponse])
 async def get_diagnostic_history(
     tool: Optional[str] = Query(None, description="Filter by tool"),
     limit: int = Query(10, description="Maximum number of results to return"),
