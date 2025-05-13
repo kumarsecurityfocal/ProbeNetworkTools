@@ -28,24 +28,38 @@ const apiProxyOptions = {
 // Create API proxy middleware
 const apiProxy = createProxyMiddleware(apiProxyOptions);
 
+// Define special routes before static file handling
+
+// Create special proxy options for login and register endpoints
+const authProxyOptions = {
+  ...apiProxyOptions,
+  pathRewrite: { '^/api': '' }, // Remove the /api prefix for these routes
+};
+
+const authProxy = createProxyMiddleware(authProxyOptions);
+
+// Handle auth routes first - these will go directly to /login and /register on backend
+app.use('/api/login', (req, res, next) => {
+  console.log('Login request received');
+  return authProxy(req, res, next);
+});
+
+app.use('/api/register', (req, res, next) => {
+  console.log('Register request received');
+  return authProxy(req, res, next);
+});
+
+// Then handle general API routes - these will maintain their /api prefix 
+app.use('/api', (req, res, next) => {
+  console.log(`API request received: ${req.method} ${req.url}`);
+  return apiProxy(req, res, next);
+});
+
 // Serve static files from the public directory (built frontend)
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Also serve files from the frontend directory for development
 app.use('/src', express.static(path.join(__dirname, 'frontend', 'src')));
-
-// Use a custom handler for /api/* routes that preserves the /api prefix
-app.use('/api', (req, res, next) => {
-  const fullPath = '/api' + req.url;
-  console.log(`API request received: ${req.method} ${req.url} -> full path: ${fullPath}`);
-  
-  // Modify the request URL to include /api prefix when forwarded
-  req.url = '/api' + req.url;
-  return apiProxy(req, res, next);
-});
-
-// We no longer need separate proxies for login and register
-// as they are now properly prefixed with /api and handled by the main proxy
 
 // For any request that doesn't match a static file
 // serve the index.html - use explicit routes instead of wildcard to avoid path-to-regexp issues
