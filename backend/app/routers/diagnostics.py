@@ -12,7 +12,7 @@ from app.diagnostics.tools import run_ping, run_traceroute, run_dns_lookup
 router = APIRouter()
 
 
-@router.get("/api/diagnostics/ping", response_model=schemas.DiagnosticResponse)
+@router.get("/diagnostics/ping", response_model=schemas.DiagnosticResponse)
 async def ping_target(
     target: str = Query(..., description="Hostname or IP address to ping"),
     count: int = Query(4, description="Number of packets to send"),
@@ -40,7 +40,7 @@ async def ping_target(
     return diagnostic
 
 
-@router.get("/api/diagnostics/traceroute", response_model=schemas.DiagnosticResponse)
+@router.get("/diagnostics/traceroute", response_model=schemas.DiagnosticResponse)
 async def traceroute_target(
     target: str = Query(..., description="Hostname or IP address to trace"),
     max_hops: int = Query(30, description="Maximum number of hops"),
@@ -68,7 +68,7 @@ async def traceroute_target(
     return diagnostic
 
 
-@router.get("/api/diagnostics/dns", response_model=schemas.DiagnosticResponse)
+@router.get("/diagnostics/dns", response_model=schemas.DiagnosticResponse)
 async def dns_lookup(
     target: str = Query(..., description="Hostname to look up"),
     record_type: str = Query("A", description="DNS record type (A, AAAA, MX, etc.)"),
