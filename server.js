@@ -81,8 +81,33 @@ app.get('/server/test', (req, res) => {
   res.json({ message: 'Express server is working!' });
 });
 
-// Fallback route for SPA support - use specific named parameters instead of wildcard
-app.get('/:page', (req, res) => {
+// Fallback route for SPA support - handle specified routes explicitly 
+// These are the main routes in our React app
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/diagnostics', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/scheduled-probes', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/profile', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
