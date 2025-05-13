@@ -19,47 +19,19 @@ async def create_scheduled_probe(
     Create a new scheduled probe.
     Validates the user's subscription tier allows scheduled probes.
     """
-    # Check user's subscription tier
-    user_subscription = db.query(models.UserSubscription).filter(
-        models.UserSubscription.user_id == current_user.id,
-        models.UserSubscription.is_active == True
-    ).first()
-    
-    if not user_subscription:
+    # For MVP, we'll allow scheduled probes for all users and handle subscription validation later
+    # Check if the interval is one of the allowed values
+    allowed_intervals = [5, 15, 60, 1440]  # 5min, 15min, 1h, 1day
+    if probe.interval_minutes not in allowed_intervals:
         raise HTTPException(
-            status_code=403,
-            detail="Active subscription required for scheduled probes"
+            status_code=400,
+            detail=f"Invalid interval. Allowed intervals are: {', '.join([str(i) for i in allowed_intervals])}"
         )
     
-    # Get subscription tier
-    tier = db.query(models.SubscriptionTier).filter(
-        models.SubscriptionTier.id == user_subscription.tier_id
-    ).first()
-    
-    if not tier.allow_scheduled_probes:
-        raise HTTPException(
-            status_code=403,
-            detail="Your subscription tier does not allow scheduled probes"
-        )
-    
-    # Check if user has reached their probe limit
+    # We'll keep track of the probe count but not enforce a limit for now
     probe_count = db.query(models.ScheduledProbe).filter(
         models.ScheduledProbe.user_id == current_user.id
     ).count()
-    
-    if probe_count >= tier.max_scheduled_probes:
-        raise HTTPException(
-            status_code=403,
-            detail=f"Maximum scheduled probes limit reached ({tier.max_scheduled_probes})"
-        )
-    
-    # Check minimum interval based on tier
-    # Only Enterprise tier can have intervals below 15 minutes
-    if probe.interval_minutes < 15 and not tier.allow_custom_intervals:
-        raise HTTPException(
-            status_code=403,
-            detail="Your subscription tier requires a minimum interval of 15 minutes"
-        )
     
     # Create the scheduled probe
     db_probe = models.ScheduledProbe(
@@ -138,28 +110,13 @@ async def update_scheduled_probe(
     """
     Update a specific scheduled probe.
     """
-    # Get the user's subscription tier
-    user_subscription = db.query(models.UserSubscription).filter(
-        models.UserSubscription.user_id == current_user.id,
-        models.UserSubscription.is_active == True
-    ).first()
-    
-    if not user_subscription:
+    # For MVP, we'll allow scheduled probes for all users and handle subscription validation later
+    # Check if the interval is one of the allowed values
+    allowed_intervals = [5, 15, 60, 1440]  # 5min, 15min, 1h, 1day
+    if probe_update.interval_minutes not in allowed_intervals:
         raise HTTPException(
-            status_code=403,
-            detail="Active subscription required for scheduled probes"
-        )
-    
-    # Get subscription tier
-    tier = db.query(models.SubscriptionTier).filter(
-        models.SubscriptionTier.id == user_subscription.tier_id
-    ).first()
-    
-    # Check minimum interval based on tier
-    if probe_update.interval_minutes < 15 and not tier.allow_custom_intervals:
-        raise HTTPException(
-            status_code=403,
-            detail="Your subscription tier requires a minimum interval of 15 minutes"
+            status_code=400,
+            detail=f"Invalid interval. Allowed intervals are: {', '.join([str(i) for i in allowed_intervals])}"
         )
     
     # Get the existing probe

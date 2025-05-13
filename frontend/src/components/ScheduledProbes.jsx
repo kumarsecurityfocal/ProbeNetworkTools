@@ -78,11 +78,12 @@ const toolOptions = [
   { value: 'http_request', label: 'HTTP(S) Request', tooltip: 'Test HTTP/HTTPS requests' }
 ];
 
-// Interval type options
-const intervalTypes = [
-  { value: 'minutes', label: 'Minutes' },
-  { value: 'hours', label: 'Hours' },
-  { value: 'days', label: 'Days' }
+// Fixed interval options as specified
+const intervalOptions = [
+  { value: 5, label: '5 Minutes', minutes: 5 },
+  { value: 15, label: '15 Minutes', minutes: 15 },
+  { value: 60, label: '1 Hour', minutes: 60 },
+  { value: 1440, label: '1 Day', minutes: 1440 }
 ];
 
 function ScheduledProbes() {
@@ -101,14 +102,13 @@ function ScheduledProbes() {
     description: '',
     tool: 'ping',
     target: '',
-    interval_minutes: 60,
+    interval_minutes: 60, // Default to 1 hour
     is_active: true,
     alert_on_failure: false,
     alert_on_threshold: false,
     threshold_value: null
   });
-  const [intervalType, setIntervalType] = useState('hours');
-  const [intervalValue, setIntervalValue] = useState(1);
+  const [selectedInterval, setSelectedInterval] = useState(60); // Default to 1 hour
   const [selectedProbes, setSelectedProbes] = useState([]);
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -168,23 +168,8 @@ function ScheduledProbes() {
     setFormMode(mode);
     
     if (mode === 'edit' && probe) {
-      // Convert minutes to appropriate interval
-      let intervalMinutes = probe.interval_minutes;
-      let type = 'minutes';
-      let value = intervalMinutes;
-      
-      if (intervalMinutes % 1440 === 0) {
-        // Days
-        type = 'days';
-        value = intervalMinutes / 1440;
-      } else if (intervalMinutes % 60 === 0) {
-        // Hours
-        type = 'hours';
-        value = intervalMinutes / 60;
-      }
-      
-      setIntervalType(type);
-      setIntervalValue(value);
+      // Set the selected interval
+      setSelectedInterval(probe.interval_minutes);
       setFormData({
         name: probe.name,
         description: probe.description || '',
@@ -198,8 +183,7 @@ function ScheduledProbes() {
       });
     } else {
       // Default values for create
-      setIntervalType('hours');
-      setIntervalValue(1);
+      setSelectedInterval(60); // Default to 1 hour
       setFormData({
         name: '',
         description: '',
@@ -230,36 +214,10 @@ function ScheduledProbes() {
     });
   };
 
-  // Handle interval type change
-  const handleIntervalTypeChange = (e) => {
-    setIntervalType(e.target.value);
-    
-    // Update interval_minutes in formData
-    let minutes = intervalValue;
-    if (e.target.value === 'hours') {
-      minutes = intervalValue * 60;
-    } else if (e.target.value === 'days') {
-      minutes = intervalValue * 24 * 60;
-    }
-    
-    setFormData({
-      ...formData,
-      interval_minutes: minutes
-    });
-  };
-
-  // Handle interval value change
-  const handleIntervalValueChange = (e) => {
-    const value = parseInt(e.target.value, 10);
-    setIntervalValue(value);
-    
-    // Update interval_minutes in formData
-    let minutes = value;
-    if (intervalType === 'hours') {
-      minutes = value * 60;
-    } else if (intervalType === 'days') {
-      minutes = value * 24 * 60;
-    }
+  // Handle interval selection change
+  const handleIntervalChange = (e) => {
+    const minutes = Number(e.target.value);
+    setSelectedInterval(minutes);
     
     setFormData({
       ...formData,
@@ -721,33 +679,24 @@ function ScheduledProbes() {
           {/* Schedule Settings Tab */}
           {selectedTab === 1 && (
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12}>
                 <FormControl fullWidth>
-                  <InputLabel>Interval Type</InputLabel>
+                  <InputLabel>Interval</InputLabel>
                   <Select
-                    value={intervalType}
-                    onChange={handleIntervalTypeChange}
-                    label="Interval Type"
+                    value={selectedInterval}
+                    onChange={handleIntervalChange}
+                    label="Interval"
                   >
-                    {intervalTypes.map((type) => (
-                      <MenuItem key={type.value} value={type.value}>
-                        {type.label}
+                    {intervalOptions.map((option) => (
+                      <MenuItem key={option.value} value={option.minutes}>
+                        {option.label}
                       </MenuItem>
                     ))}
                   </Select>
+                  <FormHelperText>
+                    Probe will run at this interval
+                  </FormHelperText>
                 </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  type="number"
-                  label="Interval Value"
-                  value={intervalValue}
-                  onChange={handleIntervalValueChange}
-                  fullWidth
-                  required
-                  inputProps={{ min: 1 }}
-                  helperText={`Probe will run every ${intervalValue} ${intervalType}`}
-                />
               </Grid>
               <Grid item xs={12}>
                 <FormControlLabel
