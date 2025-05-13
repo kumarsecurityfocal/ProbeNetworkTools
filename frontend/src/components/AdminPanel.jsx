@@ -455,7 +455,7 @@ const AdminPanel = () => {
           aria-label="admin panel tabs"
         >
           <Tab icon={<SubscriptionIcon />} label="Subscriptions" />
-          <Tab icon={<PersonIcon />} label="Users" disabled />
+          <Tab icon={<PersonIcon />} label="Users" />
         </Tabs>
       </Box>
 
