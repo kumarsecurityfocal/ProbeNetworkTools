@@ -547,24 +547,118 @@ const AdminPanel = () => {
       <TabPanel value={tabValue} index={1}>
         <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h6">User Management</Typography>
-          <Button 
-            variant="contained" 
-            startIcon={<AddIcon />}
-            onClick={() => {
-              setCurrentUser(null);
-              setUserFormData({
-                username: '',
-                email: '',
-                password: '',
-                is_admin: false,
-                is_active: true,
-                email_verified: true
-              });
-              setEditUserDialog(true);
+          <Box>
+            <Button 
+              variant="contained" 
+              startIcon={<AddIcon />}
+              onClick={() => {
+                setCurrentUser(null);
+                setUserFormData({
+                  username: '',
+                  email: '',
+                  password: '',
+                  is_admin: false,
+                  is_active: true,
+                  email_verified: true
+                });
+                setEditUserDialog(true);
+              }}
+              sx={{ mr: 2 }}
+            >
+              Add New User
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<RefreshIcon />}
+              onClick={() => {
+                setUserLoading(true);
+                getAllUsers()
+                  .then(data => {
+                    setUsers(data);
+                    setUserLoading(false);
+                  })
+                  .catch(err => {
+                    console.error('Error refreshing users:', err);
+                    setUserError('Failed to refresh users data');
+                    setUserLoading(false);
+                  });
+              }}
+            >
+              Refresh
+            </Button>
+          </Box>
+        </Box>
+        
+        {/* Search and filter controls */}
+        <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+          <TextField
+            label="Search Users"
+            variant="outlined"
+            size="small"
+            placeholder="Username or email"
+            onChange={(e) => {
+              const searchTerm = e.target.value.toLowerCase();
+              if (searchTerm) {
+                const filteredUsers = users.filter(user => 
+                  user.username.toLowerCase().includes(searchTerm) || 
+                  user.email.toLowerCase().includes(searchTerm)
+                );
+                setUsers(filteredUsers);
+              } else {
+                // If search field is cleared, fetch all users again
+                getAllUsers().then(setUsers);
+              }
             }}
-          >
-            Add New User
-          </Button>
+            sx={{ minWidth: 250 }}
+          />
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel id="role-filter-label">Role</InputLabel>
+            <Select
+              labelId="role-filter-label"
+              label="Role"
+              defaultValue="all"
+              onChange={(e) => {
+                const roleFilter = e.target.value;
+                getAllUsers().then(allUsers => {
+                  if (roleFilter === 'all') {
+                    setUsers(allUsers);
+                  } else if (roleFilter === 'admin') {
+                    setUsers(allUsers.filter(user => user.is_admin));
+                  } else {
+                    setUsers(allUsers.filter(user => !user.is_admin));
+                  }
+                });
+              }}
+            >
+              <MenuItem value="all">All Roles</MenuItem>
+              <MenuItem value="admin">Admins</MenuItem>
+              <MenuItem value="user">Regular Users</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel id="status-filter-label">Status</InputLabel>
+            <Select
+              labelId="status-filter-label"
+              label="Status"
+              defaultValue="all"
+              onChange={(e) => {
+                const statusFilter = e.target.value;
+                getAllUsers().then(allUsers => {
+                  if (statusFilter === 'all') {
+                    setUsers(allUsers);
+                  } else if (statusFilter === 'active') {
+                    setUsers(allUsers.filter(user => user.is_active));
+                  } else {
+                    setUsers(allUsers.filter(user => !user.is_active));
+                  }
+                });
+              }}
+            >
+              <MenuItem value="all">All Status</MenuItem>
+              <MenuItem value="active">Active</MenuItem>
+              <MenuItem value="inactive">Inactive</MenuItem>
+            </Select>
+          </FormControl>
         </Box>
         
         {userLoading ? (
@@ -578,13 +672,13 @@ const AdminPanel = () => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>ID</TableCell>
                   <TableCell>Username</TableCell>
                   <TableCell>Email</TableCell>
                   <TableCell>Role</TableCell>
                   <TableCell>Status</TableCell>
-                  <TableCell>Email Verified</TableCell>
+                  <TableCell>Subscription Tier</TableCell>
                   <TableCell>Created</TableCell>
+                  <TableCell>Email Verified</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
