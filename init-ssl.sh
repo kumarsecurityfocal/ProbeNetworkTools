@@ -9,8 +9,8 @@ set -e
 # Variables
 TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
 LOG_FILE="ssl-setup.log"
-DOMAINS="probeops.com www.probeops.com"  # Replace with your actual domains
-EMAIL="your-email@example.com"           # Replace with your actual email
+DOMAINS="probeops.com www.probeops.com"
+EMAIL="admin@probeops.com"  # Update this with the domain administrator's email
 
 # Initialize log file
 echo "===== SSL SETUP STARTED: $TIMESTAMP =====" > $LOG_FILE
