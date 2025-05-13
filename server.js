@@ -31,6 +31,10 @@ const apiProxy = createProxyMiddleware(apiProxyOptions);
 // Use API proxy for /api/* routes
 app.use('/api', apiProxy);
 
+// Also proxy auth routes directly
+app.use('/login', apiProxy);
+app.use('/register', apiProxy);
+
 // Serve static files from the public directory (built frontend)
 app.use(express.static(path.join(__dirname, 'public')));
 
