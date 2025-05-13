@@ -52,9 +52,8 @@ app.use('/api', (req, res, next) => {
   console.log(`Forwarding to backend: ${apiProxyOptions.target}${req.originalUrl}`);
   console.log(`============================================`);
   
-  // Manually modify the url to keep the /api prefix
-  req.url = '/api' + req.url;
-  
+  // The original URL already has the /api prefix that the backend needs
+  // No need to modify the URL, just proxy as-is
   return apiProxy(req, res, next);
 });
 

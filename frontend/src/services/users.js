@@ -3,10 +3,18 @@ import api from './api';
 // Get all users (admin only)
 export const getAllUsers = async () => {
   try {
+    console.log('Fetching all users from /api/users');
     const response = await api.get('/api/users');
+    console.log('Users data received:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error fetching users:', error);
+    if (error.response) {
+      console.error('Error response data:', error.response.data);
+      console.error('Error response status:', error.response.status);
+    } else if (error.request) {
+      console.error('No response received from server');
+    }
     throw error;
   }
 };
