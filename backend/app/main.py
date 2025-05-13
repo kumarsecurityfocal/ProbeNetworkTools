@@ -32,11 +32,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(auth.router, tags=["Authentication"])
-app.include_router(diagnostics.router, tags=["Diagnostics"])
-app.include_router(api_keys.router, tags=["API Keys"])
-app.include_router(subscriptions.router, tags=["Subscriptions"])
+# Include routers with proper prefix
+app.include_router(auth.router, prefix="/api", tags=["Authentication"])
+app.include_router(diagnostics.router, prefix="/api", tags=["Diagnostics"])
+app.include_router(api_keys.router, prefix="/api", tags=["API Keys"])
+app.include_router(subscriptions.router, prefix="/api", tags=["Subscriptions"])
 
 @app.get("/", tags=["Root"])
 async def root():

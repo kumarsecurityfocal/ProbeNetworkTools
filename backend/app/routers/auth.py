@@ -13,7 +13,7 @@ from app.models import UserSubscription
 router = APIRouter()
 
 
-@router.post("/api/register", response_model=schemas.UserResponse)
+@router.post("/register", response_model=schemas.UserResponse)
 def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     # Check if user already exists
     db_user = db.query(models.User).filter(
@@ -41,7 +41,7 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return db_user
 
 
-@router.post("/api/login", response_model=schemas.Token)
+@router.post("/login", response_model=schemas.Token)
 def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = auth.authenticate_user(db, form_data.username, form_data.password)
     if not user:
@@ -57,14 +57,14 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.get("/api/users/me", response_model=schemas.UserDetailResponse)
+@router.get("/users/me", response_model=schemas.UserDetailResponse)
 def read_users_me(current_user: models.User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
     # Get user with subscription details
     user_with_subscription = db.query(models.User).filter(models.User.id == current_user.id).first()
     return user_with_subscription
 
 
-@router.get("/api/users", response_model=List[schemas.UserResponse])
+@router.get("/users", response_model=List[schemas.UserResponse])
 def list_users(
     current_user: models.User = Depends(auth.get_admin_user), 
     skip: int = 0, 
@@ -76,7 +76,7 @@ def list_users(
     return users
 
 
-@router.get("/api/subscription", response_model=schemas.UserSubscriptionResponse)
+@router.get("/subscription", response_model=schemas.UserSubscriptionResponse)
 def get_subscription(current_user: models.User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
     """Get the current user's subscription details."""
     subscription = db.query(UserSubscription).filter(UserSubscription.user_id == current_user.id).first()
@@ -85,7 +85,7 @@ def get_subscription(current_user: models.User = Depends(auth.get_current_active
     return subscription
 
 
-@router.get("/api/subscription/tiers", response_model=List[schemas.SubscriptionTierResponse])
+@router.get("/subscription/tiers", response_model=List[schemas.SubscriptionTierResponse])
 def get_subscription_tiers(db: Session = Depends(get_db)):
     """Get all available subscription tiers."""
     tiers = db.query(models.SubscriptionTier).all()
