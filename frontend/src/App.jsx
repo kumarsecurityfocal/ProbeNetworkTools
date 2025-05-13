@@ -12,6 +12,7 @@ import ApiKeys from './components/ApiKeys';
 import SubscriptionTiers from './components/SubscriptionTiers';
 import AdminPanel from './components/AdminPanel';
 import ScheduledProbes from './components/ScheduledProbes';
+import UserProfile from './components/UserProfile';
 
 // Create theme
 const theme = createTheme({
@@ -95,6 +96,12 @@ function App() {
             <Route path="/scheduled-probes" element={
               <ProtectedRoute>
                 <ScheduledProbes />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <UserProfile />
               </ProtectedRoute>
             } />
             
