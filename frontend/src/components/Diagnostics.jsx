@@ -782,14 +782,15 @@ const DiagnosticHistory = ({ refreshTrigger, onRepeatDiagnostic }) => {
                           </AccordionSummary>
                           <AccordionDetails>
                             <Box sx={{ 
-                              backgroundColor: '#f5f5f5', 
+                              backgroundColor: '#2d2d2d', 
+                              color: '#ffffff',
                               p: 2, 
                               borderRadius: 1,
                               fontFamily: 'monospace',
                               maxHeight: '200px',
                               overflow: 'auto'
                             }}>
-                              <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{item.result}</pre>
+                              <pre style={{ margin: 0, whiteSpace: 'pre-wrap', color: 'inherit' }}>{item.result}</pre>
                             </Box>
                           </AccordionDetails>
                         </Accordion>
@@ -894,12 +895,13 @@ const DiagnosticResult = ({ result }) => {
       <Box className="diagnostic-result" sx={{ 
         maxHeight: '400px', 
         overflow: 'auto', 
-        backgroundColor: '#f5f5f5', 
+        backgroundColor: '#2d2d2d', 
+        color: '#ffffff',
         p: 2, 
         borderRadius: 1,
         fontFamily: 'monospace'
       }}>
-        <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{result.result}</pre>
+        <pre style={{ margin: 0, whiteSpace: 'pre-wrap', color: 'inherit' }}>{result.result}</pre>
       </Box>
     </Paper>
   );
