@@ -1,5 +1,5 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional, List
+from pydantic import BaseModel, EmailStr, Field
+from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 
 
@@ -12,6 +12,13 @@ class UserCreate(UserBase):
     password: str
 
 
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
 class UserLogin(BaseModel):
     username: str
     password: str
@@ -20,11 +27,16 @@ class UserLogin(BaseModel):
 class UserResponse(UserBase):
     id: int
     is_active: bool
-    is_superuser: bool
+    is_admin: bool
+    email_verified: bool
     created_at: datetime
     
     class Config:
         orm_mode = True
+
+
+class UserDetailResponse(UserResponse):
+    user_subscription: Optional["UserSubscriptionResponse"] = None
 
 
 class ApiKeyBase(BaseModel):
@@ -64,6 +76,146 @@ class DiagnosticResponse(DiagnosticCreate):
         orm_mode = True
 
 
+class SubscriptionTierBase(BaseModel):
+    name: str
+    description: str
+    price_monthly: int
+    price_yearly: int
+    features: Dict[str, Any]
+    rate_limit_minute: int
+    rate_limit_hour: int
+    max_scheduled_probes: int
+    max_api_keys: int
+    max_history_days: int
+    allow_scheduled_probes: bool
+    allow_api_access: bool
+    allow_export: bool
+    allow_alerts: bool
+    allow_custom_intervals: bool
+    priority_support: bool
+
+
+class SubscriptionTierCreate(SubscriptionTierBase):
+    pass
+
+
+class SubscriptionTierResponse(SubscriptionTierBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        orm_mode = True
+
+
+class UserSubscriptionBase(BaseModel):
+    is_active: bool = True
+    expires_at: Optional[datetime] = None
+    payment_id: Optional[str] = None
+    payment_method: Optional[str] = None
+
+
+class UserSubscriptionCreate(UserSubscriptionBase):
+    tier_id: int
+    user_id: int
+
+
+class UserSubscriptionResponse(UserSubscriptionBase):
+    id: int
+    user_id: int
+    tier_id: int
+    tier: "SubscriptionTierResponse"
+    starts_at: datetime
+    created_at: datetime
+    
+    class Config:
+        orm_mode = True
+
+
+class ScheduledProbeBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    tool: str
+    target: str
+    interval_minutes: int
+    is_active: bool = True
+    alert_on_failure: bool = False
+    alert_on_threshold: bool = False
+    threshold_value: Optional[int] = None
+
+
+class ScheduledProbeCreate(ScheduledProbeBase):
+    pass
+
+
+class ScheduledProbeResponse(ScheduledProbeBase):
+    id: int
+    user_id: int
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        orm_mode = True
+
+
+class ProbeResultBase(BaseModel):
+    result: str
+    status: str
+    execution_time: int
+
+
+class ProbeResultCreate(ProbeResultBase):
+    scheduled_probe_id: int
+
+
+class ProbeResultResponse(ProbeResultBase):
+    id: int
+    scheduled_probe_id: int
+    created_at: datetime
+    
+    class Config:
+        orm_mode = True
+
+
+class ApiUsageLogBase(BaseModel):
+    endpoint: str
+    method: str
+    status_code: int
+    response_time: int
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+
+
+class ApiUsageLogCreate(ApiUsageLogBase):
+    user_id: int
+
+
+class ApiUsageLogResponse(ApiUsageLogBase):
+    id: int
+    user_id: int
+    created_at: datetime
+    
+    class Config:
+        orm_mode = True
+
+
+class SystemMetricBase(BaseModel):
+    metric_name: str
+    metric_value: float
+
+
+class SystemMetricCreate(SystemMetricBase):
+    pass
+
+
+class SystemMetricResponse(SystemMetricBase):
+    id: int
+    created_at: datetime
+    
+    class Config:
+        orm_mode = True
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -71,3 +223,7 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     username: Optional[str] = None
+
+
+# Fix circular references
+UserDetailResponse.update_forward_refs()

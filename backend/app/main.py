@@ -1,8 +1,18 @@
-from fastapi import FastAPI
+import logging
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import auth, diagnostics, api_keys
-from app.database import engine, Base
+from app.database import engine, Base, get_db
 from app.config import settings
+from app.initialize_db import initialize_database
+from sqlalchemy.orm import Session
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -30,6 +40,43 @@ app.include_router(api_keys.router, tags=["API Keys"])
 @app.get("/", tags=["Root"])
 async def root():
     return {"message": "Welcome to ProbeOps API"}
+
+@app.get("/api/health", tags=["Health"])
+async def health_check(db: Session = Depends(get_db)):
+    """
+    Health check endpoint to verify API and database connection.
+    """
+    try:
+        # Check database connection by executing a simple query
+        from sqlalchemy import text
+        db.execute(text("SELECT 1")).fetchall()
+        return {
+            "status": "healthy",
+            "database": "connected"
+        }
+    except Exception as e:
+        logger.error(f"Health check failed: {str(e)}")
+        return {
+            "status": "unhealthy",
+            "database": "disconnected",
+            "error": str(e)
+        }
+
+@app.on_event("startup")
+async def startup_event():
+    """
+    Run initialization tasks when the application starts.
+    """
+    logger.info("Starting ProbeOps API")
+    
+    # Initialize database (tiers, users, etc.)
+    try:
+        init_result = initialize_database()
+        logger.info(f"Database initialization completed: {init_result}")
+    except Exception as e:
+        logger.error(f"Database initialization failed: {str(e)}")
+    
+    logger.info("ProbeOps API started successfully")
 
 if __name__ == "__main__":
     import uvicorn
