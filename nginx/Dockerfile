@@ -4,10 +4,17 @@ FROM nginx:alpine
 RUN rm /etc/nginx/conf.d/default.conf
 
 # Copy our custom nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/
+COPY nginx.conf /etc/nginx/nginx.conf
 
-# Expose port
+# Create directory for SSL certificates (for future use)
+RUN mkdir -p /etc/letsencrypt
+
+# Copy the built frontend files to nginx html directory
+COPY --from=frontend /app/dist /usr/share/nginx/html
+
+# Expose ports
 EXPOSE 80
+EXPOSE 443
 
-# Run nginx in foreground
+# Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
