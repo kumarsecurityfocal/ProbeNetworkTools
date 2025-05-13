@@ -25,19 +25,46 @@ log_message() {
 execute_and_log() {
     local cmd="$1"
     local message="$2"
+    local continue_on_error="${3:-false}"
     
     log_message "🔄 $message"
     echo "$ $cmd" >> $LOG_FILE
     
-    # Execute command and capture output
-    if output=$(eval "$cmd" 2>&1); then
-        echo "$output" >> $LOG_FILE
+    # Execute command and capture output along with exit code
+    local temp_log=$(mktemp)
+    eval "$cmd" > >(tee -a "$temp_log" "$LOG_FILE") 2> >(tee -a "$temp_log" "$LOG_FILE" >&2)
+    local exit_code=$?
+    
+    # Check for errors or warnings in the output
+    if grep -q "ERROR" "$temp_log"; then
+        log_message "⚠️ Errors detected during '$message'"
+        grep "ERROR" "$temp_log" | while read -r line; do
+            log_message "  ❌ $line"
+        done
+    fi
+    
+    if grep -q "WARNING\|WARN" "$temp_log"; then
+        log_message "⚠️ Warnings detected during '$message'"
+        grep -E "WARNING|WARN" "$temp_log" | while read -r line; do
+            log_message "  ⚠️ $line"
+        done
+    fi
+    
+    # Remove temporary log file
+    rm -f "$temp_log"
+    
+    # Handle exit code
+    if [ $exit_code -eq 0 ]; then
         log_message "✅ $message completed successfully"
         return 0
     else
-        echo "$output" >> $LOG_FILE
-        log_message "❌ $message failed"
-        return 1
+        log_message "❌ $message failed with exit code $exit_code"
+        if [ "$continue_on_error" = "true" ]; then
+            log_message "⚠️ Continuing despite error (as requested)"
+            return 0
+        else
+            return 1
+        fi
     fi
 }
 
@@ -58,12 +85,35 @@ else
 fi
 
 # Step 3: Rebuild and start containers
-if execute_and_log "docker compose up -d --build" "Rebuilding and starting containers"; then
-    :  # Success case handled in function
+log_message "🔄 Rebuilding and starting containers..."
+echo "$ docker compose up -d --build" >> $LOG_FILE
+
+# Special handling for build step to catch specific Docker errors
+build_output=$(mktemp)
+if docker compose up -d --build > >(tee -a "$build_output" "$LOG_FILE") 2> >(tee -a "$build_output" "$LOG_FILE" >&2); then
+    log_message "✅ Docker containers built and started successfully"
 else
+    build_exit_code=$?
+    log_message "❌ Docker build failed with exit code $build_exit_code"
+    
+    # Look for specific error patterns
+    if grep -q "load metadata for docker.io/library/frontend" "$build_output"; then
+        log_message "❌ Error detected: Unable to find frontend image. This was likely caused by an invalid 'FROM' statement in Dockerfile"
+    fi
+    
+    if grep -q "ERROR" "$build_output"; then
+        log_message "⚠️ Build errors detected:"
+        grep "ERROR" "$build_output" | while read -r line; do
+            log_message "  ❌ $line"
+        done
+    fi
+    
+    rm -f "$build_output"
     log_message "Deployment failed at container build step"
     exit 1
 fi
+
+rm -f "$build_output"
 
 # Step 4: Wait for backend service to be ready
 log_message "🔄 Waiting for backend service to be ready..."
@@ -71,12 +121,9 @@ echo "$ sleep 15  # Waiting for services to initialize" >> $LOG_FILE
 sleep 15  # Give the backend container time to start
 
 # Step 5: Apply database migrations
-if execute_and_log "docker compose exec -T backend alembic upgrade head" "Applying database migrations to AWS RDS"; then
-    :  # Success case handled in function
-else
-    log_message "⚠️ Database migration failed, but continuing with deployment"
-    # Non-fatal error, continue deployment
-fi
+# Pass "true" as the third parameter to continue_on_error
+execute_and_log "docker compose exec -T backend alembic upgrade head" "Applying database migrations to AWS RDS" "true"
+# Migration failure is now handled in the function with detailed error logging
 
 # Step 6: Verify services are running
 log_message "🔄 Verifying services..."
