@@ -26,12 +26,28 @@ if [ -d "/var/www/html" ] && [ -f "/var/www/html/index.html" ]; then
     rm -f /var/www/html/index.html
 fi
 
+# Create directory if it doesn't exist
+mkdir -p /usr/share/nginx/html
+
+# If there's already content in our html directory, we need to check if it's valid
+echo "Checking existing content in /usr/share/nginx/html..."
+if [ -f "/usr/share/nginx/html/index.html" ]; then
+    echo "File index.html exists in /usr/share/nginx/html"
+    
+    # Check if it's the default NGINX welcome page
+    if grep -q "Welcome to nginx" "/usr/share/nginx/html/index.html"; then
+        echo "⚠️ Default NGINX welcome page detected, removing it"
+        rm -f /usr/share/nginx/html/index.html
+    else
+        echo "✅ Custom index.html found, not the default NGINX page"
+    fi
+fi
+
 # Create .probeops-build-ok marker file
 echo "ProbeOps build verification - $(date)" > /usr/share/nginx/html/.probeops-build-ok
 
 # Check our custom html directory
 echo "Checking /usr/share/nginx/html directory:"
-mkdir -p /usr/share/nginx/html
 ls -la /usr/share/nginx/html
 
 # Verify NGINX configuration
