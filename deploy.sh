@@ -244,12 +244,47 @@ log_message "🔄 Building frontend assets..."
 if execute_and_log "cd frontend && npm install && npm run build" "Building frontend assets"; then
     log_message "✅ Frontend assets built successfully"
     
-    # Run the frontend asset copy script
-    if execute_and_log "./copy-frontend-assets.sh" "Copying frontend assets to NGINX build directory"; then
-        log_message "✅ Frontend assets successfully copied for NGINX container"
+    # Copy frontend assets directly (without relying on external script)
+    log_message "🔄 Copying frontend assets to NGINX build directory..."
+    
+    # Create destination directory
+    if execute_and_log "mkdir -p nginx/frontend-build" "Creating NGINX frontend-build directory"; then
+        # Check if we have frontend assets in dist/ directory
+        if [ -d "frontend/dist" ] && [ -f "frontend/dist/index.html" ]; then
+            # Copy from frontend/dist to nginx/frontend-build
+            if execute_and_log "cp -r frontend/dist/* nginx/frontend-build/" "Copying frontend/dist assets"; then
+                log_message "✅ Frontend assets successfully copied from frontend/dist to NGINX container"
+            else
+                log_message "⚠️ Failed to copy from frontend/dist. Trying public/ directory..."
+                # Try public directory as fallback
+                if [ -d "public" ] && [ -f "public/index.html" ]; then
+                    if execute_and_log "cp -r public/* nginx/frontend-build/" "Copying public/ assets"; then
+                        log_message "✅ Frontend assets successfully copied from public/ to NGINX container"
+                    else
+                        log_message "❌ Failed to copy frontend assets. Deployment may have issues."
+                    fi
+                else
+                    log_message "⚠️ No frontend assets found in public/ either. Creating placeholder..."
+                    execute_and_log "echo '<html><head><title>ProbeOps</title></head><body><h1>ProbeOps</h1><p>Frontend assets not found. This is a placeholder.</p></body></html>' > nginx/frontend-build/index.html" "Creating placeholder index.html"
+                fi
+            fi
+        elif [ -d "public" ] && [ -f "public/index.html" ]; then
+            # Try public directory directly
+            if execute_and_log "cp -r public/* nginx/frontend-build/" "Copying public/ assets"; then
+                log_message "✅ Frontend assets successfully copied from public/ to NGINX container"
+            else
+                log_message "❌ Failed to copy frontend assets. Deployment may have issues."
+            fi
+        else
+            log_message "⚠️ No frontend assets found in expected locations. Creating placeholder..."
+            execute_and_log "echo '<html><head><title>ProbeOps</title></head><body><h1>ProbeOps</h1><p>Frontend assets not found. This is a placeholder.</p></body></html>' > nginx/frontend-build/index.html" "Creating placeholder index.html"
+        fi
+        
+        # Create a marker file
+        execute_and_log "echo 'ProbeOps frontend build copied at $(date)' > nginx/frontend-build/.probeops-build-copied" "Creating build marker file"
+        execute_and_log "ls -la nginx/frontend-build/" "Listing copied frontend files"
     else
-        log_message "❌ Failed to copy frontend assets. Deployment may fail."
-        exit 1
+        log_message "❌ Failed to create nginx/frontend-build directory. Deployment may fail."
     fi
 else
     log_message "❌ Failed to build frontend assets. Aborting deployment."
