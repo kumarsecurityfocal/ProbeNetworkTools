@@ -28,18 +28,18 @@ const apiProxyOptions = {
 // Create API proxy middleware
 const apiProxy = createProxyMiddleware(apiProxyOptions);
 
+// Serve static files from the public directory (built frontend)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Also serve files from the frontend directory for development
+app.use('/src', express.static(path.join(__dirname, 'frontend', 'src')));
+
 // Use API proxy for /api/* routes
 app.use('/api', apiProxy);
 
 // Also proxy auth routes directly
 app.use('/login', apiProxy);
 app.use('/register', apiProxy);
-
-// Serve static files from the public directory (built frontend)
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Also serve files from the frontend directory for development
-app.use('/src', express.static(path.join(__dirname, 'frontend', 'src')));
 
 // For any request that doesn't match a static file
 // serve the index.html - use explicit routes instead of wildcard to avoid path-to-regexp issues

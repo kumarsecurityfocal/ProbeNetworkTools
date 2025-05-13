@@ -57,7 +57,7 @@ export const loginUser = async (username, password) => {
     formData.append('username', username);
     formData.append('password', password);
     
-    const response = await api.post('/login', formData);
+    const response = await api.post('/api/login', formData);
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -66,7 +66,7 @@ export const loginUser = async (username, password) => {
 
 export const registerUser = async (username, email, password) => {
   try {
-    const response = await api.post('/register', {
+    const response = await api.post('/api/register', {
       username,
       email,
       password
@@ -79,7 +79,7 @@ export const registerUser = async (username, email, password) => {
 
 export const getUserProfile = async () => {
   try {
-    const response = await api.get('/users/me');
+    const response = await api.get('/api/users/me');
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -89,7 +89,7 @@ export const getUserProfile = async () => {
 // Diagnostic APIs
 export const runDiagnostic = async (tool, params = {}) => {
   try {
-    const endpoint = `/diagnostics/${tool}`;
+    const endpoint = `/api/diagnostics/${tool}`;
     const response = await api.get(endpoint, { params });
     return response.data;
   } catch (error) {
