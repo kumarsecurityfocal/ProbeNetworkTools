@@ -25,6 +25,7 @@ import {
   VpnKey as ApiKeyIcon,
   CardMembership as SubscriptionIcon,
   AdminPanelSettings as AdminIcon,
+  Schedule as ScheduleIcon,
   AccountCircle,
   Logout
 } from '@mui/icons-material';
@@ -61,6 +62,7 @@ const Navbar = () => {
   const baseNavItems = [
     { name: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
     { name: 'Diagnostics', path: '/diagnostics', icon: <DiagnosticsIcon /> },
+    { name: 'Scheduled Probes', path: '/scheduled-probes', icon: <ScheduleIcon /> },
     { name: 'API Keys', path: '/api-keys', icon: <ApiKeyIcon /> },
     { name: 'Subscriptions', path: '/subscriptions', icon: <SubscriptionIcon /> },
   ];
