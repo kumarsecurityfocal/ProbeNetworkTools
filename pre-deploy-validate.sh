@@ -33,69 +33,10 @@ echo "==== ProbeOps Pre-Deployment Validation ===="
 echo "Running pre-deployment checks to prevent common issues..."
 echo ""
 
-# Check 1: Verify .gitignore excludes SSL files
-log_info "Check 1: Verifying .gitignore configuration..."
-if [ -f ".gitignore" ]; then
-    if grep -q "nginx/ssl/live" .gitignore && grep -q "*.pem" .gitignore; then
-        log_success "SSL files are properly excluded in .gitignore"
-    else
-        log_error "SSL files are not properly excluded in .gitignore"
-        echo "Updating .gitignore..."
-        
-        # Add SSL exclusions to .gitignore if not present
-        if ! grep -q "nginx/ssl/live" .gitignore; then
-            echo "# SSL Certificate Files" >> .gitignore
-            echo "nginx/ssl/live/" >> .gitignore
-            echo "nginx/ssl/archive/" >> .gitignore
-            echo "nginx/ssl/renewal/" >> .gitignore
-        fi
-        
-        if ! grep -q "*.pem" .gitignore; then
-            echo "*.pem" >> .gitignore
-            echo "*.key" >> .gitignore
-            echo "*.crt" >> .gitignore
-        fi
-        
-        log_success "Updated .gitignore to exclude SSL files"
-    fi
-else
-    log_error "No .gitignore file found"
-    echo "Creating .gitignore..."
-    
-    # Create a new .gitignore file
-    cat > .gitignore << 'EOF'
-# Node dependencies
-node_modules/
-npm-debug.log
-
-# Python
-__pycache__/
-*.py[cod]
-*.so
-.env
-venv/
-
-# SSL Certificates
-nginx/ssl/live/
-nginx/ssl/archive/
-nginx/ssl/renewal/
-nginx/ssl/webroot/
-*.pem
-*.key
-*.crt
-*.cert
-*.csr
-
-# Frontend builds
-dist/
-public/
-
-# Logs
-*.log
-EOF
-    
-    log_success "Created new .gitignore file with SSL exclusions"
-fi
+# Check 1: Verify .gitignore status (skipping modifications as requested)
+log_info "Check 1: .gitignore check skipped as requested..."
+log_warning "NOTE: Consider adding SSL certificate files to your .gitignore on the production server"
+log_warning "      This would typically include: nginx/ssl/live/, *.pem, etc."
 
 echo ""
 

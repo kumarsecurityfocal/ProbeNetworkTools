@@ -140,15 +140,8 @@ if [[ -n "$uncommitted_changes" ]]; then
             2)
                 log_message "🔄 Stashing app-related changes (excluding SSL files)..."
                 
-                # Make sure .gitignore includes SSL files
-                if ! grep -q "nginx/ssl/live" .gitignore; then
-                    echo "# SSL Certificate Files - added by deploy.sh" >> .gitignore
-                    echo "nginx/ssl/live/" >> .gitignore
-                    echo "nginx/ssl/archive/" >> .gitignore
-                    echo "nginx/ssl/renewal/" >> .gitignore
-                    echo "*.pem" >> .gitignore
-                    log_message "✅ Updated .gitignore to exclude SSL files"
-                fi
+                # Skip modifying .gitignore as requested by user
+                log_message "ℹ️ Not modifying .gitignore as requested"
                 
                 # Create .git/info/exclude if it doesn't exist
                 mkdir -p .git/info
@@ -172,15 +165,8 @@ if [[ -n "$uncommitted_changes" ]]; then
             3)
                 log_message "⚠️ Force pull selected. App-related changes may be lost."
                 
-                # Make sure .gitignore includes SSL files
-                if ! grep -q "nginx/ssl/live" .gitignore; then
-                    echo "# SSL Certificate Files - added by deploy.sh" >> .gitignore
-                    echo "nginx/ssl/live/" >> .gitignore
-                    echo "nginx/ssl/archive/" >> .gitignore
-                    echo "nginx/ssl/renewal/" >> .gitignore
-                    echo "*.pem" >> .gitignore
-                    log_message "✅ Updated .gitignore to exclude SSL files"
-                fi
+                # Skip modifying .gitignore as requested by user
+                log_message "ℹ️ Not modifying .gitignore as requested"
                 
                 # Create .git/info/exclude if it doesn't exist
                 mkdir -p .git/info
