@@ -102,6 +102,26 @@ docker-compose --version
 
 ## 3. Deploying ProbeOps
 
+### Important Production Deployment Notes
+
+#### Frontend Asset Handling
+⚠️ **WARNING**: Do not manually mount the `./frontend/dist` directory to the NGINX container in production. 
+- The frontend container builds assets using a multi-stage Dockerfile
+- These assets are then copied to the NGINX container during the build process
+- Mounting a host directory can override this and cause empty directories to be served
+
+#### SSL Certificate Persistence
+- SSL certificates issued by Let's Encrypt must persist across container rebuilds
+- Never override the SSL certificate volumes when rebuilding containers
+- The following volume mounts should always be preserved:
+  ```yaml
+  volumes:
+    - ./nginx/ssl:/etc/letsencrypt
+    - ./nginx/ssl/webroot:/var/www/certbot
+    - ./nginx/ssl/ssl-dhparams.pem:/etc/letsencrypt/ssl-dhparams.pem
+  ```
+- Always back up the `./nginx/ssl` directory before major deployments
+
 ### 3.1 Clone the Repository
 
 ```bash
@@ -159,6 +179,10 @@ LOG_LEVEL=INFO
 
 ### 3.3 Deploy with Docker Compose
 
+#### Production Deployment
+
+For production, use the standard docker-compose.yml without any overrides:
+
 ```bash
 # Build and start the containers
 docker compose up -d --build
@@ -166,6 +190,24 @@ docker compose up -d --build
 # Check if all containers are running
 docker compose ps
 ```
+
+#### Development Deployment
+
+For development, use the docker-compose.dev.yml override file:
+
+```bash
+# Build and start the containers with development overrides
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+
+# Check if all containers are running
+docker compose ps
+```
+
+The development override provides these benefits:
+- Hot reloading for the frontend and backend
+- Volume mounts for development convenience
+- Development mode for all services
+- Exposed development ports for direct access
 
 ### 3.4 Run Database Migrations
 

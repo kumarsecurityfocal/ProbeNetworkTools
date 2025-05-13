@@ -27,9 +27,11 @@ services:
     environment:
       - VITE_API_URL=http://backend:8000
       - NODE_ENV=production
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+    # No volumes in production - allow the Dockerfile multi-stage build to work properly
+    # Development-only volumes are commented out to prevent build artifacts from being overridden
+    # volumes:
+    #   - ./frontend:/app
+    #   - /app/node_modules
     networks:
       - probeops-network
 
@@ -51,7 +53,6 @@ services:
     volumes:
       - ./nginx/ssl:/etc/letsencrypt
       - ./nginx/ssl/webroot:/var/www/certbot
-      - ./frontend/dist:/usr/share/nginx/html
       - ./nginx/ssl/ssl-dhparams.pem:/etc/letsencrypt/ssl-dhparams.pem
 
   # Probe service (network diagnostic agent)

@@ -1,3 +1,5 @@
+FROM frontend:latest as frontend
+
 FROM nginx:alpine
 
 # Remove default nginx configuration
@@ -13,9 +15,12 @@ COPY ssl-params.conf /etc/nginx/ssl-params.conf
 RUN mkdir -p /etc/letsencrypt
 RUN mkdir -p /var/www/certbot
 
-# Copy the built frontend files to nginx html directory
-# This will be handled by volume mounting in docker-compose.yml
-# or can be built as a multi-stage build when needed
+# Copy the built frontend files from the frontend image
+# No volume mounting should be used in production to avoid empty directories
+COPY --from=frontend /usr/share/nginx/html /usr/share/nginx/html
+
+# Create a marker file to confirm assets were copied properly
+RUN echo "Assets properly copied from frontend container" > /usr/share/nginx/html/assets-verification.txt
 
 # Expose ports
 EXPOSE 80

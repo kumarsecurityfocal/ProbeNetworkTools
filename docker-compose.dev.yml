@@ -1,0 +1,36 @@
+version: '3'
+
+# Development-specific overrides for docker-compose.yml
+# This file is used in development to override production settings
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  # Frontend service development overrides
+  frontend:
+    # Development-only volumes for hot reloading
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    # Use development mode
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:8000
+    command: ["npm", "run", "dev"]
+    ports:
+      - "3000:3000"  # Expose dev server port
+
+  # NGINX service development overrides
+  nginx:
+    # This is only for development
+    # For production, we rely on the multi-stage build copy from frontend image
+    volumes:
+      - ./frontend/dist:/usr/share/nginx/html
+      - ./nginx/ssl:/etc/letsencrypt
+      - ./nginx/ssl/webroot:/var/www/certbot
+      - ./nginx/ssl/ssl-dhparams.pem:/etc/letsencrypt/ssl-dhparams.pem
+
+  # Backend service development overrides
+  backend:
+    environment:
+      - DEBUG=True
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
