@@ -187,7 +187,7 @@ curl http://localhost:8000/
 docker-compose logs
 ```
 
-## 4. Setting Up Domain and SSL (Optional)
+## 4. Setting Up Domain and SSL
 
 ### 4.1 Configure DNS for Your Domain
 
@@ -198,31 +198,143 @@ docker-compose logs
 
 2. Wait for DNS propagation (can take up to 24-48 hours)
 
-### 4.2 Set Up SSL with Certbot
+### 4.2 SSL Certificates with Docker
+
+Since NGINX is running in a container, we need a special approach for SSL certificate management:
+
+#### 4.2.1 Create SSL Directory Structure
 
 ```bash
-# Install Certbot
-sudo amazon-linux-extras install epel -y  # Amazon Linux
-sudo yum install certbot -y
-# or
-sudo apt install certbot python3-certbot-nginx -y  # Ubuntu
-
-# Get SSL certificate
-sudo certbot --nginx -d probeops.com -d www.probeops.com
-
-# Follow the prompts to complete the SSL setup
+# Create directory structure for SSL certificates
+mkdir -p ./nginx/ssl/live/probeops.com
+mkdir -p ./nginx/ssl/archive/probeops.com
+mkdir -p ./nginx/ssl/renewal
 ```
 
-### 4.3 Update NGINX Configuration
+#### 4.2.2 Using Certbot with Docker
 
-After obtaining SSL certificates, update the NGINX configuration if needed:
+We'll use the official Certbot Docker image to generate certificates:
+
+```bash
+# Stop nginx container temporarily to free port 80
+docker-compose stop nginx
+
+# Run Certbot Docker container using standalone mode
+docker run -it --rm \
+  -v ./nginx/ssl:/etc/letsencrypt \
+  -v ./nginx/ssl/webroot:/var/www/certbot \
+  -p 80:80 \
+  certbot/certbot certonly \
+  --standalone \
+  --preferred-challenges http \
+  --email your-email@example.com \
+  --agree-tos \
+  --no-eff-email \
+  -d probeops.com -d www.probeops.com
+
+# Start nginx again
+docker-compose start nginx
+```
+
+#### 4.2.3 Update NGINX Configuration
+
+Now, update the NGINX configuration to use SSL certificates:
 
 ```bash
 # Edit the NGINX configuration
 nano nginx/nginx.conf
 ```
 
-The necessary SSL configuration should already be handled by Certbot, but verify the configuration looks correct.
+Add the following configuration:
+
+```nginx
+# Example SSL configuration block to add to nginx.conf
+server {
+    listen 80;
+    server_name probeops.com www.probeops.com;
+    
+    # Redirect all HTTP requests to HTTPS
+    location / {
+        return 301 https://$host$request_uri;
+    }
+
+    # For certbot challenges (renewal process)
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+}
+
+server {
+    listen 443 ssl;
+    server_name probeops.com www.probeops.com;
+
+    # SSL certificates
+    ssl_certificate /etc/letsencrypt/live/probeops.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/probeops.com/privkey.pem;
+    
+    # Include SSL settings
+    include /etc/nginx/ssl-params.conf;  # Optional, if you have additional SSL settings
+    
+    # Rest of your server configuration...
+    location / {
+        proxy_pass http://frontend:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+    
+    location /api {
+        proxy_pass http://backend:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+After updating the NGINX configuration:
+
+```bash
+# Restart NGINX container to apply the changes
+docker-compose restart nginx
+```
+
+#### 4.2.4 Setting Up Certificate Auto-Renewal
+
+Create a renewal script:
+
+```bash
+nano cert-renewal.sh
+```
+
+Add the following content:
+
+```bash
+#!/bin/bash
+
+# Stop nginx container temporarily
+docker-compose stop nginx
+
+# Run certbot renewal
+docker run --rm \
+  -v ./nginx/ssl:/etc/letsencrypt \
+  -v ./nginx/ssl/webroot:/var/www/certbot \
+  -p 80:80 \
+  certbot/certbot renew
+
+# Start nginx again
+docker-compose start nginx
+```
+
+Make the script executable:
+
+```bash
+chmod +x cert-renewal.sh
+```
+
+Set up a cron job to run the renewal script twice a day:
+
+```bash
+(crontab -l 2>/dev/null; echo "0 3,15 * * * /path/to/probeops/cert-renewal.sh >> /path/to/probeops/ssl-renewal.log 2>&1") | crontab -
+```
 
 ## 5. Automating Deployments
 

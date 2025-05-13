@@ -117,6 +117,43 @@ else
     log_message "⚠️ Warning: Frontend check failed"
 fi
 
+# Step 7: SSL Certificate Management
+log_message "🔄 Checking SSL certificates status..."
+
+# Check if this is running in a production environment with a domain
+if [[ -f "./nginx/ssl/live/probeops.com/fullchain.pem" ]]; then
+    # Check certificate expiration
+    CERT_FILE="./nginx/ssl/live/probeops.com/fullchain.pem"
+    echo "$ openssl x509 -dates -noout -in $CERT_FILE" >> $LOG_FILE
+    
+    if cert_info=$(openssl x509 -dates -noout -in "$CERT_FILE" 2>&1); then
+        echo "$cert_info" >> $LOG_FILE
+        expiry_date=$(echo "$cert_info" | grep "notAfter" | cut -d= -f2)
+        log_message "✅ SSL certificate is valid until $expiry_date"
+        
+        # Calculate days until expiry
+        expiry_epoch=$(date -d "$expiry_date" +%s)
+        current_epoch=$(date +%s)
+        days_left=$(( (expiry_epoch - current_epoch) / 86400 ))
+        
+        if [[ $days_left -lt 30 ]]; then
+            log_message "⚠️ Warning: SSL certificate will expire in $days_left days"
+            log_message "🔄 Running certificate renewal..."
+            
+            if execute_and_log "./cert-renewal.sh" "Renewing SSL certificates"; then
+                log_message "✅ SSL certificate renewal initiated"
+            else
+                log_message "⚠️ Warning: SSL certificate renewal may have issues"
+            fi
+        fi
+    else
+        log_message "⚠️ Warning: Unable to read SSL certificate information"
+    fi
+else
+    # Check if we have a domain name set and should set up SSL
+    log_message "ℹ️ SSL certificates not found. Run cert-renewal.sh manually if SSL is needed."
+fi
+
 # Final status
 log_message "===== DEPLOYMENT COMPLETED: $(date +"%Y-%m-%d %H:%M:%S") ====="
 log_message "📊 Deployment Status: ✅ SUCCESS"
