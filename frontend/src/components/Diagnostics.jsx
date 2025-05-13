@@ -227,10 +227,13 @@ const DiagnosticHistory = ({ refreshTrigger }) => {
       try {
         setLoading(true);
         const response = await getDiagnosticHistory();
-        setHistory(response);
+        // Ensure the response is an array
+        setHistory(Array.isArray(response) ? response : []);
       } catch (error) {
         console.error('Error fetching diagnostic history:', error);
         setError('Failed to load diagnostic history');
+        // Set empty array on error
+        setHistory([]);
       } finally {
         setLoading(false);
       }

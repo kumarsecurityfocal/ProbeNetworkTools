@@ -53,10 +53,13 @@ const ApiKeys = () => {
       setLoading(true);
       setError('');
       const keys = await getApiKeys();
-      setApiKeys(keys);
+      // Ensure keys is an array even if the API returns null or undefined
+      setApiKeys(Array.isArray(keys) ? keys : []);
     } catch (err) {
       console.error('Error fetching API keys:', err);
       setError('Failed to load API keys. Please try again.');
+      // Set empty array on error
+      setApiKeys([]);
     } finally {
       setLoading(false);
     }

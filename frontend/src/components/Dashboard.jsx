@@ -42,17 +42,27 @@ const Dashboard = () => {
         
         // Fetch diagnostics history
         const diagnosticsResponse = await getDiagnosticHistory({ limit: 5 });
+        // Ensure response is an array
+        const diagnostics = Array.isArray(diagnosticsResponse) ? diagnosticsResponse : [];
         
         // Fetch API keys
         const apiKeysResponse = await getApiKeys();
+        // Ensure response is an array
+        const apiKeys = Array.isArray(apiKeysResponse) ? apiKeysResponse : [];
         
         setStats({
-          diagnosticCount: diagnosticsResponse.length,
-          apiKeyCount: apiKeysResponse.length,
-          recentDiagnostics: diagnosticsResponse.slice(0, 5),
+          diagnosticCount: diagnostics.length,
+          apiKeyCount: apiKeys.length,
+          recentDiagnostics: diagnostics.slice(0, 5),
         });
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
+        // Set default values on error
+        setStats({
+          diagnosticCount: 0,
+          apiKeyCount: 0,
+          recentDiagnostics: [],
+        });
       } finally {
         setLoading(false);
       }
