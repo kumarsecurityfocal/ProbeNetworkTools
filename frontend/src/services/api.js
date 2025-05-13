@@ -163,4 +163,104 @@ export const deactivateApiKey = async (keyId) => {
   }
 };
 
+// Scheduled Probes APIs
+export const getScheduledProbes = async (params = {}) => {
+  try {
+    const response = await api.get('/api/probes', { params });
+    return response.data;
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+export const getScheduledProbeById = async (probeId) => {
+  try {
+    const response = await api.get(`/api/probes/${probeId}`);
+    return response.data;
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+export const createScheduledProbe = async (probeData) => {
+  try {
+    const response = await api.post('/api/probes', probeData);
+    return response.data;
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+export const updateScheduledProbe = async (probeId, probeData) => {
+  try {
+    const response = await api.put(`/api/probes/${probeId}`, probeData);
+    return response.data;
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+export const deleteScheduledProbe = async (probeId) => {
+  try {
+    const response = await api.delete(`/api/probes/${probeId}`);
+    return response.data;
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+export const pauseScheduledProbe = async (probeId) => {
+  try {
+    const response = await api.put(`/api/probes/${probeId}/pause`);
+    return response.data;
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+export const resumeScheduledProbe = async (probeId) => {
+  try {
+    const response = await api.put(`/api/probes/${probeId}/resume`);
+    return response.data;
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+export const getProbeResults = async (probeId, params = {}) => {
+  try {
+    const response = await api.get(`/api/probes/${probeId}/results`, { params });
+    return response.data;
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+export const bulkPauseProbes = async (probeIds) => {
+  try {
+    const response = await api.post('/api/probes/bulk-pause', probeIds);
+    return response.data;
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+export const bulkResumeProbes = async (probeIds) => {
+  try {
+    const response = await api.post('/api/probes/bulk-resume', probeIds);
+    return response.data;
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+export const bulkDeleteProbes = async (probeIds) => {
+  try {
+    const response = await api.post('/api/probes/bulk-delete', probeIds);
+    return response.data;
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
 export default api;
