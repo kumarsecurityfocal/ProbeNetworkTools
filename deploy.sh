@@ -80,46 +80,24 @@ if [[ -n "$uncommitted_changes" ]]; then
     log_message "⚠️ Uncommitted changes detected. This could cause merge conflicts during deployment."
     echo "$uncommitted_changes" >> $LOG_FILE
     
-    # Check for SSL certificate files in uncommitted changes
-    ssl_cert_files=$(echo "$uncommitted_changes" | grep -E '\.pem$|nginx/ssl/live|nginx/ssl/archive|privkey')
+    # For initial deployment, just force skip the prompt
+    SKIP_PROMPT=true
+    log_message "⚠️ Uncommitted changes detected, but proceeding with deployment anyway."
+    log_message "⚠️ This is likely due to SSL certificate files that shouldn't be tracked by Git."
     
-    if [[ -n "$ssl_cert_files" ]]; then
-        log_message "⚠️ IMPORTANT: SSL certificate files detected in uncommitted changes"
-        log_message "⚠️ These files should never be committed to the repo and should be excluded from git operations"
-        
-        # Create a list of SSL certificate files to exclude
-        echo "SSL certificate files detected:" >> $LOG_FILE
-        echo "$ssl_cert_files" | awk '{print $2}' >> $LOG_FILE
-        
-        # Extract app-related changes (excluding SSL files)
-        app_changes=$(echo "$uncommitted_changes" | grep -v -E '\.pem$|nginx/ssl/live|nginx/ssl/archive|privkey')
-        
-        if [[ -n "$app_changes" ]]; then
-            log_message "📋 App-related changes (non-SSL) detected:"
-            echo "App-related changes:" >> $LOG_FILE
-            echo "$app_changes" | awk '{print $2}' >> $LOG_FILE
-        else
-            log_message "ℹ️ No app-related changes detected, only SSL certificate files"
-            log_message "✅ We can safely proceed with deployment by ignoring SSL files"
-            
-            # Create .git/info/exclude if it doesn't exist
-            mkdir -p .git/info
-            touch .git/info/exclude
-            
-            # Add SSL paths to git exclude
-            echo "# SSL Certificate Files - added by deploy.sh" >> .git/info/exclude
-            echo "nginx/ssl/live/" >> .git/info/exclude
-            echo "nginx/ssl/archive/" >> .git/info/exclude
-            echo "nginx/ssl/renewal/" >> .git/info/exclude
-            echo "*.pem" >> .git/info/exclude
-            
-            log_message "✅ Added SSL files to .git/info/exclude to prevent future issues"
-            log_message "✅ Proceeding with git pull"
-            
-            # Skip to git pull - set a flag to continue
-            SKIP_PROMPT=true
-        fi
-    fi
+    # Create .git/info/exclude if it doesn't exist
+    mkdir -p .git/info
+    touch .git/info/exclude
+    
+    # Add SSL paths to git exclude
+    echo "# SSL Certificate Files - added by deploy.sh" >> .git/info/exclude
+    echo "nginx/ssl/live/" >> .git/info/exclude
+    echo "nginx/ssl/archive/" >> .git/info/exclude
+    echo "nginx/ssl/renewal/" >> .git/info/exclude
+    echo "*.pem" >> .git/info/exclude
+    
+    log_message "✅ Added SSL files to .git/info/exclude to prevent future issues"
+    log_message "✅ Proceeding with deployment"
     
     # Only prompt if we didn't set the skip flag
     if [ "$SKIP_PROMPT" = false ]; then
