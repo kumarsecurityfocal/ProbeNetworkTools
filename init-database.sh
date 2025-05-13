@@ -57,6 +57,11 @@ echo "---------------------------------------------"
 python init_db.py
 
 echo ""
+echo "Assigning default subscriptions to users..."
+echo "---------------------------------------------"
+python assign_subscriptions.py
+
+echo ""
 echo "Database initialization complete!"
 echo "You can now start the application with initialized database."
 echo ""

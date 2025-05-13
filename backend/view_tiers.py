@@ -7,9 +7,6 @@ import sys
 import os
 from pprint import pprint
 
-# Add the parent directory to the Python path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 # Import app modules
 from app.database import get_db
 from app.models import SubscriptionTier
