@@ -34,9 +34,28 @@ const apiProxy = createProxyMiddleware(apiProxyOptions);
 
 // Define special routes before static file handling
 
-// Handle all API routes with consistent prefixing
+// Handle API routes by prefixing the backend routes with /api when they come from the frontend without /api
+app.use('/users', (req, res, next) => {
+  console.log(`Adding /api prefix to user route: ${req.method} ${req.url}`);
+  req.url = '/api' + req.originalUrl;
+  return apiProxy(req, res, next);
+});
+
+app.use('/diagnostics', (req, res, next) => {
+  console.log(`Adding /api prefix to diagnostics route: ${req.method} ${req.url}`);
+  req.url = '/api' + req.originalUrl;
+  return apiProxy(req, res, next);
+});
+
+app.use('/keys', (req, res, next) => {
+  console.log(`Adding /api prefix to keys route: ${req.method} ${req.url}`);
+  req.url = '/api' + req.originalUrl;
+  return apiProxy(req, res, next);
+});
+
+// Handle routes that already include /api prefix
 app.use('/api', (req, res, next) => {
-  console.log(`API request received: ${req.method} ${req.url}`);
+  console.log(`API request received with prefix: ${req.method} ${req.url}`);
   return apiProxy(req, res, next);
 });
 
