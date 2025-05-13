@@ -11,8 +11,8 @@ const apiProxyOptions = {
   ws: true,
   xfwd: true,
   logLevel: 'debug',
-  // Don't rewrite the path at all to preserve the /api prefix
-  // pathRewrite: { '^/api': '/api' },
+  // Rewrite the path to remove /api prefix as the FastAPI backend already has it configured
+  pathRewrite: { '^/api': '' },
   onProxyReq: (proxyReq, req, res) => {
     // Log proxy request for debugging
     console.log(`Proxying to: ${req.method} ${proxyReq.path}`);
@@ -49,11 +49,11 @@ app.use('/api', (req, res, next) => {
   console.log(`API request received with prefix: ${req.method} ${req.url}`);
   console.log(`Original URL: ${req.originalUrl}`);
   console.log(`Path: ${req.path}`);
-  console.log(`Forwarding to backend: ${apiProxyOptions.target}${req.originalUrl}`);
+  // Now we're rewriting to remove the /api prefix for FastAPI
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}${req.path}`);
   console.log(`============================================`);
   
-  // The original URL already has the /api prefix that the backend needs
-  // No need to modify the URL, just proxy as-is
+  // Let the proxy middleware handle the rewriting
   return apiProxy(req, res, next);
 });
 
