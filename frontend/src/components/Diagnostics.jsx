@@ -44,8 +44,8 @@ import {
 import { runDiagnostic, getDiagnosticHistory } from '../services/api';
 
 const DiagnosticTool = ({ onRunComplete, prefilledTool }) => {
-  const [tool, setTool] = useState('ping');
-  const [target, setTarget] = useState('');
+  const [tool, setTool] = useState(prefilledTool?.tool || 'ping');
+  const [target, setTarget] = useState(prefilledTool?.target || '');
   const [options, setOptions] = useState({
     ping: { count: 4, timeout: 5, packetSize: 56 },
     traceroute: { maxHops: 30, timeout: 5, protocol: 'tcp' },
@@ -63,6 +63,25 @@ const DiagnosticTool = ({ onRunComplete, prefilledTool }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
+  
+  // Handle prefilling when prefilledTool changes
+  useEffect(() => {
+    if (prefilledTool) {
+      setTool(prefilledTool.tool);
+      setTarget(prefilledTool.target);
+      
+      // If there are specific params, we could update the options state here
+      if (prefilledTool.params) {
+        setOptions(prevOptions => ({
+          ...prevOptions,
+          [prefilledTool.tool]: {
+            ...prevOptions[prefilledTool.tool],
+            ...prefilledTool.params
+          }
+        }));
+      }
+    }
+  }, [prefilledTool]);
   
   const handleToolChange = (event) => {
     setTool(event.target.value);
