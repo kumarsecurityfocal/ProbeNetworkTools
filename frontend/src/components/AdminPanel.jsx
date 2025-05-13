@@ -65,8 +65,10 @@ function TabPanel(props) {
 }
 
 const AdminPanel = () => {
-  const { user } = useAuth();
+  const { user: currentLoggedInUser } = useAuth();
   const [tabValue, setTabValue] = useState(0);
+  
+  // Subscription state
   const [subscriptions, setSubscriptions] = useState([]);
   const [tiers, setTiers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -75,6 +77,30 @@ const AdminPanel = () => {
   const [currentSubscription, setCurrentSubscription] = useState(null);
   const [selectedTierId, setSelectedTierId] = useState('');
   const [renewMonths, setRenewMonths] = useState(1);
+  
+  // User management state
+  const [users, setUsers] = useState([]);
+  const [userLoading, setUserLoading] = useState(true);
+  const [userError, setUserError] = useState(null);
+  const [editUserDialog, setEditUserDialog] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [resetPasswordDialog, setResetPasswordDialog] = useState(false);
+  const [passwordResetUser, setPasswordResetUser] = useState(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [deleteUserDialog, setDeleteUserDialog] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+  
+  // Form fields for user creation/editing
+  const [userFormData, setUserFormData] = useState({
+    username: '',
+    email: '',
+    password: '',
+    is_admin: false,
+    is_active: true,
+    email_verified: true
+  });
+  
+  // Snackbar state
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -83,10 +109,10 @@ const AdminPanel = () => {
 
   // Check if user is admin
   useEffect(() => {
-    if (user && !user.is_admin) {
+    if (currentLoggedInUser && !currentLoggedInUser.is_admin) {
       setError('Access denied. Admin privileges required.');
     }
-  }, [user]);
+  }, [currentLoggedInUser]);
 
   // Load subscription data
   useEffect(() => {
@@ -107,10 +133,31 @@ const AdminPanel = () => {
       }
     };
 
-    if (user && user.is_admin) {
+    if (currentLoggedInUser && currentLoggedInUser.is_admin) {
       fetchData();
     }
-  }, [user]);
+  }, [currentLoggedInUser]);
+  
+  // Load user data
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setUserLoading(true);
+      try {
+        const usersData = await getAllUsers();
+        setUsers(usersData);
+        setUserError(null);
+      } catch (err) {
+        console.error('Error loading users:', err);
+        setUserError('Failed to load users. Please try again later.');
+      } finally {
+        setUserLoading(false);
+      }
+    };
+    
+    if (currentLoggedInUser && currentLoggedInUser.is_admin && tabValue === 1) {
+      fetchUsers();
+    }
+  }, [currentLoggedInUser, tabValue]);
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -191,6 +238,169 @@ const AdminPanel = () => {
       setSnackbar({
         open: true,
         message: 'Failed to update subscription',
+        severity: 'error'
+      });
+    }
+  };
+
+  // User management functions
+  const handleEditUser = (user) => {
+    setCurrentUser(user);
+    setUserFormData({
+      username: user.username,
+      email: user.email,
+      password: '', // Don't include password when editing
+      is_admin: user.is_admin,
+      is_active: user.is_active,
+      email_verified: user.email_verified
+    });
+    setEditUserDialog(true);
+  };
+  
+  const handleUserFormChange = (e) => {
+    const { name, value, checked } = e.target;
+    if (name === 'is_admin' || name === 'is_active' || name === 'email_verified') {
+      setUserFormData({
+        ...userFormData,
+        [name]: checked
+      });
+    } else {
+      setUserFormData({
+        ...userFormData,
+        [name]: value
+      });
+    }
+  };
+  
+  const handleSaveUser = async () => {
+    try {
+      if (currentUser) {
+        // Update existing user
+        const updateData = { ...userFormData };
+        if (!updateData.password) delete updateData.password; // Don't send password if it's empty
+        
+        await updateUser(currentUser.id, updateData);
+        
+        setSnackbar({
+          open: true,
+          message: 'User updated successfully',
+          severity: 'success'
+        });
+      } else {
+        // Create new user
+        await createUser(userFormData);
+        
+        setSnackbar({
+          open: true,
+          message: 'User created successfully',
+          severity: 'success'
+        });
+      }
+      
+      // Refresh users list
+      const usersData = await getAllUsers();
+      setUsers(usersData);
+      
+      // Close dialog
+      setEditUserDialog(false);
+    } catch (error) {
+      console.error('Error saving user:', error);
+      setSnackbar({
+        open: true,
+        message: `Failed to save user: ${error.response?.data?.detail || error.message}`,
+        severity: 'error'
+      });
+    }
+  };
+  
+  const handleToggleUserStatus = async (user) => {
+    try {
+      await changeUserStatus(user.id, !user.is_active);
+      
+      // Refresh users
+      const usersData = await getAllUsers();
+      setUsers(usersData);
+      
+      setSnackbar({
+        open: true,
+        message: `User ${user.is_active ? 'deactivated' : 'activated'} successfully`,
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Error changing user status:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to change user status',
+        severity: 'error'
+      });
+    }
+  };
+  
+  const handleVerifyEmail = async (userId) => {
+    try {
+      await verifyUserEmail(userId);
+      
+      // Refresh users
+      const usersData = await getAllUsers();
+      setUsers(usersData);
+      
+      setSnackbar({
+        open: true,
+        message: 'Email verified successfully',
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Error verifying email:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to verify email',
+        severity: 'error'
+      });
+    }
+  };
+  
+  const handleResetPassword = async () => {
+    try {
+      await resetUserPassword(passwordResetUser.id, newPassword);
+      
+      setSnackbar({
+        open: true,
+        message: 'Password reset successfully',
+        severity: 'success'
+      });
+      
+      setResetPasswordDialog(false);
+      setNewPassword('');
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to reset password',
+        severity: 'error'
+      });
+    }
+  };
+  
+  const handleDeleteUser = async () => {
+    try {
+      await deleteUser(userToDelete.id);
+      
+      // Refresh users
+      const usersData = await getAllUsers();
+      setUsers(usersData);
+      
+      setSnackbar({
+        open: true,
+        message: 'User deleted successfully',
+        severity: 'success'
+      });
+      
+      setDeleteUserDialog(false);
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to delete user',
         severity: 'error'
       });
     }
@@ -325,10 +535,185 @@ const AdminPanel = () => {
         </TableContainer>
       </TabPanel>
 
-      {/* Users Tab (Disabled for now) */}
+      {/* Users Tab */}
       <TabPanel value={tabValue} index={1}>
-        <Typography variant="h6">User Management</Typography>
-        <Typography>Coming soon...</Typography>
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h6">User Management</Typography>
+          <Button 
+            variant="contained" 
+            startIcon={<AddIcon />}
+            onClick={() => {
+              setCurrentUser(null);
+              setUserFormData({
+                username: '',
+                email: '',
+                password: '',
+                is_admin: false,
+                is_active: true,
+                email_verified: true
+              });
+              setEditUserDialog(true);
+            }}
+          >
+            Add New User
+          </Button>
+        </Box>
+        
+        {userLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+            <CircularProgress />
+          </Box>
+        ) : userError ? (
+          <Alert severity="error" sx={{ mb: 3 }}>{userError}</Alert>
+        ) : (
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>ID</TableCell>
+                  <TableCell>Username</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Role</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Email Verified</TableCell>
+                  <TableCell>Created</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {users.length > 0 ? (
+                  users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>{user.id}</TableCell>
+                      <TableCell>{user.username}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>
+                        {user.is_admin ? (
+                          <Chip 
+                            label="Admin" 
+                            color="primary" 
+                            size="small" 
+                          />
+                        ) : (
+                          <Chip 
+                            label="User" 
+                            color="default" 
+                            size="small" 
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {user.is_active ? (
+                          <Chip 
+                            label="Active" 
+                            color="success" 
+                            size="small" 
+                          />
+                        ) : (
+                          <Chip 
+                            label="Inactive" 
+                            color="error" 
+                            size="small" 
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {user.email_verified ? (
+                          <Chip 
+                            label="Verified" 
+                            color="success" 
+                            size="small" 
+                            icon={<VerifiedIcon />}
+                          />
+                        ) : (
+                          <Chip 
+                            label="Unverified" 
+                            color="warning" 
+                            size="small" 
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell>{formatDate(user.created_at)}</TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex' }}>
+                          <Tooltip title="Edit User">
+                            <IconButton 
+                              size="small" 
+                              onClick={() => handleEditUser(user)}
+                              sx={{ mr: 1 }}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          
+                          <Tooltip title={user.is_active ? "Deactivate User" : "Activate User"}>
+                            <IconButton 
+                              size="small" 
+                              color={user.is_active ? "error" : "success"}
+                              onClick={() => handleToggleUserStatus(user)}
+                              sx={{ mr: 1 }}
+                              disabled={user.id === currentLoggedInUser?.id}
+                            >
+                              {user.is_active ? <BlockIcon fontSize="small" /> : <CheckCircle fontSize="small" />}
+                            </IconButton>
+                          </Tooltip>
+                          
+                          {!user.email_verified && (
+                            <Tooltip title="Verify Email">
+                              <IconButton 
+                                size="small" 
+                                color="primary"
+                                onClick={() => handleVerifyEmail(user.id)}
+                                sx={{ mr: 1 }}
+                              >
+                                <VerifiedIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          
+                          <Tooltip title="Reset Password">
+                            <IconButton 
+                              size="small" 
+                              color="warning"
+                              onClick={() => {
+                                setPasswordResetUser(user);
+                                setNewPassword('');
+                                setResetPasswordDialog(true);
+                              }}
+                              sx={{ mr: 1 }}
+                            >
+                              <RefreshIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          
+                          <Tooltip title="Delete User">
+                            <IconButton 
+                              size="small" 
+                              color="error"
+                              onClick={() => {
+                                setUserToDelete(user);
+                                setDeleteUserDialog(true);
+                              }}
+                              disabled={user.id === currentLoggedInUser?.id}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={8} align="center">
+                      No users found
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
       </TabPanel>
 
       {/* Edit Subscription Dialog */}
@@ -361,6 +746,140 @@ const AdminPanel = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Edit User Dialog */}
+      <Dialog open={editUserDialog} onClose={() => setEditUserDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          {currentUser ? 'Edit User' : 'Create New User'}
+        </DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12}>
+              <TextField
+                name="username"
+                label="Username"
+                value={userFormData.username}
+                onChange={handleUserFormChange}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                name="email"
+                label="Email"
+                type="email"
+                value={userFormData.email}
+                onChange={handleUserFormChange}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                name="password"
+                label={currentUser ? "New Password (leave blank to keep current)" : "Password"}
+                type="password"
+                value={userFormData.password}
+                onChange={handleUserFormChange}
+                fullWidth
+                required={!currentUser}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    name="is_admin"
+                    checked={userFormData.is_admin}
+                    onChange={handleUserFormChange}
+                  />
+                }
+                label="Admin Role"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    name="is_active"
+                    checked={userFormData.is_active}
+                    onChange={handleUserFormChange}
+                  />
+                }
+                label="Active Account"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    name="email_verified"
+                    checked={userFormData.email_verified}
+                    onChange={handleUserFormChange}
+                  />
+                }
+                label="Email Verified"
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditUserDialog(false)}>Cancel</Button>
+          <Button onClick={handleSaveUser} variant="contained" color="primary">
+            {currentUser ? 'Update' : 'Create'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
+      {/* Reset Password Dialog */}
+      <Dialog open={resetPasswordDialog} onClose={() => setResetPasswordDialog(false)}>
+        <DialogTitle>Reset User Password</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Enter a new password for user: <strong>{passwordResetUser?.username}</strong>
+          </Typography>
+          <TextField
+            label="New Password"
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            fullWidth
+            required
+            autoFocus
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setResetPasswordDialog(false)}>Cancel</Button>
+          <Button 
+            onClick={handleResetPassword} 
+            variant="contained" 
+            color="primary"
+            disabled={!newPassword}
+          >
+            Reset Password
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
+      {/* Delete User Confirmation Dialog */}
+      <Dialog open={deleteUserDialog} onClose={() => setDeleteUserDialog(false)}>
+        <DialogTitle>Confirm User Deletion</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1">
+            Are you sure you want to delete user <strong>{userToDelete?.username}</strong>?
+          </Typography>
+          <Typography variant="body2" color="error" sx={{ mt: 2 }}>
+            This action cannot be undone. All user data, including diagnostics history and API keys, will be permanently deleted.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteUserDialog(false)}>Cancel</Button>
+          <Button onClick={handleDeleteUser} variant="contained" color="error">
+            Delete User
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
       {/* Snackbar for notifications */}
       <Snackbar
         open={snackbar.open}
