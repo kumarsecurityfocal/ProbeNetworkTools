@@ -52,6 +52,7 @@ services:
       - ./nginx/ssl:/etc/letsencrypt
       - ./nginx/ssl/webroot:/var/www/certbot
       - ./frontend/dist:/usr/share/nginx/html
+      - ./nginx/ssl/ssl-dhparams.pem:/etc/letsencrypt/ssl-dhparams.pem
 
   # Probe service (network diagnostic agent)
   probe:

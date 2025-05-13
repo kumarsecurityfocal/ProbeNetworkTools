@@ -50,8 +50,8 @@ execute_and_log "mkdir -p ./nginx/ssl/webroot/.well-known/acme-challenge" "Creat
 
 # Step 2: Generate DH parameters for SSL security
 log_message "🔄 Generating DH parameters (this may take a while)..."
-if [ ! -f "./nginx/dhparam.pem" ]; then
-    execute_and_log "openssl dhparam -out ./nginx/dhparam.pem 2048" "Generating DH parameters"
+if [ ! -f "./nginx/ssl/ssl-dhparams.pem" ]; then
+    execute_and_log "openssl dhparam -out ./nginx/ssl/ssl-dhparams.pem 2048" "Generating DH parameters"
 else
     log_message "ℹ️ DH parameters already exist, skipping generation"
 fi

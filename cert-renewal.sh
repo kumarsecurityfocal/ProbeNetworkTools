@@ -10,7 +10,7 @@ set -e
 TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
 LOG_FILE="ssl-renewal.log"
 DOMAINS="probeops.com www.probeops.com"
-EMAIL="your-email@example.com"  # Replace with your actual email
+EMAIL="admin@probeops.com"  # Domain administrator's email
 
 # Initialize log file for this run
 echo "===== SSL RENEWAL STARTED: $TIMESTAMP =====" >> $LOG_FILE
