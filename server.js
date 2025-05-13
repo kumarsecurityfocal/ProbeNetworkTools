@@ -11,6 +11,8 @@ const apiProxyOptions = {
   ws: true,
   xfwd: true,
   logLevel: 'debug',
+  timeout: 60000, // Increase timeout to 60 seconds
+  proxyTimeout: 60000, // Increase proxy timeout as well
   // No prefix rewrite - we'll handle this manually in our middleware
   onProxyReq: (proxyReq, req, res) => {
     // Log proxy request for debugging
