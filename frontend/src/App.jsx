@@ -13,6 +13,7 @@ import SubscriptionTiers from './components/SubscriptionTiers';
 import AdminPanel from './components/AdminPanel';
 import ScheduledProbes from './components/ScheduledProbes';
 import UserProfile from './components/UserProfile';
+import Reports from './components/Reports';
 
 // Create theme
 const theme = createTheme({
@@ -102,6 +103,12 @@ function App() {
             <Route path="/profile" element={
               <ProtectedRoute>
                 <UserProfile />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/reports" element={
+              <ProtectedRoute>
+                <Reports />
               </ProtectedRoute>
             } />
             

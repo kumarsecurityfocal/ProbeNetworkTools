@@ -28,7 +28,8 @@ import {
   Schedule as ScheduleIcon,
   AccountCircle,
   Logout,
-  Person as PersonIcon
+  Person as PersonIcon,
+  Assessment as ReportIcon
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 
@@ -64,6 +65,7 @@ const Navbar = () => {
     { name: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
     { name: 'Diagnostics', path: '/diagnostics', icon: <DiagnosticsIcon /> },
     { name: 'Scheduled Probes', path: '/scheduled-probes', icon: <ScheduleIcon /> },
+    { name: 'Reports', path: '/reports', icon: <ReportIcon /> },
     { name: 'API Keys', path: '/api-keys', icon: <ApiKeyIcon /> },
     { name: 'Subscriptions', path: '/subscriptions', icon: <SubscriptionIcon /> },
   ];
