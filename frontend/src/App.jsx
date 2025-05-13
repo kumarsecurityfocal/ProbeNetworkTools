@@ -9,6 +9,7 @@ import Dashboard from './components/Dashboard';
 import Navbar from './components/Navbar';
 import Diagnostics from './components/Diagnostics';
 import ApiKeys from './components/ApiKeys';
+import SubscriptionTiers from './components/SubscriptionTiers';
 
 // Create theme
 const theme = createTheme({
