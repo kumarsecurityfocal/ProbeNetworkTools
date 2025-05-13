@@ -3,18 +3,30 @@ const path = require('path');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const app = express();
 
-// API proxy middleware to redirect API requests to the backend
-// In production, this should point to the FastAPI backend service
-const apiProxy = createProxyMiddleware({
+// API proxy middleware configuration
+const apiProxyOptions = {
   target: 'http://localhost:8000', // FastAPI backend URL
   changeOrigin: true,
-  // Don't rewrite the path, just forward it as is
+  secure: false,
+  ws: true,
+  xfwd: true,
   logLevel: 'debug',
+  onProxyReq: (proxyReq, req, res) => {
+    // Log proxy request for debugging
+    console.log(`Proxying to: ${req.method} ${proxyReq.path}`);
+  },
+  onProxyRes: (proxyRes, req, res) => {
+    // Log proxy response for debugging
+    console.log(`Proxy response: ${proxyRes.statusCode} for ${req.method} ${req.url}`);
+  },
   onError: (err, req, res) => {
     console.error('Proxy error:', err);
     res.status(500).json({ error: 'API Proxy Error', message: err.message });
   }
-});
+};
+
+// Create API proxy middleware
+const apiProxy = createProxyMiddleware(apiProxyOptions);
 
 // Use API proxy for /api/* routes
 app.use('/api', apiProxy);
