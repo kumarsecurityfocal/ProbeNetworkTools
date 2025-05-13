@@ -10,6 +10,7 @@ import Navbar from './components/Navbar';
 import Diagnostics from './components/Diagnostics';
 import ApiKeys from './components/ApiKeys';
 import SubscriptionTiers from './components/SubscriptionTiers';
+import AdminPanel from './components/AdminPanel';
 
 // Create theme
 const theme = createTheme({
@@ -81,6 +82,12 @@ function App() {
             <Route path="/subscriptions" element={
               <ProtectedRoute>
                 <SubscriptionTiers />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/admin" element={
+              <ProtectedRoute>
+                <AdminPanel />
               </ProtectedRoute>
             } />
             

@@ -24,6 +24,7 @@ import {
   NetworkCheck as DiagnosticsIcon,
   VpnKey as ApiKeyIcon,
   CardMembership as SubscriptionIcon,
+  AdminPanelSettings as AdminIcon,
   AccountCircle,
   Logout
 } from '@mui/icons-material';
@@ -56,12 +57,23 @@ const Navbar = () => {
     navigate('/login');
   };
   
-  const navItems = [
+  // Base navigation items for all users
+  const baseNavItems = [
     { name: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
     { name: 'Diagnostics', path: '/diagnostics', icon: <DiagnosticsIcon /> },
     { name: 'API Keys', path: '/api-keys', icon: <ApiKeyIcon /> },
     { name: 'Subscriptions', path: '/subscriptions', icon: <SubscriptionIcon /> },
   ];
+  
+  // Admin-only navigation items
+  const adminNavItems = [
+    { name: 'Admin Panel', path: '/admin', icon: <AdminIcon /> },
+  ];
+  
+  // Combine navigation items based on user role
+  const navItems = user?.is_admin
+    ? [...baseNavItems, ...adminNavItems]
+    : baseNavItems;
   
   const drawer = (
     <Box>
