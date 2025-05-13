@@ -327,4 +327,43 @@ export const bulkDeleteProbes = async (probeIds) => {
   }
 };
 
+// Reports APIs
+export const generateReport = async (params = {}) => {
+  try {
+    const response = await api.post('/api/reports/generate', params);
+    return response.data;
+  } catch (error) {
+    // If we get a 404, the endpoint might not exist yet, return empty object
+    if (error.response && error.response.status === 404) {
+      return { message: "Report generation endpoint not available" };
+    }
+    return handleApiError(error);
+  }
+};
+
+export const exportReport = async (format = 'pdf', reportId) => {
+  try {
+    const response = await api.get(`/api/reports/${reportId}/export`, { 
+      params: { format },
+      responseType: 'blob'
+    });
+    return response.data;
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+export const getReportHistory = async (params = {}) => {
+  try {
+    const response = await api.get('/api/reports', { params });
+    return response.data;
+  } catch (error) {
+    // If we get a 404, the endpoint might not exist yet, return empty array
+    if (error.response && error.response.status === 404) {
+      return [];
+    }
+    return handleApiError(error);
+  }
+};
+
 export default api;

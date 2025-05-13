@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { AuthContext } from '../contexts/AuthContext';
+import { AuthContext } from '../context/AuthContext';
 import { 
   Container, 
   Grid, 
@@ -342,14 +342,14 @@ const Reports = () => {
                 label="Start Date"
                 value={startDate}
                 onChange={(newValue) => setStartDate(newValue)}
-                renderInput={(params) => <TextField {...params} fullWidth sx={{ mb: 2 }} />}
+                slotProps={{ textField: { fullWidth: true, sx: { mb: 2 } } }}
                 maxDate={endDate}
               />
               <DatePicker
                 label="End Date"
                 value={endDate}
                 onChange={(newValue) => setEndDate(newValue)}
-                renderInput={(params) => <TextField {...params} fullWidth />}
+                slotProps={{ textField: { fullWidth: true } }}
                 minDate={startDate}
                 maxDate={dayjs()}
               />
