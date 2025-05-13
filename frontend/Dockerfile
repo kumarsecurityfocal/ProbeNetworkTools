@@ -1,4 +1,5 @@
-FROM node:20-alpine as build
+# --- Build Stage ---
+FROM node:20-alpine AS build
 
 # Set working directory
 WORKDIR /app
@@ -15,10 +16,10 @@ COPY . .
 # Build the app
 RUN npm run build
 
-# Production stage
-FROM nginx:alpine as frontend
+# --- Production Stage ---
+FROM nginx:alpine
 
-# Copy the build output
-COPY --from=build /app/dist /app/dist
+# Copy the build output to nginx html directory
+COPY --from=build /app/dist /usr/share/nginx/html
 
 # We don't need to configure nginx here since the main nginx container will handle it
