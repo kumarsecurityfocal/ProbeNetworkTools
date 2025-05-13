@@ -4,7 +4,10 @@ import dns.resolver
 import ipaddress
 from ping3 import ping
 import time
-from typing import Tuple, List, Dict, Any, Optional
+import requests
+import json
+from typing import Tuple, List, Dict, Any, Optional, Union
+from urllib.parse import urlparse
 
 
 def run_ping(target: str, count: int = 4) -> Tuple[bool, str]:
@@ -198,3 +201,249 @@ def run_dns_lookup(target: str, record_type: str = "A") -> Tuple[bool, str]:
         return False, f"Error: No nameservers available for {target}"
     except Exception as e:
         return False, f"DNS Error: {str(e)}"
+
+
+def run_whois_lookup(target: str) -> Tuple[bool, str]:
+    """
+    Run WHOIS lookup against a domain.
+    
+    Args:
+        target: The domain to lookup
+        
+    Returns:
+        Tuple of (success, result)
+    """
+    try:
+        # Validate target to ensure it's a domain
+        if not ('.' in target and not target.startswith('http')):
+            return False, "Error: Invalid domain format. Please enter a valid domain like 'example.com'"
+        
+        # We'll use a subprocess to call whois since it's commonly available
+        cmd = ["whois", target]
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        
+        if process.returncode != 0:
+            return False, f"WHOIS Error: {stderr.decode('utf-8', errors='ignore')}"
+        
+        result = stdout.decode('utf-8', errors='ignore')
+        if not result.strip():
+            return False, f"No WHOIS information found for {target}"
+        
+        return True, f"WHOIS information for {target}:\n\n{result}"
+    except Exception as e:
+        return False, f"WHOIS Error: {str(e)}"
+
+
+def run_port_check(target: str, ports: str, protocol: str = "tcp", timeout: int = 5) -> Tuple[bool, str]:
+    """
+    Check if specific ports are open on a target.
+    
+    Args:
+        target: The hostname or IP to check
+        ports: Comma-separated list of ports or a single port
+        protocol: 'tcp' or 'udp'
+        timeout: Timeout in seconds
+        
+    Returns:
+        Tuple of (success, result)
+    """
+    try:
+        # Validate target
+        addr_info = socket.getaddrinfo(target, None)
+        ip_address = addr_info[0][4][0]  # Extract IP address
+        
+        # Parse ports
+        try:
+            if ',' in ports:
+                port_list = [int(p.strip()) for p in ports.split(',')]
+            else:
+                port_list = [int(ports.strip())]
+            
+            # Validate ports are in range
+            for port in port_list:
+                if port < 1 or port > 65535:
+                    return False, f"Error: Port {port} is out of valid range (1-65535)"
+        except ValueError:
+            return False, "Error: Invalid port format. Use a single port number or comma-separated list."
+        
+        # Validate protocol
+        if protocol.lower() not in ['tcp', 'udp']:
+            protocol = 'tcp'  # Default to TCP
+        
+        # Validate timeout
+        if timeout < 1 or timeout > 60:
+            timeout = 5  # Default to 5 seconds
+        
+        # Check each port
+        results = []
+        success = False  # Will be set to True if at least one port is open
+        
+        result_output = f"Port scan for {target} ({ip_address}) - Testing {len(port_list)} port(s)\n\n"
+        result_output += f"{'PORT':<10} {'STATE':<10} {'SERVICE':<15}\n"
+        result_output += f"{'-'*40}\n"
+        
+        for port in port_list:
+            port_open = False
+            service = "unknown"
+            
+            # Try to get service name
+            try:
+                service = socket.getservbyport(port)
+            except:
+                # Use a few common services if getservbyport fails
+                common_services = {
+                    22: "ssh", 21: "ftp", 23: "telnet", 25: "smtp", 53: "domain",
+                    80: "http", 443: "https", 110: "pop3", 143: "imap", 389: "ldap",
+                    3306: "mysql", 5432: "postgresql", 8080: "http-alt", 8443: "https-alt"
+                }
+                service = common_services.get(port, "unknown")
+            
+            # Check if port is open
+            if protocol.lower() == 'tcp':
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.settimeout(timeout)
+                result = s.connect_ex((ip_address, port))
+                port_open = (result == 0)
+                s.close()
+            else:  # UDP
+                # UDP port checking is less reliable, but we'll do our best
+                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                s.settimeout(timeout)
+                try:
+                    s.sendto(b'', (ip_address, port))
+                    data, addr = s.recvfrom(1024)
+                    port_open = True
+                except socket.timeout:
+                    # UDP ports often don't respond, so we can't be sure
+                    port_open = False
+                except:
+                    port_open = False
+                finally:
+                    s.close()
+            
+            # Record result
+            if port_open:
+                result_output += f"{port:<10} {'open':<10} {service:<15}\n"
+                success = True
+            else:
+                result_output += f"{port:<10} {'closed':<10} {service:<15}\n"
+        
+        # Add summary
+        open_count = len([1 for line in result_output.split('\n') if ' open ' in line])
+        result_output += f"\nScan complete - {open_count} port(s) open out of {len(port_list)} checked\n"
+        
+        return success, result_output
+    except socket.gaierror as e:
+        return False, f"Error: Could not resolve hostname {target}: {str(e)}"
+    except Exception as e:
+        return False, f"Port Check Error: {str(e)}"
+
+
+def run_http_request(url: str, method: str = "GET", headers: Optional[Dict[str, str]] = None, 
+                   body: Optional[str] = None, follow_redirects: bool = True, 
+                   timeout: int = 30) -> Tuple[bool, str]:
+    """
+    Make an HTTP(S) request to a URL and return the response details.
+    
+    Args:
+        url: The URL to request
+        method: HTTP method (GET, POST, PUT, DELETE)
+        headers: Optional dict of request headers
+        body: Optional request body for POST/PUT
+        follow_redirects: Whether to follow redirects
+        timeout: Request timeout in seconds
+        
+    Returns:
+        Tuple of (success, result)
+    """
+    try:
+        # Validate URL
+        if not url.startswith(('http://', 'https://')):
+            url = f"http://{url}"  # Default to HTTP
+        
+        # Validate method
+        valid_methods = ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS']
+        if method.upper() not in valid_methods:
+            return False, f"Error: Invalid HTTP method. Must be one of: {', '.join(valid_methods)}"
+        
+        # Validate timeout
+        if timeout < 1 or timeout > 300:
+            timeout = 30  # Default to 30 seconds
+        
+        # Prepare headers
+        request_headers = {}
+        if headers:
+            request_headers.update(headers)
+        
+        # Prepare request parameters
+        params = {
+            'url': url,
+            'method': method.upper(),
+            'headers': request_headers,
+            'allow_redirects': follow_redirects,
+            'timeout': timeout
+        }
+        
+        # Add body for POST/PUT
+        if body and method.upper() in ['POST', 'PUT']:
+            try:
+                # Try to parse as JSON
+                json_body = json.loads(body)
+                params['json'] = json_body
+            except json.JSONDecodeError:
+                # If not valid JSON, send as raw data
+                params['data'] = body
+        
+        # Make request
+        start_time = time.time()
+        response = requests.request(**params)
+        response_time = time.time() - start_time
+        
+        # Format response
+        parsed_url = urlparse(url)
+        result_output = f"HTTP(S) Request to {parsed_url.netloc}{parsed_url.path}\n\n"
+        
+        # Request details
+        result_output += "REQUEST:\n"
+        result_output += f"Method: {method.upper()}\n"
+        result_output += f"URL: {url}\n"
+        if request_headers:
+            result_output += "Headers:\n"
+            for key, value in request_headers.items():
+                result_output += f"  {key}: {value}\n"
+        if body and method.upper() in ['POST', 'PUT']:
+            result_output += f"Body: {body}\n"
+        
+        # Response details
+        result_output += "\nRESPONSE:\n"
+        result_output += f"Status: {response.status_code} {response.reason}\n"
+        result_output += f"Time: {response_time*1000:.2f} ms\n"
+        result_output += "Headers:\n"
+        for key, value in response.headers.items():
+            result_output += f"  {key}: {value}\n"
+        
+        # Response body (limit size to avoid huge responses)
+        result_output += "\nBody:\n"
+        
+        # Try to format JSON response for readability
+        try:
+            # If it's JSON, pretty-print it
+            json_response = response.json()
+            result_output += json.dumps(json_response, indent=2)
+        except json.JSONDecodeError:
+            # Not JSON, limit size to avoid huge responses
+            content = response.text
+            if len(content) > 5000:
+                result_output += content[:5000] + "...\n[Content truncated, too large to display completely]"
+            else:
+                result_output += content
+        
+        # Request was successful if status code is 2xx or 3xx
+        success = response.status_code < 400
+        
+        return success, result_output
+    except requests.exceptions.RequestException as e:
+        return False, f"HTTP Request Error: {str(e)}"
+    except Exception as e:
+        return False, f"Error: {str(e)}"

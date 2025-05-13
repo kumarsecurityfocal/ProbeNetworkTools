@@ -1,13 +1,17 @@
 from datetime import datetime
 import time
-from typing import List, Optional
+from typing import List, Optional, Dict
+import json
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Body
 from sqlalchemy.orm import Session
 
 from app import models, schemas, auth
 from app.database import get_db
-from app.diagnostics.tools import run_ping, run_traceroute, run_dns_lookup
+from app.diagnostics.tools import (
+    run_ping, run_traceroute, run_dns_lookup, 
+    run_whois_lookup, run_port_check, run_http_request
+)
 
 router = APIRouter()
 
@@ -83,6 +87,97 @@ async def dns_lookup(
     diagnostic = models.Diagnostic(
         tool="dns_lookup",
         target=f"{target} ({record_type})",
+        result=result,
+        status="success" if success else "failure",
+        user_id=current_user.id,
+        execution_time=execution_time
+    )
+    
+    db.add(diagnostic)
+    db.commit()
+    db.refresh(diagnostic)
+    
+    return diagnostic
+
+
+@router.get("/whois", response_model=schemas.DiagnosticResponse)
+async def whois_lookup(
+    target: str = Query(..., description="Domain to look up WHOIS information for"),
+    current_user: models.User = Depends(auth.get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    start_time = time.time()
+    success, result = run_whois_lookup(target)
+    execution_time = int((time.time() - start_time) * 1000)  # Convert to ms
+    
+    # Create diagnostic record
+    diagnostic = models.Diagnostic(
+        tool="whois",
+        target=target,
+        result=result,
+        status="success" if success else "failure",
+        user_id=current_user.id,
+        execution_time=execution_time
+    )
+    
+    db.add(diagnostic)
+    db.commit()
+    db.refresh(diagnostic)
+    
+    return diagnostic
+
+
+@router.get("/port", response_model=schemas.DiagnosticResponse)
+async def port_check(
+    target: str = Query(..., description="Hostname or IP address to check"),
+    ports: str = Query(..., description="Port number or comma-separated list of ports"),
+    protocol: str = Query("tcp", description="Protocol (tcp or udp)"),
+    timeout: int = Query(5, description="Timeout in seconds (1-60)"),
+    current_user: models.User = Depends(auth.get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    start_time = time.time()
+    success, result = run_port_check(target, ports, protocol, timeout)
+    execution_time = int((time.time() - start_time) * 1000)  # Convert to ms
+    
+    # Create diagnostic record
+    diagnostic = models.Diagnostic(
+        tool="port_check",
+        target=f"{target} (Ports: {ports}, Protocol: {protocol})",
+        result=result,
+        status="success" if success else "failure",
+        user_id=current_user.id,
+        execution_time=execution_time
+    )
+    
+    db.add(diagnostic)
+    db.commit()
+    db.refresh(diagnostic)
+    
+    return diagnostic
+
+
+@router.post("/http", response_model=schemas.DiagnosticResponse)
+async def http_request(
+    url: str = Query(..., description="URL to request"),
+    method: str = Query("GET", description="HTTP method (GET, POST, PUT, DELETE, etc.)"),
+    follow_redirects: bool = Query(True, description="Whether to follow redirects"),
+    timeout: int = Query(30, description="Timeout in seconds (1-300)"),
+    headers: Optional[Dict[str, str]] = Body({}, description="Request headers"),
+    body: Optional[str] = Body(None, description="Request body (for POST/PUT)"),
+    current_user: models.User = Depends(auth.get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    start_time = time.time()
+    success, result = run_http_request(
+        url, method, headers, body, follow_redirects, timeout
+    )
+    execution_time = int((time.time() - start_time) * 1000)  # Convert to ms
+    
+    # Create diagnostic record
+    diagnostic = models.Diagnostic(
+        tool="http_request",
+        target=f"{method} {url}",
         result=result,
         status="success" if success else "failure",
         user_id=current_user.id,

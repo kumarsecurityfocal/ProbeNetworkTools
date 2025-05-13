@@ -93,12 +93,19 @@ export const getUserProfile = async () => {
 };
 
 // Diagnostic APIs
-export const runDiagnostic = async (tool, params = {}) => {
+export const runDiagnostic = async (tool, params = {}, data = null) => {
   try {
     // The API endpoint must include the /api prefix
     const endpoint = `/api/${tool}`;
-    const response = await api.get(endpoint, { params });
-    return response.data;
+    
+    // For HTTP requests, we need to use POST with a body
+    if (tool === 'http') {
+      const response = await api.post(endpoint, data, { params });
+      return response.data;
+    } else {
+      const response = await api.get(endpoint, { params });
+      return response.data;
+    }
   } catch (error) {
     return handleApiError(error);
   }
