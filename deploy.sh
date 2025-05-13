@@ -130,6 +130,38 @@ else
     exit 1
 fi
 
+# Step 1.5: Check environment variables safety
+log_message "🛡️ Checking if backend/.env.backend.template has changed..."
+echo "$ Comparing template with environment variables" >> $LOG_FILE
+
+# Check if the environment directory exists
+if [ -d "../environment" ] && [ -f "../environment/.env.backend" ]; then
+    # Extract keys from template and actual env files
+    TEMPLATE_KEYS=$(grep -v '^#' ./backend/.env.backend.template | cut -d= -f1 | sort)
+    ACTUAL_KEYS=$(grep -v '^#' ../environment/.env.backend | cut -d= -f1 | sort)
+    
+    # Use process substitution with comm to find missing keys
+    MISSING_KEYS=$(comm -23 <(echo "$TEMPLATE_KEYS") <(echo "$ACTUAL_KEYS"))
+    
+    if [[ -n "$MISSING_KEYS" ]]; then
+        log_message "❌ ERROR: Your production .env.backend is missing required keys:"
+        echo "$MISSING_KEYS" >> $LOG_FILE
+        log_message "$(echo "$MISSING_KEYS" | while read -r key; do echo "  - $key"; done)"
+        log_message "🛑 Please update ../environment/.env.backend manually before continuing."
+        exit 1
+    else
+        log_message "✅ .env.backend structure matches template. Proceeding with env file copy..."
+        if execute_and_log "cp ../environment/.env.backend ./backend/.env.backend" "Copying production environment file"; then
+            log_message "✅ Environment variables properly set"
+        else
+            log_message "⚠️ Warning: Failed to copy environment file, deployment may use default values"
+        fi
+    fi
+else
+    log_message "⚠️ No production environment directory found at ../environment"
+    log_message "⚠️ Deployment will continue using existing or default environment variables"
+fi
+
 # Step 2: Stop and remove existing containers
 if execute_and_log "docker compose down" "Stopping existing containers"; then
     :  # Success case handled in function
