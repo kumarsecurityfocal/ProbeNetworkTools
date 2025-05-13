@@ -73,51 +73,139 @@ log_message "🔄 Checking for uncommitted changes..."
 echo "$ git status --porcelain" >> $LOG_FILE
 uncommitted_changes=$(git status --porcelain)
 
+# Initialize flag
+SKIP_PROMPT=false
+
 if [[ -n "$uncommitted_changes" ]]; then
     log_message "⚠️ Uncommitted changes detected. This could cause merge conflicts during deployment."
     echo "$uncommitted_changes" >> $LOG_FILE
     
-    # Display list of uncommitted files
-    echo "Uncommitted files:" >> $LOG_FILE
-    echo "$uncommitted_changes" | awk '{print $2}' >> $LOG_FILE
+    # Check for SSL certificate files in uncommitted changes
+    ssl_cert_files=$(echo "$uncommitted_changes" | grep -E '\.pem$|nginx/ssl/live|nginx/ssl/archive|privkey')
     
-    log_message "❓ You have three options:"
-    log_message "  1. Abort the deployment (default)"
-    log_message "  2. Stash changes and continue"
-    log_message "  3. Force pull (may overwrite local changes)"
+    if [[ -n "$ssl_cert_files" ]]; then
+        log_message "⚠️ IMPORTANT: SSL certificate files detected in uncommitted changes"
+        log_message "⚠️ These files should never be committed to the repo and should be excluded from git operations"
+        
+        # Create a list of SSL certificate files to exclude
+        echo "SSL certificate files detected:" >> $LOG_FILE
+        echo "$ssl_cert_files" | awk '{print $2}' >> $LOG_FILE
+        
+        # Extract app-related changes (excluding SSL files)
+        app_changes=$(echo "$uncommitted_changes" | grep -v -E '\.pem$|nginx/ssl/live|nginx/ssl/archive|privkey')
+        
+        if [[ -n "$app_changes" ]]; then
+            log_message "📋 App-related changes (non-SSL) detected:"
+            echo "App-related changes:" >> $LOG_FILE
+            echo "$app_changes" | awk '{print $2}' >> $LOG_FILE
+        else
+            log_message "ℹ️ No app-related changes detected, only SSL certificate files"
+            log_message "✅ We can safely proceed with deployment by ignoring SSL files"
+            
+            # Create .git/info/exclude if it doesn't exist
+            mkdir -p .git/info
+            touch .git/info/exclude
+            
+            # Add SSL paths to git exclude
+            echo "# SSL Certificate Files - added by deploy.sh" >> .git/info/exclude
+            echo "nginx/ssl/live/" >> .git/info/exclude
+            echo "nginx/ssl/archive/" >> .git/info/exclude
+            echo "nginx/ssl/renewal/" >> .git/info/exclude
+            echo "*.pem" >> .git/info/exclude
+            
+            log_message "✅ Added SSL files to .git/info/exclude to prevent future issues"
+            log_message "✅ Proceeding with git pull"
+            
+            # Skip to git pull - set a flag to continue
+            SKIP_PROMPT=true
+        fi
+    fi
     
-    # Ask for user input with 30 second timeout
-    log_message "⏱️ Waiting 30 seconds for input (default: abort)..."
-    echo "$ read -t 30 -p 'Enter choice [1-3]: ' choice" >> $LOG_FILE
-    
-    # Prompt for input with timeout
-    read -t 30 -p "Enter choice [1-3]: " choice || choice=1
-    echo "User choice: $choice" >> $LOG_FILE
-    
-    case $choice in
-        2)
-            log_message "🔄 Stashing local changes..."
-            if execute_and_log "git stash --include-untracked" "Stashing local changes"; then
-                log_message "✅ Changes stashed. Proceeding with git pull."
-            else
-                log_message "❌ Failed to stash changes. Aborting deployment."
+    # Only prompt if we didn't set the skip flag
+    if [ "$SKIP_PROMPT" = false ]; then
+        log_message "❓ You have three options:"
+        log_message "  1. Abort the deployment (default)"
+        log_message "  2. Stash changes and continue (excluding SSL files)"
+        log_message "  3. Force pull (may overwrite local changes)"
+        
+        # Ask for user input with 30 second timeout
+        log_message "⏱️ Waiting 30 seconds for input (default: abort)..."
+        echo "$ read -t 30 -p 'Enter choice [1-3]: ' choice" >> $LOG_FILE
+        
+        # Prompt for input with timeout
+        read -t 30 -p "Enter choice [1-3]: " choice || choice=1
+        echo "User choice: $choice" >> $LOG_FILE
+        
+        case $choice in
+            2)
+                log_message "🔄 Stashing app-related changes (excluding SSL files)..."
+                
+                # Make sure .gitignore includes SSL files
+                if ! grep -q "nginx/ssl/live" .gitignore; then
+                    echo "# SSL Certificate Files - added by deploy.sh" >> .gitignore
+                    echo "nginx/ssl/live/" >> .gitignore
+                    echo "nginx/ssl/archive/" >> .gitignore
+                    echo "nginx/ssl/renewal/" >> .gitignore
+                    echo "*.pem" >> .gitignore
+                    log_message "✅ Updated .gitignore to exclude SSL files"
+                fi
+                
+                # Create .git/info/exclude if it doesn't exist
+                mkdir -p .git/info
+                touch .git/info/exclude
+                
+                # Add SSL paths to git exclude
+                echo "# SSL Certificate Files - added by deploy.sh" >> .git/info/exclude
+                echo "nginx/ssl/live/" >> .git/info/exclude
+                echo "nginx/ssl/archive/" >> .git/info/exclude
+                echo "nginx/ssl/renewal/" >> .git/info/exclude
+                echo "*.pem" >> .git/info/exclude
+                
+                # Stash app changes
+                if execute_and_log "git stash push -- frontend backend probe nginx/*.conf" "Stashing app-related changes"; then
+                    log_message "✅ App changes stashed. Proceeding with git pull."
+                else
+                    log_message "❌ Failed to stash changes. Consider using option 3 (force pull) instead."
+                    exit 1
+                fi
+                ;;
+            3)
+                log_message "⚠️ Force pull selected. App-related changes may be lost."
+                
+                # Make sure .gitignore includes SSL files
+                if ! grep -q "nginx/ssl/live" .gitignore; then
+                    echo "# SSL Certificate Files - added by deploy.sh" >> .gitignore
+                    echo "nginx/ssl/live/" >> .gitignore
+                    echo "nginx/ssl/archive/" >> .gitignore
+                    echo "nginx/ssl/renewal/" >> .gitignore
+                    echo "*.pem" >> .gitignore
+                    log_message "✅ Updated .gitignore to exclude SSL files"
+                fi
+                
+                # Create .git/info/exclude if it doesn't exist
+                mkdir -p .git/info
+                touch .git/info/exclude
+                
+                # Add SSL paths to git exclude
+                echo "# SSL Certificate Files - added by deploy.sh" >> .git/info/exclude
+                echo "nginx/ssl/live/" >> .git/info/exclude
+                echo "nginx/ssl/archive/" >> .git/info/exclude
+                echo "nginx/ssl/renewal/" >> .git/info/exclude
+                echo "*.pem" >> .git/info/exclude
+                
+                if execute_and_log "git reset --hard" "Resetting local changes"; then
+                    log_message "✅ Local changes reset. Proceeding with git pull."
+                else
+                    log_message "❌ Failed to reset local changes. Aborting deployment."
+                    exit 1
+                fi
+                ;;
+            *)
+                log_message "❌ Deployment aborted to prevent merge conflicts."
                 exit 1
-            fi
-            ;;
-        3)
-            log_message "⚠️ Force pull selected. Local changes may be lost."
-            if execute_and_log "git reset --hard" "Resetting local changes"; then
-                log_message "✅ Local changes reset. Proceeding with git pull."
-            else
-                log_message "❌ Failed to reset local changes. Aborting deployment."
-                exit 1
-            fi
-            ;;
-        *)
-            log_message "❌ Deployment aborted to prevent merge conflicts."
-            exit 1
-            ;;
-    esac
+                ;;
+        esac
+    fi
 else
     log_message "✅ No uncommitted changes detected. Proceeding with git pull."
 fi
