@@ -11,6 +11,7 @@ const apiProxyOptions = {
   ws: true,
   xfwd: true,
   logLevel: 'debug',
+  // Don't rewrite path - let the full /api path pass through
   onProxyReq: (proxyReq, req, res) => {
     // Log proxy request for debugging
     console.log(`Proxying to: ${req.method} ${proxyReq.path}`);
