@@ -187,7 +187,24 @@ else
     log_message "⚠️ Deployment will continue using existing or default environment variables"
 fi
 
-# Step 2: Stop and remove existing containers
+# Step 2: Build the frontend assets
+log_message "🔄 Building frontend assets..."
+if execute_and_log "cd frontend && npm install && npm run build" "Building frontend assets"; then
+    log_message "✅ Frontend assets built successfully"
+    
+    # Run the frontend asset copy script
+    if execute_and_log "./copy-frontend-assets.sh" "Copying frontend assets to NGINX build directory"; then
+        log_message "✅ Frontend assets successfully copied for NGINX container"
+    else
+        log_message "❌ Failed to copy frontend assets. Deployment may fail."
+        exit 1
+    fi
+else
+    log_message "❌ Failed to build frontend assets. Aborting deployment."
+    exit 1
+fi
+
+# Step 3: Stop and remove existing containers
 if execute_and_log "docker compose down" "Stopping existing containers"; then
     :  # Success case handled in function
 else
@@ -195,7 +212,7 @@ else
     # Continue anyway as this may be first deployment
 fi
 
-# Step 3: Rebuild and start containers
+# Step 4: Rebuild and start containers
 log_message "🔄 Rebuilding and starting containers..."
 echo "$ docker compose up -d --build" >> $LOG_FILE
 
@@ -226,7 +243,7 @@ fi
 
 rm -f "$build_output"
 
-# Step 4: Wait for backend service to be ready
+# Step 5: Wait for backend service to be ready
 log_message "🔄 Waiting for backend service to be ready..."
 echo "$ sleep 15  # Waiting for services to initialize" >> $LOG_FILE
 sleep 15  # Give the backend container time to start
