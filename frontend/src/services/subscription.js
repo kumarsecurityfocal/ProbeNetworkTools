@@ -3,7 +3,7 @@ import api from './api';
 // Get user's subscription
 export const getUserSubscription = async () => {
   try {
-    const response = await api.get('/subscription');
+    const response = await api.get('/api/subscription');
     return response.data;
   } catch (error) {
     console.error('Error fetching user subscription:', error);
@@ -14,7 +14,7 @@ export const getUserSubscription = async () => {
 // Get all subscription tiers
 export const getSubscriptionTiers = async () => {
   try {
-    const response = await api.get('/subscription/tiers');
+    const response = await api.get('/api/subscription/tiers');
     return response.data;
   } catch (error) {
     console.error('Error fetching subscription tiers:', error);
@@ -30,7 +30,7 @@ export const createSubscription = async (userId, tierId, paymentDetails = {}) =>
       tier_id: tierId,
       ...paymentDetails,
     };
-    const response = await api.post('/subscriptions', data);
+    const response = await api.post('/api/subscriptions', data);
     return response.data;
   } catch (error) {
     console.error('Error creating subscription:', error);
@@ -41,7 +41,7 @@ export const createSubscription = async (userId, tierId, paymentDetails = {}) =>
 // Admin: List all subscriptions
 export const getAllSubscriptions = async () => {
   try {
-    const response = await api.get('/subscriptions');
+    const response = await api.get('/api/subscriptions');
     return response.data;
   } catch (error) {
     console.error('Error fetching all subscriptions:', error);
@@ -52,7 +52,7 @@ export const getAllSubscriptions = async () => {
 // Admin: Update a subscription
 export const updateSubscription = async (subscriptionId, data) => {
   try {
-    const response = await api.put(`/subscriptions/${subscriptionId}`, data);
+    const response = await api.put(`/api/subscriptions/${subscriptionId}`, data);
     return response.data;
   } catch (error) {
     console.error('Error updating subscription:', error);
