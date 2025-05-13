@@ -85,7 +85,7 @@ def get_subscription(
     return subscription
 
 
-@router.put("/api/subscriptions/{subscription_id}", response_model=schemas.UserSubscriptionResponse)
+@router.put("/subscriptions/{subscription_id}", response_model=schemas.UserSubscriptionResponse)
 def update_subscription(
     subscription_data: schemas.UserSubscriptionCreate,
     subscription_id: int = Path(..., title="The ID of the subscription to update"),
@@ -107,7 +107,7 @@ def update_subscription(
     return subscription
 
 
-@router.post("/api/subscriptions/{subscription_id}/cancel", response_model=schemas.UserSubscriptionResponse)
+@router.post("/subscriptions/{subscription_id}/cancel", response_model=schemas.UserSubscriptionResponse)
 def cancel_subscription(
     subscription_id: int = Path(..., title="The ID of the subscription to cancel"),
     current_user: models.User = Depends(auth.get_admin_user),
@@ -128,7 +128,7 @@ def cancel_subscription(
     return subscription
 
 
-@router.post("/api/subscriptions/{subscription_id}/renew", response_model=schemas.UserSubscriptionResponse)
+@router.post("/subscriptions/{subscription_id}/renew", response_model=schemas.UserSubscriptionResponse)
 def renew_subscription(
     months: int = Query(1, ge=1, le=12, description="Number of months to renew"),
     subscription_id: int = Path(..., title="The ID of the subscription to renew"),
