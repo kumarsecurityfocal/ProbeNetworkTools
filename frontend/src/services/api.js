@@ -159,6 +159,27 @@ export const getDiagnosticHistory = async (params = {}) => {
   }
 };
 
+// Dashboard metrics
+export const getDashboardMetrics = async () => {
+  try {
+    const response = await api.get('/api/metrics/dashboard');
+    return response.data;
+  } catch (error) {
+    // For now, if the endpoint doesn't exist, return mock data structure that will be
+    // replaced when the backend endpoint is implemented
+    if (error.response && error.response.status === 404) {
+      return {
+        diagnostic_count: 0,
+        api_key_count: 0,
+        scheduled_probe_count: 0,
+        success_rate: 0,
+        avg_response_time: 0
+      };
+    }
+    return handleApiError(error);
+  }
+};
+
 // API Key APIs
 export const getApiKeys = async () => {
   try {

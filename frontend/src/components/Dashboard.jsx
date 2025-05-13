@@ -13,17 +13,27 @@ import {
   ListItem,
   ListItemText,
   CircularProgress,
-  Button
+  Button,
+  LinearProgress,
+  Tooltip,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
 } from '@mui/material';
 import { 
   NetworkCheck as NetworkIcon,
   VpnKey as ApiKeyIcon,
   History as HistoryIcon,
-  Speed as SpeedIcon
+  Speed as SpeedIcon,
+  Schedule as ScheduleIcon,
+  CheckCircle as SuccessIcon,
+  AccessTime as TimeIcon,
+  Assessment as AssessmentIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getDiagnosticHistory, getApiKeys } from '../services/api';
+import { getDiagnosticHistory, getApiKeys, getScheduledProbes, getDashboardMetrics } from '../services/api';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -32,8 +42,13 @@ const Dashboard = () => {
   const [stats, setStats] = useState({
     diagnosticCount: 0,
     apiKeyCount: 0,
+    scheduledProbeCount: 0,
+    successRate: 0,
+    avgResponseTime: 0,
     recentDiagnostics: [],
+    activeProbes: [],
   });
+  const [timeRange, setTimeRange] = useState('day');
   
   useEffect(() => {
     const fetchDashboardData = async () => {
