@@ -229,6 +229,10 @@ export const getScheduledProbes = async (params = {}) => {
     const response = await api.get('/api/probes', { params });
     return response.data;
   } catch (error) {
+    // If we get a 404, the endpoint might not exist yet, return empty array
+    if (error.response && error.response.status === 404) {
+      return [];
+    }
     return handleApiError(error);
   }
 };
