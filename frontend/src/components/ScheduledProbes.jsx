@@ -168,7 +168,9 @@ function ScheduledProbes() {
   const handleOpenDialog = (mode, probe = null) => {
     setFormMode(mode);
     
+    // Set the selectedProbe for edit mode
     if (mode === 'edit' && probe) {
+      setSelectedProbe(probe);
       // Set the selected interval
       setSelectedInterval(probe.interval_minutes);
       setFormData({
@@ -183,6 +185,8 @@ function ScheduledProbes() {
         threshold_value: probe.threshold_value
       });
     } else {
+      // Clear selectedProbe for create mode
+      setSelectedProbe(null);
       // Default values for create
       setSelectedInterval(60); // Default to 1 hour
       setFormData({
@@ -204,6 +208,9 @@ function ScheduledProbes() {
   // Handle dialog close
   const handleCloseDialog = () => {
     setOpenDialog(false);
+    // Clear form mode and selected probe state when dialog closes
+    setFormMode('create');
+    setSelectedProbe(null);
   };
 
   // Handle form input change
@@ -233,10 +240,12 @@ function ScheduledProbes() {
         const newProbe = await createScheduledProbe(formData);
         setProbes([newProbe, ...probes]);
         showSnackbar('Scheduled probe created successfully');
-      } else {
+      } else if (formMode === 'edit' && selectedProbe && selectedProbe.id) {
         const updatedProbe = await updateScheduledProbe(selectedProbe.id, formData);
         setProbes(probes.map(p => p.id === updatedProbe.id ? updatedProbe : p));
         showSnackbar('Scheduled probe updated successfully');
+      } else {
+        throw new Error('Invalid edit operation. Missing probe identifier.');
       }
       handleCloseDialog();
     } catch (error) {
