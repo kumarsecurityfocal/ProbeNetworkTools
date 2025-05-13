@@ -1,38 +1,7 @@
 from pydantic_settings import BaseSettings
+from pydantic import field_validator
 import os
-import json
-from typing import Optional, List, Union, Any
-
-
-# Custom field validator function for CORS_ORIGINS
-def parse_cors_origins(v: Union[str, List[str]]) -> List[str]:
-    """
-    Parse CORS_ORIGINS from either a JSON string or comma-separated string.
-    Falls back to default in case of parsing errors.
-    """
-    if isinstance(v, list):
-        return v
-    
-    # Default value if parsing fails
-    default = ["*"]
-    
-    if not v or not isinstance(v, str):
-        return default
-    
-    # Try to parse as JSON
-    try:
-        origins = json.loads(v)
-        if isinstance(origins, list):
-            return origins
-    except (json.JSONDecodeError, TypeError):
-        pass
-    
-    # Try to parse as comma-separated string
-    if ',' in v:
-        return [origin.strip() for origin in v.split(',') if origin.strip()]
-    
-    # Just return the single value as a list
-    return [v]
+from typing import Optional, List
 
 
 class Settings(BaseSettings):
@@ -54,7 +23,8 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
-    # CORS settings
+    # CORS settings - default to "*" (allow all origins)
+    # Use comma-separated string format in .env file
     CORS_ORIGINS: List[str] = ["*"]
     
     # Diagnostic tool settings
@@ -64,12 +34,26 @@ class Settings(BaseSettings):
         env_file = ".env.backend"
         env_file_encoding = 'utf-8'
         extra = "ignore"
+        validate_assignment = True
         
-        @classmethod
-        def parse_env_var(cls, field_name: str, raw_val: str):
-            if field_name == "CORS_ORIGINS":
-                return parse_cors_origins(raw_val)
-            return raw_val
+    # Use model_validator to directly manipulate the final settings
+    # This is cleaner than the previous approach with custom parsing
 
 
 settings = Settings()
+
+# Set CORS_ORIGINS directly from environment to avoid JSON parsing issues
+cors_origins_env = os.getenv("CORS_ORIGINS", "*")
+if cors_origins_env:
+    if cors_origins_env.startswith("[") and cors_origins_env.endswith("]"):
+        # Try to extract values from JSON-like string without actual JSON parsing
+        raw_values = cors_origins_env[1:-1]  # Remove the brackets
+        if raw_values:
+            values = [v.strip().strip('"').strip("'") for v in raw_values.split(",")]
+            settings.CORS_ORIGINS = values
+    elif "," in cors_origins_env:
+        # Handle comma-separated format
+        settings.CORS_ORIGINS = [v.strip() for v in cors_origins_env.split(",") if v.strip()]
+    else:
+        # Single value
+        settings.CORS_ORIGINS = [cors_origins_env]
