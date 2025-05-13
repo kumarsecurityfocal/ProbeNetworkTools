@@ -1,7 +1,8 @@
 from pydantic_settings import BaseSettings
-from pydantic import field_validator
+from pydantic import validator
 import os
-from typing import Optional, List
+import json
+from typing import Optional, List, Union
 
 
 class Settings(BaseSettings):
@@ -23,37 +24,60 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
-    # CORS settings - default to "*" (allow all origins)
-    # Use comma-separated string format in .env file
-    CORS_ORIGINS: List[str] = ["*"]
+    # CORS settings - using Union type to allow both string and list inputs
+    # This enables Pydantic to handle various formats correctly
+    CORS_ORIGINS: Union[str, List[str]] = ["*"]
     
     # Diagnostic tool settings
     PROBE_TIMEOUT: int = 5  # seconds
+    
+    # Validator that runs before the model is created (pre=True)
+    # This ensures it runs during Alembic's initialization
+    @validator("CORS_ORIGINS", pre=True)
+    def parse_cors_origins(cls, v):
+        """
+        Parse CORS_ORIGINS from various formats:
+        - JSON string arrays: '["http://localhost", "http://frontend"]'
+        - Comma-separated strings: 'http://localhost,http://frontend'
+        - Single string values: 'http://localhost'
+        - List objects (already parsed): ['http://localhost', 'http://frontend']
+        """
+        # If it's already a list, return it as is
+        if isinstance(v, list):
+            return v
+            
+        # Default value if parsing fails
+        default = ["*"]
+        
+        # If it's not a string or is empty, return default
+        if not v or not isinstance(v, str):
+            return default
+            
+        # Handle JSON-formatted string
+        if v.startswith("[") and v.endswith("]"):
+            try:
+                parsed = json.loads(v)
+                if isinstance(parsed, list):
+                    return parsed
+            except json.JSONDecodeError:
+                # If JSON parsing fails, try manual extraction
+                raw_values = v[1:-1]  # Remove the brackets
+                if raw_values:
+                    return [item.strip().strip('"').strip("'") for item in raw_values.split(",")]
+                return default
+                
+        # Handle comma-separated string
+        if "," in v:
+            return [item.strip() for item in v.split(",") if item.strip()]
+            
+        # Handle single value
+        return [v]
     
     class Config:
         env_file = ".env.backend"
         env_file_encoding = 'utf-8'
         extra = "ignore"
-        validate_assignment = True
-        
-    # Use model_validator to directly manipulate the final settings
-    # This is cleaner than the previous approach with custom parsing
 
 
+# Initialize settings
 settings = Settings()
-
-# Set CORS_ORIGINS directly from environment to avoid JSON parsing issues
-cors_origins_env = os.getenv("CORS_ORIGINS", "*")
-if cors_origins_env:
-    if cors_origins_env.startswith("[") and cors_origins_env.endswith("]"):
-        # Try to extract values from JSON-like string without actual JSON parsing
-        raw_values = cors_origins_env[1:-1]  # Remove the brackets
-        if raw_values:
-            values = [v.strip().strip('"').strip("'") for v in raw_values.split(",")]
-            settings.CORS_ORIGINS = values
-    elif "," in cors_origins_env:
-        # Handle comma-separated format
-        settings.CORS_ORIGINS = [v.strip() for v in cors_origins_env.split(",") if v.strip()]
-    else:
-        # Single value
-        settings.CORS_ORIGINS = [cors_origins_env]
