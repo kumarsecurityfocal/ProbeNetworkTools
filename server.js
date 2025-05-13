@@ -42,15 +42,21 @@ const apiProxy = createProxyMiddleware(apiProxyOptions);
 
 // No need for separate routes to add /api prefix since we're using it consistently now
 
-// Handle routes that already include /api prefix
+// Handle routes with /api prefix and prevent duplicate prefixes
 app.use('/api', (req, res, next) => {
+  // Create a custom path to avoid double /api prefixes
+  // The path that FastAPI expects is already /api/[endpoint]
+  const backendPath = req.url; // This is already '/endpoint' without the '/api' prefix
+  
   console.log(`============================================`);
-  console.log(`API request received with prefix: ${req.method} ${req.url}`);
+  console.log(`API request received: ${req.method} ${req.url}`);
   console.log(`Original URL: ${req.originalUrl}`);
-  console.log(`Path: ${req.path}`);
-  // Keep the /api prefix for FastAPI
-  console.log(`Forwarding to backend: ${apiProxyOptions.target}${req.originalUrl}`);
+  console.log(`Path without duplicate prefix: ${backendPath}`);
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}/api${backendPath}`);
   console.log(`============================================`);
+  
+  // Manually modify the URL to avoid proxy middleware's automatic handling
+  req.url = `/api${backendPath}`;
   
   // Let the proxy middleware handle the request
   return apiProxy(req, res, next);
