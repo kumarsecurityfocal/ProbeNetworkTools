@@ -96,7 +96,7 @@ async def dns_lookup(
     return diagnostic
 
 
-@router.get("/api/diagnostics/history", response_model=List[schemas.DiagnosticResponse])
+@router.get("/diagnostics/history", response_model=List[schemas.DiagnosticResponse])
 async def get_diagnostic_history(
     tool: Optional[str] = Query(None, description="Filter by tool"),
     limit: int = Query(10, description="Maximum number of results to return"),
