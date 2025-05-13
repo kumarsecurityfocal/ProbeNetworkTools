@@ -40,7 +40,7 @@ async def create_api_key(
     return db_api_key
 
 
-@router.get("/api/keys", response_model=List[schemas.ApiKeyResponse])
+@router.get("/keys", response_model=List[schemas.ApiKeyResponse])
 async def get_api_keys(
     current_user: models.User = Depends(auth.get_current_active_user),
     db: Session = Depends(get_db)
@@ -49,7 +49,7 @@ async def get_api_keys(
     return api_keys
 
 
-@router.delete("/api/keys/{api_key_id}", response_model=schemas.ApiKeyResponse)
+@router.delete("/keys/{api_key_id}", response_model=schemas.ApiKeyResponse)
 async def delete_api_key(
     api_key_id: int,
     current_user: models.User = Depends(auth.get_current_active_user),
@@ -69,7 +69,7 @@ async def delete_api_key(
     return api_key
 
 
-@router.put("/api/keys/{api_key_id}/deactivate", response_model=schemas.ApiKeyResponse)
+@router.put("/keys/{api_key_id}/deactivate", response_model=schemas.ApiKeyResponse)
 async def deactivate_api_key(
     api_key_id: int,
     current_user: models.User = Depends(auth.get_current_active_user),

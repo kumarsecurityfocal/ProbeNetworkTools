@@ -10,7 +10,7 @@ from app.database import get_db
 router = APIRouter()
 
 
-@router.post("/api/subscriptions", response_model=schemas.UserSubscriptionResponse)
+@router.post("/subscriptions", response_model=schemas.UserSubscriptionResponse)
 def create_subscription(
     subscription: schemas.UserSubscriptionCreate,
     current_user: models.User = Depends(auth.get_admin_user),
@@ -50,7 +50,7 @@ def create_subscription(
     return db_subscription
 
 
-@router.get("/api/subscriptions", response_model=List[schemas.UserSubscriptionResponse])
+@router.get("/subscriptions", response_model=List[schemas.UserSubscriptionResponse])
 def list_subscriptions(
     current_user: models.User = Depends(auth.get_admin_user),
     skip: int = 0,
@@ -70,7 +70,7 @@ def list_subscriptions(
     return subscriptions
 
 
-@router.get("/api/subscriptions/{subscription_id}", response_model=schemas.UserSubscriptionResponse)
+@router.get("/subscriptions/{subscription_id}", response_model=schemas.UserSubscriptionResponse)
 def get_subscription(
     subscription_id: int = Path(..., title="The ID of the subscription to get"),
     current_user: models.User = Depends(auth.get_admin_user),
@@ -157,7 +157,7 @@ def renew_subscription(
     return subscription
 
 
-@router.get("/api/subscription-tiers", response_model=List[schemas.SubscriptionTierResponse])
+@router.get("/subscription-tiers", response_model=List[schemas.SubscriptionTierResponse])
 def list_subscription_tiers(db: Session = Depends(get_db)):
     """
     List all subscription tiers. Public endpoint.
