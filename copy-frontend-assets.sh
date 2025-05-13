@@ -10,7 +10,7 @@ echo "⚠️ IMPORTANT: If this script is being run, it means the build process 
 echo "========================="
 
 # Variables
-SRC_DIR="./frontend/dist"
+SRC_DIR="./public"
 DEST_DIR="./nginx/frontend-build"
 
 # Ensure the destination directory exists

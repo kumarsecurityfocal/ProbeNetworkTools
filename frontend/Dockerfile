@@ -24,6 +24,8 @@ RUN mkdir -p /usr/share/nginx/html
 
 # Copy the build output to nginx html directory
 COPY --from=build /app/dist /usr/share/nginx/html
+# In our Vite setup, the build output is configured to go to ../public
+# This is handled by the copy-frontend-assets.sh script in our deployment
 
 # Add a marker file to verify assets were correctly copied
 RUN echo "Frontend assets successfully built and copied at $(date)" > /usr/share/nginx/html/build-info.txt
