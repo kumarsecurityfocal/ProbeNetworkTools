@@ -13,6 +13,14 @@ export const getToken = () => {
   return localStorage.getItem(TOKEN_KEY);
 };
 
+export const getAuthHeader = () => {
+  const token = getToken();
+  if (token) {
+    return { Authorization: `Bearer ${token}` };
+  }
+  return {};
+};
+
 export const clearToken = () => {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);

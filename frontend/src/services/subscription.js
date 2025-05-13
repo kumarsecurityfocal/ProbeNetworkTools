@@ -1,13 +1,9 @@
-import axios from 'axios';
-import { getAuthHeader } from './auth';
-
-const API_URL = process.env.REACT_APP_API_URL || '/api';
+import api from './api';
 
 // Get user's subscription
 export const getUserSubscription = async () => {
   try {
-    const headers = getAuthHeader();
-    const response = await axios.get(`${API_URL}/subscription`, { headers });
+    const response = await api.get('/subscription');
     return response.data;
   } catch (error) {
     console.error('Error fetching user subscription:', error);
@@ -18,7 +14,7 @@ export const getUserSubscription = async () => {
 // Get all subscription tiers
 export const getSubscriptionTiers = async () => {
   try {
-    const response = await axios.get(`${API_URL}/subscription/tiers`);
+    const response = await api.get('/subscription/tiers');
     return response.data;
   } catch (error) {
     console.error('Error fetching subscription tiers:', error);
@@ -29,13 +25,12 @@ export const getSubscriptionTiers = async () => {
 // Admin: Create subscription for a user
 export const createSubscription = async (userId, tierId, paymentDetails = {}) => {
   try {
-    const headers = getAuthHeader();
     const data = {
       user_id: userId,
       tier_id: tierId,
       ...paymentDetails,
     };
-    const response = await axios.post(`${API_URL}/subscriptions`, data, { headers });
+    const response = await api.post('/subscriptions', data);
     return response.data;
   } catch (error) {
     console.error('Error creating subscription:', error);
@@ -46,8 +41,7 @@ export const createSubscription = async (userId, tierId, paymentDetails = {}) =>
 // Admin: List all subscriptions
 export const getAllSubscriptions = async () => {
   try {
-    const headers = getAuthHeader();
-    const response = await axios.get(`${API_URL}/subscriptions`, { headers });
+    const response = await api.get('/subscriptions');
     return response.data;
   } catch (error) {
     console.error('Error fetching all subscriptions:', error);
@@ -58,8 +52,7 @@ export const getAllSubscriptions = async () => {
 // Admin: Update a subscription
 export const updateSubscription = async (subscriptionId, data) => {
   try {
-    const headers = getAuthHeader();
-    const response = await axios.put(`${API_URL}/subscriptions/${subscriptionId}`, data, { headers });
+    const response = await api.put(`/subscriptions/${subscriptionId}`, data);
     return response.data;
   } catch (error) {
     console.error('Error updating subscription:', error);
@@ -70,8 +63,7 @@ export const updateSubscription = async (subscriptionId, data) => {
 // Admin: Cancel a subscription
 export const cancelSubscription = async (subscriptionId) => {
   try {
-    const headers = getAuthHeader();
-    const response = await axios.post(`${API_URL}/subscriptions/${subscriptionId}/cancel`, {}, { headers });
+    const response = await api.post(`/subscriptions/${subscriptionId}/cancel`, {});
     return response.data;
   } catch (error) {
     console.error('Error canceling subscription:', error);
@@ -82,11 +74,9 @@ export const cancelSubscription = async (subscriptionId) => {
 // Admin: Renew a subscription
 export const renewSubscription = async (subscriptionId, months = 1) => {
   try {
-    const headers = getAuthHeader();
-    const response = await axios.post(
-      `${API_URL}/subscriptions/${subscriptionId}/renew`, 
-      { months }, 
-      { headers }
+    const response = await api.post(
+      `/subscriptions/${subscriptionId}/renew`, 
+      { months }
     );
     return response.data;
   } catch (error) {

@@ -78,6 +78,12 @@ function App() {
               </ProtectedRoute>
             } />
             
+            <Route path="/subscriptions" element={
+              <ProtectedRoute>
+                <SubscriptionTiers />
+              </ProtectedRoute>
+            } />
+            
             <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
           </Routes>
         </Box>

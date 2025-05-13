@@ -23,6 +23,7 @@ import {
   Dashboard as DashboardIcon,
   NetworkCheck as DiagnosticsIcon,
   VpnKey as ApiKeyIcon,
+  CardMembership as SubscriptionIcon,
   AccountCircle,
   Logout
 } from '@mui/icons-material';
@@ -59,6 +60,7 @@ const Navbar = () => {
     { name: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
     { name: 'Diagnostics', path: '/diagnostics', icon: <DiagnosticsIcon /> },
     { name: 'API Keys', path: '/api-keys', icon: <ApiKeyIcon /> },
+    { name: 'Subscriptions', path: '/subscriptions', icon: <SubscriptionIcon /> },
   ];
   
   const drawer = (
