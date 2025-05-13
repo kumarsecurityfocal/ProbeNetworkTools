@@ -63,7 +63,7 @@ export const updateSubscription = async (subscriptionId, data) => {
 // Admin: Cancel a subscription
 export const cancelSubscription = async (subscriptionId) => {
   try {
-    const response = await api.post(`/subscriptions/${subscriptionId}/cancel`, {});
+    const response = await api.post(`/api/subscriptions/${subscriptionId}/cancel`, {});
     return response.data;
   } catch (error) {
     console.error('Error canceling subscription:', error);
@@ -75,7 +75,7 @@ export const cancelSubscription = async (subscriptionId) => {
 export const renewSubscription = async (subscriptionId, months = 1) => {
   try {
     const response = await api.post(
-      `/subscriptions/${subscriptionId}/renew`, 
+      `/api/subscriptions/${subscriptionId}/renew`, 
       { months }
     );
     return response.data;

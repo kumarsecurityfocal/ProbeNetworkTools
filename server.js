@@ -30,26 +30,7 @@ const apiProxy = createProxyMiddleware(apiProxyOptions);
 
 // Define special routes before static file handling
 
-// Create special proxy options for login and register endpoints
-const authProxyOptions = {
-  ...apiProxyOptions,
-  pathRewrite: { '^/api': '' }, // Remove the /api prefix for these routes
-};
-
-const authProxy = createProxyMiddleware(authProxyOptions);
-
-// Handle auth routes first - these will go directly to /login and /register on backend
-app.use('/api/login', (req, res, next) => {
-  console.log('Login request received');
-  return authProxy(req, res, next);
-});
-
-app.use('/api/register', (req, res, next) => {
-  console.log('Register request received');
-  return authProxy(req, res, next);
-});
-
-// Then handle general API routes - these will maintain their /api prefix 
+// Handle all API routes with consistent prefixing
 app.use('/api', (req, res, next) => {
   console.log(`API request received: ${req.method} ${req.url}`);
   return apiProxy(req, res, next);

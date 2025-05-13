@@ -57,7 +57,7 @@ export const loginUser = async (username, password) => {
     formData.append('username', username);
     formData.append('password', password);
     
-    const response = await api.post('/api/login', formData);
+    const response = await api.post('/login', formData);
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -66,7 +66,7 @@ export const loginUser = async (username, password) => {
 
 export const registerUser = async (username, email, password) => {
   try {
-    const response = await api.post('/api/register', {
+    const response = await api.post('/register', {
       username,
       email,
       password
@@ -79,7 +79,7 @@ export const registerUser = async (username, email, password) => {
 
 export const getUserProfile = async () => {
   try {
-    const response = await api.get('/api/users/me');
+    const response = await api.get('/users/me');
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -89,7 +89,7 @@ export const getUserProfile = async () => {
 // Diagnostic APIs
 export const runDiagnostic = async (tool, params = {}) => {
   try {
-    const endpoint = `/api/diagnostics/${tool}`;
+    const endpoint = `/diagnostics/${tool}`;
     const response = await api.get(endpoint, { params });
     return response.data;
   } catch (error) {
@@ -99,7 +99,7 @@ export const runDiagnostic = async (tool, params = {}) => {
 
 export const getDiagnosticHistory = async (params = {}) => {
   try {
-    const response = await api.get('/api/diagnostics/history', { params });
+    const response = await api.get('/diagnostics/history', { params });
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -109,7 +109,7 @@ export const getDiagnosticHistory = async (params = {}) => {
 // API Key APIs
 export const getApiKeys = async () => {
   try {
-    const response = await api.get('/api/keys');
+    const response = await api.get('/keys');
     return response.data;
   } catch (error) {
     return handleApiError(error);
