@@ -20,6 +20,10 @@ args = "Server"
 task = "workflow.run"
 args = "Build Frontend"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Backend API"
+
 [[workflows.workflow]]
 name = "Server"
 author = "agent"
@@ -37,9 +41,22 @@ author = "agent"
 task = "shell.exec"
 args = "cd frontend && npx vite build --outDir=../public"
 
+[[workflows.workflow]]
+name = "Backend API"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+waitForPort = 8000
+
 [deployment]
 run = ["sh", "-c", "cd frontend && npm install && npm run dev"]
 
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 8000
+externalPort = 8000

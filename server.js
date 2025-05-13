@@ -1,6 +1,25 @@
 const express = require('express');
 const path = require('path');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 const app = express();
+
+// API proxy middleware to redirect API requests to the backend
+// In production, this should point to the FastAPI backend service
+const apiProxy = createProxyMiddleware({
+  target: 'http://localhost:8000', // FastAPI backend URL
+  changeOrigin: true,
+  pathRewrite: {
+    '^/api': '/api' // No rewrite needed if FastAPI also uses /api prefix
+  },
+  logLevel: 'debug',
+  onError: (err, req, res) => {
+    console.error('Proxy error:', err);
+    res.status(500).json({ error: 'API Proxy Error', message: err.message });
+  }
+});
+
+// Use API proxy for /api/* routes
+app.use('/api', apiProxy);
 
 // Serve static files from the public directory (built frontend)
 app.use(express.static(path.join(__dirname, 'public')));
@@ -14,9 +33,9 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Explicit route for API test
-app.get('/api/test', (req, res) => {
-  res.json({ message: 'Server is working!' });
+// Explicit route for server test (not proxied)
+app.get('/server/test', (req, res) => {
+  res.json({ message: 'Express server is working!' });
 });
 
 // Fallback route for SPA support - use specific named parameters instead of wildcard
