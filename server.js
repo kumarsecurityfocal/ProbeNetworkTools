@@ -37,9 +37,8 @@ app.use('/src', express.static(path.join(__dirname, 'frontend', 'src')));
 // Use API proxy for /api/* routes
 app.use('/api', apiProxy);
 
-// Also proxy auth routes directly
-app.use('/login', apiProxy);
-app.use('/register', apiProxy);
+// We no longer need separate proxies for login and register
+// as they are now properly prefixed with /api and handled by the main proxy
 
 // For any request that doesn't match a static file
 // serve the index.html - use explicit routes instead of wildcard to avoid path-to-regexp issues
