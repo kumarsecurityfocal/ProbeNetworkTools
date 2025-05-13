@@ -344,9 +344,9 @@ const AdminPanel = () => {
     }
   };
   
-  const handleVerifyEmail = async (userId) => {
+  const handleVerifyEmail = async (user) => {
     try {
-      await verifyUserEmail(userId);
+      await verifyUserEmail(user.id);
       
       // Refresh users
       const usersData = await getAllUsers();
@@ -686,7 +686,6 @@ const AdminPanel = () => {
                 {users.length > 0 ? (
                   users.map((user) => (
                     <TableRow key={user.id}>
-                      <TableCell>{user.id}</TableCell>
                       <TableCell>{user.username}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>
@@ -720,6 +719,22 @@ const AdminPanel = () => {
                         )}
                       </TableCell>
                       <TableCell>
+                        {user.user_subscription?.tier?.name ? (
+                          <Chip 
+                            color="info" 
+                            size="small" 
+                            label={user.user_subscription.tier.name} 
+                          />
+                        ) : (
+                          <Chip 
+                            color="default" 
+                            size="small" 
+                            label="FREE" 
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell>{formatDate(user.created_at)}</TableCell>
+                      <TableCell>
                         {user.email_verified ? (
                           <Chip 
                             label="Verified" 
@@ -735,7 +750,6 @@ const AdminPanel = () => {
                           />
                         )}
                       </TableCell>
-                      <TableCell>{formatDate(user.created_at)}</TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex' }}>
                           <Tooltip title="Edit User">
