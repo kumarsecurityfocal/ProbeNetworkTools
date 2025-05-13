@@ -21,10 +21,12 @@ services:
 
   # NGINX service development overrides
   nginx:
-    # This is only for development
-    # For production, we rely on the multi-stage build copy from frontend image
+    # This is only for development - DO NOT use in production!
     volumes:
-      - ./frontend/dist:/usr/share/nginx/html
+      # In dev mode, we can mount the frontend build directory for direct serving
+      # This gives us faster rebuilds during development
+      - ./frontend/dist:/usr/share/nginx/html:ro
+      # SSL certificates and related paths
       - ./nginx/ssl:/etc/letsencrypt
       - ./nginx/ssl/webroot:/var/www/certbot
       - ./nginx/ssl/ssl-dhparams.pem:/etc/letsencrypt/ssl-dhparams.pem

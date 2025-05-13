@@ -1,5 +1,3 @@
-FROM frontend:latest as frontend
-
 FROM nginx:alpine
 
 # Remove default nginx configuration
@@ -15,16 +13,16 @@ COPY ssl-params.conf /etc/nginx/ssl-params.conf
 RUN mkdir -p /etc/letsencrypt
 RUN mkdir -p /var/www/certbot
 
-# Copy the built frontend files from the frontend image
-# No volume mounting should be used in production to avoid empty directories
-COPY --from=frontend /usr/share/nginx/html /usr/share/nginx/html
+# Create nginx html directory if it doesn't exist
+RUN mkdir -p /usr/share/nginx/html
 
-# Create a marker file to confirm assets were copied properly
-RUN echo "Assets properly copied from frontend container" > /usr/share/nginx/html/assets-verification.txt
+# Copy entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Expose ports
 EXPOSE 80
 EXPOSE 443
 
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Use our custom entrypoint script
+ENTRYPOINT ["/entrypoint.sh"]
