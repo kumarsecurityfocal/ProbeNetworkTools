@@ -11,8 +11,7 @@ const apiProxyOptions = {
   ws: true,
   xfwd: true,
   logLevel: 'debug',
-  // Don't rewrite the path as FastAPI expects the /api prefix
-  // pathRewrite: { '^/api': '' },
+  // No prefix rewrite - we'll handle this manually in our middleware
   onProxyReq: (proxyReq, req, res) => {
     // Log proxy request for debugging
     console.log(`Proxying to: ${req.method} ${proxyReq.path}`);
