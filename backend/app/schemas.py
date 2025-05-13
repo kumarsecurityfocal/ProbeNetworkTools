@@ -225,5 +225,13 @@ class TokenData(BaseModel):
     username: Optional[str] = None
 
 
+class PasswordReset(BaseModel):
+    password: str
+
+
+class UserStatusUpdate(BaseModel):
+    is_active: bool
+
+
 # Fix circular references
 UserDetailResponse.update_forward_refs()

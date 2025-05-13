@@ -24,14 +24,28 @@ import {
   Grid,
   Chip,
   Snackbar,
-  Alert
+  Alert,
+  Switch,
+  FormControlLabel,
+  CircularProgress,
+  IconButton,
+  Tooltip
 } from '@mui/material';
 import {
   Person as PersonIcon,
-  CardMembership as SubscriptionIcon
+  CardMembership as SubscriptionIcon,
+  Speed as MetricsIcon,
+  Add as AddIcon,
+  Edit as EditIcon,
+  Block as BlockIcon,
+  CheckCircle as VerifiedIcon,
+  Cancel as CancelIcon,
+  DeleteOutline as DeleteIcon,
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { getAllSubscriptions, getSubscriptionTiers, cancelSubscription, updateSubscription, renewSubscription } from '../services/subscription';
+import { getAllUsers, createUser, updateUser, deleteUser } from '../services/users';
 
 // TabPanel component for tab content
 function TabPanel(props) {

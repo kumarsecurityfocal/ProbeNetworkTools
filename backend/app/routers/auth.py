@@ -76,6 +76,173 @@ def list_users(
     return users
 
 
+@router.post("/users", response_model=schemas.UserResponse)
+def create_new_user(
+    user_data: schemas.UserCreate,
+    current_user: models.User = Depends(auth.get_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Admin endpoint to create a new user."""
+    # Check if user already exists
+    db_user = db.query(models.User).filter(
+        (models.User.username == user_data.username) | (models.User.email == user_data.email)
+    ).first()
+    if db_user:
+        raise HTTPException(
+            status_code=400,
+            detail="Username or email already registered"
+        )
+    
+    # Create new user - admin created users are verified by default
+    is_admin = user_data.dict().pop("is_admin", False) if hasattr(user_data, "is_admin") else False
+    email_verified = user_data.dict().pop("email_verified", True) if hasattr(user_data, "email_verified") else True
+    
+    db_user = auth.create_user(db, user_data, is_admin=is_admin, email_verified=email_verified)
+    
+    # Assign free tier subscription by default
+    free_tier = db.query(models.SubscriptionTier).filter(models.SubscriptionTier.name == "FREE").first()
+    if free_tier:
+        user_subscription = UserSubscription(
+            user_id=db_user.id,
+            tier_id=free_tier.id
+        )
+        db.add(user_subscription)
+        db.commit()
+    
+    return db_user
+
+
+@router.get("/users/{user_id}", response_model=schemas.UserDetailResponse)
+def get_user_details(
+    user_id: int,
+    current_user: models.User = Depends(auth.get_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Admin endpoint to get user details."""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
+@router.put("/users/{user_id}", response_model=schemas.UserResponse)
+def update_user_details(
+    user_id: int,
+    user_data: schemas.UserUpdate,
+    current_user: models.User = Depends(auth.get_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Admin endpoint to update user details."""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check if updating email or username to one that already exists
+    if hasattr(user_data, "email") and user_data.email:
+        existing_user = db.query(models.User).filter(
+            models.User.email == user_data.email,
+            models.User.id != user_id
+        ).first()
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Email already in use")
+    
+    if hasattr(user_data, "username") and user_data.username:
+        existing_user = db.query(models.User).filter(
+            models.User.username == user_data.username,
+            models.User.id != user_id
+        ).first()
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Username already in use")
+    
+    # Update user fields
+    for key, value in user_data.dict(exclude_unset=True).items():
+        if value is not None:  # Only update fields that are explicitly provided
+            setattr(user, key, value)
+    
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@router.delete("/users/{user_id}", response_model=Dict[str, Any])
+def delete_user(
+    user_id: int,
+    current_user: models.User = Depends(auth.get_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Admin endpoint to delete a user."""
+    # Ensure admin cannot delete themselves
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    db.delete(user)
+    db.commit()
+    
+    return {"success": True, "message": "User deleted successfully"}
+
+
+@router.post("/users/{user_id}/reset-password", response_model=Dict[str, Any])
+def admin_reset_password(
+    user_id: int,
+    password_data: schemas.PasswordReset,
+    current_user: models.User = Depends(auth.get_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Admin endpoint to reset a user's password."""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user.hashed_password = auth.get_password_hash(password_data.password)
+    db.commit()
+    
+    return {"success": True, "message": "Password reset successfully"}
+
+
+@router.post("/users/{user_id}/verify-email", response_model=Dict[str, Any])
+def admin_verify_email(
+    user_id: int,
+    current_user: models.User = Depends(auth.get_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Admin endpoint to verify a user's email."""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user.email_verified = True
+    db.commit()
+    
+    return {"success": True, "message": "Email verified successfully"}
+
+
+@router.post("/users/{user_id}/status", response_model=Dict[str, Any])
+def change_user_status(
+    user_id: int,
+    status_data: schemas.UserStatusUpdate,
+    current_user: models.User = Depends(auth.get_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Admin endpoint to activate or deactivate a user."""
+    # Ensure admin cannot deactivate themselves
+    if user_id == current_user.id and not status_data.is_active:
+        raise HTTPException(status_code=400, detail="Cannot deactivate your own account")
+    
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user.is_active = status_data.is_active
+    db.commit()
+    
+    status_message = "activated" if status_data.is_active else "deactivated"
+    return {"success": True, "message": f"User {status_message} successfully"}
+
+
 @router.get("/subscription", response_model=schemas.UserSubscriptionResponse)
 def get_subscription(current_user: models.User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
     """Get the current user's subscription details."""
