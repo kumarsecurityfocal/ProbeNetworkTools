@@ -26,7 +26,12 @@ import {
   TableRow, 
   CircularProgress, 
   Alert, 
-  Snackbar 
+  Snackbar,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle
 } from '@mui/material';
 import { 
   Save as SaveIcon, 
@@ -43,6 +48,7 @@ import {
   updateUserProfile, 
   changePassword, 
   resendVerificationEmail,
+  logoutAllDevices,
   getApiKeys, 
   createApiKey, 
   deleteApiKey 
@@ -106,6 +112,9 @@ const UserProfile = () => {
     message: '',
     severity: 'success'
   });
+  
+  // For avatar upload
+  const [avatarUploadDialog, setAvatarUploadDialog] = useState(false);
   
   // Fetch user profile data
   useEffect(() => {
@@ -302,6 +311,7 @@ const UserProfile = () => {
             variant="outlined" 
             startIcon={<EditIcon />}
             sx={{ mb: 2 }}
+            onClick={() => setAvatarUploadDialog(true)}
           >
             Change Photo
           </Button>
@@ -322,6 +332,14 @@ const UserProfile = () => {
               color="warning" 
               size="small" 
               sx={{ mt: 1 }}
+              onClick={async () => {
+                try {
+                  await resendVerificationEmail();
+                  showSnackbar('Verification email sent successfully. Please check your inbox.');
+                } catch (error) {
+                  showSnackbar(`Error sending verification email: ${error.message}`, 'error');
+                }
+              }}
             >
               Verify Email
             </Button>
@@ -530,6 +548,17 @@ const UserProfile = () => {
           <Button 
             variant="outlined" 
             color="error"
+            onClick={async () => {
+              try {
+                setLoading(true);
+                await logoutAllDevices();
+                showSnackbar('Successfully logged out from all other devices');
+              } catch (error) {
+                showSnackbar(`Error: ${error.message}`, 'error');
+              } finally {
+                setLoading(false);
+              }
+            }}
           >
             Log Out From All Devices
           </Button>
@@ -863,6 +892,45 @@ const UserProfile = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* Avatar Upload Dialog */}
+      <Dialog open={avatarUploadDialog} onClose={() => setAvatarUploadDialog(false)}>
+        <DialogTitle>Change Profile Picture</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2 }}>
+            Upload a new profile picture. The image should be square and will be cropped if necessary.
+          </DialogContentText>
+          <Box sx={{ textAlign: 'center', my: 2 }}>
+            <input
+              accept="image/*"
+              style={{ display: 'none' }}
+              id="avatar-upload-button"
+              type="file"
+            />
+            <label htmlFor="avatar-upload-button">
+              <Button variant="contained" component="span">
+                Choose File
+              </Button>
+            </label>
+            <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+              Recommended size: 256x256 pixels, max 1MB
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAvatarUploadDialog(false)}>Cancel</Button>
+          <Button 
+            variant="contained" 
+            onClick={() => {
+              // This would be where the upload happens
+              showSnackbar('Feature coming soon: Profile picture upload');
+              setAvatarUploadDialog(false);
+            }}
+          >
+            Upload
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

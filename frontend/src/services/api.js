@@ -122,6 +122,15 @@ export const resendVerificationEmail = async () => {
   }
 };
 
+export const logoutAllDevices = async () => {
+  try {
+    const response = await api.post('/api/me/logout-all');
+    return response.data;
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
 // Diagnostic APIs
 export const runDiagnostic = async (tool, params = {}, data = null) => {
   try {
