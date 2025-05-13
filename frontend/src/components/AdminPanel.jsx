@@ -354,7 +354,7 @@ const AdminPanel = () => {
       
       setSnackbar({
         open: true,
-        message: 'Email verified successfully',
+        message: `Email verified for ${user.email}`,
         severity: 'success'
       });
     } catch (error) {
