@@ -79,7 +79,7 @@ export const registerUser = async (username, email, password) => {
 
 export const getUserProfile = async () => {
   try {
-    const response = await api.get('/users/me');
+    const response = await api.get('/api/users/me');
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -89,7 +89,7 @@ export const getUserProfile = async () => {
 // Diagnostic APIs
 export const runDiagnostic = async (tool, params = {}) => {
   try {
-    const endpoint = `/diagnostics/${tool}`;
+    const endpoint = `/api/diagnostics/${tool}`;
     const response = await api.get(endpoint, { params });
     return response.data;
   } catch (error) {
@@ -99,7 +99,7 @@ export const runDiagnostic = async (tool, params = {}) => {
 
 export const getDiagnosticHistory = async (params = {}) => {
   try {
-    const response = await api.get('/diagnostics/history', { params });
+    const response = await api.get('/api/diagnostics/history', { params });
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -109,7 +109,7 @@ export const getDiagnosticHistory = async (params = {}) => {
 // API Key APIs
 export const getApiKeys = async () => {
   try {
-    const response = await api.get('/keys');
+    const response = await api.get('/api/keys');
     return response.data;
   } catch (error) {
     return handleApiError(error);
