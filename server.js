@@ -8,8 +8,9 @@ const app = express();
 const apiProxy = createProxyMiddleware({
   target: 'http://localhost:8000', // FastAPI backend URL
   changeOrigin: true,
+  // Keep the /api prefix since FastAPI routes also use it
   pathRewrite: {
-    '^/api': '/api' // No rewrite needed if FastAPI also uses /api prefix
+    '^/api': '/api'
   },
   logLevel: 'debug',
   onError: (err, req, res) => {
