@@ -27,7 +27,8 @@ import {
   AdminPanelSettings as AdminIcon,
   Schedule as ScheduleIcon,
   AccountCircle,
-  Logout
+  Logout,
+  Person as PersonIcon
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 
@@ -196,6 +197,12 @@ const Navbar = () => {
                   <Typography variant="body2">{user?.username || 'User'}</Typography>
                 </MenuItem>
                 <Divider />
+                <MenuItem component={RouterLink} to="/profile" onClick={handleMenuClose}>
+                  <ListItemIcon>
+                    <PersonIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText>My Profile</ListItemText>
+                </MenuItem>
                 <MenuItem onClick={handleLogout}>
                   <ListItemIcon>
                     <Logout fontSize="small" />

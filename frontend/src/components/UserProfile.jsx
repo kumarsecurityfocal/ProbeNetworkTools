@@ -38,7 +38,15 @@ import {
   Edit as EditIcon 
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
-import { getUserProfile, getApiKeys, createApiKey, deleteApiKey } from '../services/api';
+import { 
+  getUserProfile, 
+  updateUserProfile, 
+  changePassword, 
+  resendVerificationEmail,
+  getApiKeys, 
+  createApiKey, 
+  deleteApiKey 
+} from '../services/api';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
@@ -174,11 +182,14 @@ const UserProfile = () => {
   // Save profile data
   const handleSaveProfile = async () => {
     try {
-      // This would typically call an API to update the user profile
-      // For now, just show a success message
+      setLoading(true);
+      await updateUserProfile(profileData);
+      await refreshUserProfile(); // Refresh user data in auth context
       showSnackbar('Profile updated successfully');
     } catch (error) {
       showSnackbar(`Error saving profile: ${error.message}`, 'error');
+    } finally {
+      setLoading(false);
     }
   };
   
@@ -191,8 +202,8 @@ const UserProfile = () => {
     }
     
     try {
-      // This would typically call an API to change the password
-      // For now, just show a success message
+      setLoading(true);
+      await changePassword(securityData.current_password, securityData.new_password);
       showSnackbar('Password changed successfully');
       
       // Clear password fields
@@ -203,6 +214,8 @@ const UserProfile = () => {
       });
     } catch (error) {
       showSnackbar(`Error changing password: ${error.message}`, 'error');
+    } finally {
+      setLoading(false);
     }
   };
   

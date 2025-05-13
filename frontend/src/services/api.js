@@ -92,6 +92,36 @@ export const getUserProfile = async () => {
   }
 };
 
+export const updateUserProfile = async (profileData) => {
+  try {
+    const response = await api.put('/api/me', profileData);
+    return response.data;
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+export const changePassword = async (currentPassword, newPassword) => {
+  try {
+    const response = await api.post('/api/me/change-password', {
+      current_password: currentPassword,
+      new_password: newPassword
+    });
+    return response.data;
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+export const resendVerificationEmail = async () => {
+  try {
+    const response = await api.post('/api/me/resend-verification');
+    return response.data;
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
 // Diagnostic APIs
 export const runDiagnostic = async (tool, params = {}, data = null) => {
   try {
