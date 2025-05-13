@@ -3,6 +3,8 @@ import subprocess
 import socket
 from logging.handlers import RotatingFileHandler
 import os
+import time
+from ping3 import ping
 
 def setup_logging():
     """Setup logging configuration"""

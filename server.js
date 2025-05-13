@@ -11,6 +11,9 @@ const apiProxyOptions = {
   ws: true,
   xfwd: true,
   logLevel: 'debug',
+  // Important: We're not stripping the /api prefix when proxying to backend
+  // because the backend routes already include the /api prefix
+  pathRewrite: { '^/api': '/api' },
   onProxyReq: (proxyReq, req, res) => {
     // Log proxy request for debugging
     console.log(`Proxying to: ${req.method} ${proxyReq.path}`);
