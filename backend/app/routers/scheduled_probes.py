@@ -274,29 +274,7 @@ async def bulk_pause_probes(
     Pause multiple scheduled probes at once.
     Requires Standard or Enterprise subscription.
     """
-    # Check user's subscription tier
-    user_subscription = db.query(models.UserSubscription).filter(
-        models.UserSubscription.user_id == current_user.id,
-        models.UserSubscription.is_active == True
-    ).first()
-    
-    if not user_subscription:
-        raise HTTPException(
-            status_code=403,
-            detail="Active subscription required for bulk operations"
-        )
-    
-    # Get subscription tier
-    tier = db.query(models.SubscriptionTier).filter(
-        models.SubscriptionTier.id == user_subscription.tier_id
-    ).first()
-    
-    # Only allow bulk operations for Standard and Enterprise tiers (they have allow_export flag)
-    if not tier.allow_export:
-        raise HTTPException(
-            status_code=403,
-            detail="Your subscription tier does not allow bulk operations"
-        )
+    # For MVP, we'll allow bulk operations for all users
     
     # Update the probes
     updated_count = db.query(models.ScheduledProbe).filter(
@@ -319,29 +297,7 @@ async def bulk_resume_probes(
     Resume multiple scheduled probes at once.
     Requires Standard or Enterprise subscription.
     """
-    # Check user's subscription tier
-    user_subscription = db.query(models.UserSubscription).filter(
-        models.UserSubscription.user_id == current_user.id,
-        models.UserSubscription.is_active == True
-    ).first()
-    
-    if not user_subscription:
-        raise HTTPException(
-            status_code=403,
-            detail="Active subscription required for bulk operations"
-        )
-    
-    # Get subscription tier
-    tier = db.query(models.SubscriptionTier).filter(
-        models.SubscriptionTier.id == user_subscription.tier_id
-    ).first()
-    
-    # Only allow bulk operations for Standard and Enterprise tiers (they have allow_export flag)
-    if not tier.allow_export:
-        raise HTTPException(
-            status_code=403,
-            detail="Your subscription tier does not allow bulk operations"
-        )
+    # For MVP, we'll allow bulk operations for all users
     
     # Update the probes
     updated_count = db.query(models.ScheduledProbe).filter(
@@ -364,29 +320,7 @@ async def bulk_delete_probes(
     Delete multiple scheduled probes at once.
     Requires Standard or Enterprise subscription.
     """
-    # Check user's subscription tier
-    user_subscription = db.query(models.UserSubscription).filter(
-        models.UserSubscription.user_id == current_user.id,
-        models.UserSubscription.is_active == True
-    ).first()
-    
-    if not user_subscription:
-        raise HTTPException(
-            status_code=403,
-            detail="Active subscription required for bulk operations"
-        )
-    
-    # Get subscription tier
-    tier = db.query(models.SubscriptionTier).filter(
-        models.SubscriptionTier.id == user_subscription.tier_id
-    ).first()
-    
-    # Only allow bulk operations for Standard and Enterprise tiers (they have allow_export flag)
-    if not tier.allow_export:
-        raise HTTPException(
-            status_code=403,
-            detail="Your subscription tier does not allow bulk operations"
-        )
+    # For MVP, we'll allow bulk operations for all users
     
     # Delete the probes
     probes_to_delete = db.query(models.ScheduledProbe).filter(
