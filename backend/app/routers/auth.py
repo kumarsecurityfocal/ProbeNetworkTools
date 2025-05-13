@@ -57,7 +57,7 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.get("/users/me", response_model=schemas.UserDetailResponse)
+@router.get("/me", response_model=schemas.UserDetailResponse)
 def read_users_me(current_user: models.User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
     # Get user with subscription details
     user_with_subscription = db.query(models.User).filter(models.User.id == current_user.id).first()

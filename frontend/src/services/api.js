@@ -79,7 +79,7 @@ export const registerUser = async (username, email, password) => {
 
 export const getUserProfile = async () => {
   try {
-    const response = await api.get('/api/users/me');
+    const response = await api.get('/api/me');
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -89,7 +89,8 @@ export const getUserProfile = async () => {
 // Diagnostic APIs
 export const runDiagnostic = async (tool, params = {}) => {
   try {
-    const endpoint = `/api/diagnostics/${tool}`;
+    // The API endpoint is now just /api/{tool} since we fixed the router paths
+    const endpoint = `/api/${tool}`;
     const response = await api.get(endpoint, { params });
     return response.data;
   } catch (error) {
@@ -99,7 +100,7 @@ export const runDiagnostic = async (tool, params = {}) => {
 
 export const getDiagnosticHistory = async (params = {}) => {
   try {
-    const response = await api.get('/api/diagnostics/history', { params });
+    const response = await api.get('/api/history', { params });
     return response.data;
   } catch (error) {
     return handleApiError(error);
