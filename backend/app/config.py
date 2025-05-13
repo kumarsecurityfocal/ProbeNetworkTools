@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings
 import os
-from typing import Optional
+import json
+from typing import Optional, List
 
 
 class Settings(BaseSettings):
@@ -23,13 +24,15 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
     # CORS settings
-    CORS_ORIGINS: list
+    CORS_ORIGINS: List[str] = ["*"]
     
     # Diagnostic tool settings
     PROBE_TIMEOUT: int = 5  # seconds
     
     class Config:
         env_file = ".env.backend"
+        env_file_encoding = 'utf-8'
+        extra = "ignore"
 
 
 settings = Settings()
