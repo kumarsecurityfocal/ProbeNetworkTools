@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { 
   Container, 
   Grid, 
@@ -44,7 +44,7 @@ import dayjs from 'dayjs';
 import { getDiagnosticHistory } from '../services/api';
 
 const Reports = () => {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [reportType, setReportType] = useState('diagnostics');
   const [timeFrame, setTimeFrame] = useState('week');
