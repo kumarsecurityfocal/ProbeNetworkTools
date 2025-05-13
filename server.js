@@ -11,8 +11,8 @@ const apiProxyOptions = {
   ws: true,
   xfwd: true,
   logLevel: 'debug',
-  // Use path rewriting to ensure proper routing
-  pathRewrite: { '^/api': '/api' },
+  // Don't rewrite the path at all to preserve the /api prefix
+  // pathRewrite: { '^/api': '/api' },
   onProxyReq: (proxyReq, req, res) => {
     // Log proxy request for debugging
     console.log(`Proxying to: ${req.method} ${proxyReq.path}`);
@@ -44,6 +44,10 @@ app.use('/api', (req, res, next) => {
   console.log(`Path: ${req.path}`);
   console.log(`Forwarding to backend: ${apiProxyOptions.target}${req.originalUrl}`);
   console.log(`============================================`);
+  
+  // Manually modify the url to keep the /api prefix
+  req.url = '/api' + req.url;
+  
   return apiProxy(req, res, next);
 });
 
