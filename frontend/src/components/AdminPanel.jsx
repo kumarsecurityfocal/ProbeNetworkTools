@@ -45,7 +45,15 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { getAllSubscriptions, getSubscriptionTiers, cancelSubscription, updateSubscription, renewSubscription } from '../services/subscription';
-import { getAllUsers, createUser, updateUser, deleteUser } from '../services/users';
+import { 
+  getAllUsers, 
+  createUser, 
+  updateUser, 
+  deleteUser, 
+  changeUserStatus, 
+  verifyUserEmail, 
+  resetUserPassword 
+} from '../services/users';
 
 // TabPanel component for tab content
 function TabPanel(props) {
