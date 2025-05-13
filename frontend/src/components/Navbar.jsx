@@ -124,7 +124,7 @@ const Navbar = () => {
           >
             <RouterLink to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <NetworkCheck sx={{ mr: 1 }} />
+                <DiagnosticsIcon sx={{ mr: 1 }} />
                 ProbeOps
               </Box>
             </RouterLink>
