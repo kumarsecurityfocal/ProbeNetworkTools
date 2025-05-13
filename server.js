@@ -11,8 +11,8 @@ const apiProxyOptions = {
   ws: true,
   xfwd: true,
   logLevel: 'debug',
-  // We need to strip the /api prefix to avoid double prefixing
-  pathRewrite: { '^/api': '' },
+  // Use path rewriting to ensure proper routing
+  pathRewrite: { '^/api': '/api' },
   onProxyReq: (proxyReq, req, res) => {
     // Log proxy request for debugging
     console.log(`Proxying to: ${req.method} ${proxyReq.path}`);
@@ -38,8 +38,12 @@ const apiProxy = createProxyMiddleware(apiProxyOptions);
 
 // Handle routes that already include /api prefix
 app.use('/api', (req, res, next) => {
+  console.log(`============================================`);
   console.log(`API request received with prefix: ${req.method} ${req.url}`);
-  console.log(`Forwarding to backend: ${apiProxyOptions.target}/api${req.url}`);
+  console.log(`Original URL: ${req.originalUrl}`);
+  console.log(`Path: ${req.path}`);
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}${req.originalUrl}`);
+  console.log(`============================================`);
   return apiProxy(req, res, next);
 });
 
