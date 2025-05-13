@@ -1,1 +1,1 @@
-# This directory will contain Alembic migration scripts
+# This file ensures the versions directory is created and tracked in Git

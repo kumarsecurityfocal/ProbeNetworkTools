@@ -19,11 +19,13 @@ from app.config import settings
 config = context.config
 
 # Interpret the config file for Python logging.
-# This line sets up loggers basically.
-fileConfig(config.config_file_name)
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
 
-# Set the database URL in the Alembic config
-config.set_main_option("sqlalchemy.url", settings.sqlalchemy_database_url)
+# Set the database URL in the Alembic config from the environment
+# This allows us to use the same DATABASE_URL from .env.backend or environment variables
+database_url = os.environ.get("DATABASE_URL", settings.sqlalchemy_database_url)
+config.set_main_option("sqlalchemy.url", database_url)
 
 # Add your model's MetaData object here
 # for 'autogenerate' support
@@ -66,8 +68,12 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
+    configuration = config.get_section(config.config_ini_section)
+    if configuration is None:
+        configuration = {}
+        
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
+        configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )

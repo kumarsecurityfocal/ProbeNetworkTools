@@ -16,8 +16,6 @@ services:
       - CORS_ORIGINS=http://localhost,http://frontend,https://probeops.com,https://www.probeops.com
     volumes:
       - ./backend:/app
-    depends_on:
-      - db
     networks:
       - probeops-network
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
@@ -72,24 +70,14 @@ services:
       - backend
 
   # Database service (for local development only)
-  # For production, use RDS - comment this out and set DATABASE_URL in env
-  db:
-    image: postgres:15-alpine
-    restart: always
-    environment:
-      - POSTGRES_USER=${PGUSER:-postgres}
-      - POSTGRES_PASSWORD=${PGPASSWORD:-postgres}
-      - POSTGRES_DB=${PGDATABASE:-probeops}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    networks:
-      - probeops-network
+  # For production with AWS RDS, comment out this entire service block
+  # and set DATABASE_URL in your environment variables or secrets panel
+  # Example for AWS RDS: DATABASE_URL=postgresql+psycopg2://username:password@your-rds-endpoint.region.rds.amazonaws.com:5432/dbname
 
 networks:
   probeops-network:
     driver: bridge
 
-volumes:
-  postgres-data:
+# Uncomment this section when using local PostgreSQL
+# volumes:
+#   postgres-data:

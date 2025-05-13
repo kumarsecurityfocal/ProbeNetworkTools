@@ -29,6 +29,9 @@ COPY . .
 COPY ./wait-for.sh /wait-for.sh
 RUN chmod +x /wait-for.sh
 
+# Create alembic migration directory
+RUN mkdir -p /app/alembic/versions
+
 # Expose port
 EXPOSE 8000
 

@@ -7,20 +7,15 @@ class Settings(BaseSettings):
     """Application settings."""
     
     # Database settings
-    POSTGRES_USER: str = os.getenv("PGUSER", "postgres")
-    POSTGRES_PASSWORD: str = os.getenv("PGPASSWORD", "postgres")
-    POSTGRES_HOST: str = os.getenv("PGHOST", "db")
-    POSTGRES_PORT: str = os.getenv("PGPORT", "5432")
-    POSTGRES_DB: str = os.getenv("PGDATABASE", "probeops")
-    DATABASE_URL: Optional[str] = os.getenv("DATABASE_URL")
+    DATABASE_URL: str = os.getenv(
+        "DATABASE_URL", 
+        "postgresql+psycopg2://postgres:postgres@db:5432/probeops"
+    )
     
     @property
     def sqlalchemy_database_url(self) -> str:
         """Get the database URL."""
-        if self.DATABASE_URL:
-            return self.DATABASE_URL
-        
-        return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        return self.DATABASE_URL
     
     # JWT settings
     SECRET_KEY: str = os.getenv("SECRET_KEY", "super-secret-key-change-in-production")
