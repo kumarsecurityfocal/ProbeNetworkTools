@@ -13,15 +13,28 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Frontend"
+args = "Server"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "DevServer"
 
 [[workflows.workflow]]
-name = "Frontend"
+name = "Server"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd frontend && npm install && npm run dev"
+args = "node server.js"
+waitForPort = 5000
+
+[[workflows.workflow]]
+name = "DevServer"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node index.js"
 waitForPort = 5000
 
 [deployment]
