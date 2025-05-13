@@ -125,6 +125,31 @@ fi
 # Now proceed with git pull
 if execute_and_log "git pull origin $BRANCH" "Pulling latest code from GitHub ($BRANCH branch)"; then
     log_message "✅ Code successfully updated from $BRANCH branch"
+    
+    # Ensure scripts have executable permissions after git pull
+    log_message "🔒 Setting executable permissions on scripts"
+    
+    # Create a list of all shell scripts to make executable
+    SCRIPT_PATHS=(
+        "*.sh"                 # All shell scripts in root directory
+        "scripts/*.sh"         # Scripts in scripts directory (if it exists)
+        "init-ssl.sh"          # SSL initialization script
+        "cert-renewal.sh"      # Certificate renewal script
+        "deploy.sh"            # This script itself
+    )
+    
+    # Set permissions for each script pattern
+    for SCRIPT_PATH in "${SCRIPT_PATHS[@]}"; do
+        # Only attempt chmod if the pattern matches files
+        if ls $SCRIPT_PATH 2>/dev/null >/dev/null; then
+            if execute_and_log "chmod +x $SCRIPT_PATH" "Setting permissions on $SCRIPT_PATH"; then
+                log_message "✅ Permissions set for $SCRIPT_PATH"
+            else
+                log_message "⚠️ Warning: Failed to set permissions for $SCRIPT_PATH"
+                # Continue anyway, this is not fatal
+            fi
+        fi
+    done
 else
     log_message "❌ Deployment failed at git pull step"
     exit 1
