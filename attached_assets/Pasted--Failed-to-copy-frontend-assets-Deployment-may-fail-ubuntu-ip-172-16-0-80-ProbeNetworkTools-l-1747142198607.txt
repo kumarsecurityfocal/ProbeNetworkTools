@@ -1,0 +1,110 @@
+❌ Failed to copy frontend assets. Deployment may fail.
+ubuntu@ip-172-16-0-80:~/ProbeNetworkTools$ ls -al
+total 1064
+drwxrwxr-x  9 ubuntu ubuntu   4096 May 13 13:15 .
+drwxr-x--- 10 ubuntu ubuntu   4096 May 13 12:49 ..
+-rw-rw-r--  1 ubuntu ubuntu    231 May 13 12:49 .dockerignore
+-rw-rw-r--  1 ubuntu ubuntu    415 May 13 12:49 .env.template
+drwxrwxr-x  8 ubuntu ubuntu   4096 May 13 13:15 .git
+-rw-rw-r--  1 ubuntu ubuntu    104 May 13 12:49 .gitignore
+-rw-rw-r--  1 ubuntu ubuntu    808 May 13 12:49 .replit
+-rw-rw-r--  1 ubuntu ubuntu  11598 May 13 12:49 DEPLOYMENT.md
+-rw-rw-r--  1 ubuntu ubuntu   4453 May 13 12:49 FRONTEND-DEPLOYMENT.md
+-rw-rw-r--  1 ubuntu ubuntu   5638 May 13 12:49 PROJECT_STATUS.md
+-rw-rw-r--  1 ubuntu ubuntu   4387 May 13 12:49 SSL-DEPLOYMENT.md
+drwxrwxr-x  2 ubuntu ubuntu   4096 May 13 13:15 attached_assets
+drwxrwxr-x  4 ubuntu ubuntu   4096 May 13 12:49 backend
+-rwxrwxr-x  1 ubuntu ubuntu   4862 May 13 12:49 cert-renewal.sh
+-rwxrwxr-x  1 ubuntu ubuntu   2250 May 13 13:15 copy-frontend-assets.sh
+-rwxrwxr-x  1 ubuntu ubuntu  15842 May 13 12:49 deploy.sh
+-rw-rw-r--  1 ubuntu ubuntu   4398 May 13 13:15 deployment.log
+-rw-rw-r--  1 ubuntu ubuntu   1289 May 13 12:49 docker-compose.dev.yml
+-rw-rw-r--  1 ubuntu ubuntu   2619 May 13 12:49 docker-compose.yml
+-rwxrwxr-x  1 ubuntu ubuntu   3900 May 13 12:49 fix-frontend-deployment.sh
+drwxrwxr-x  6 ubuntu ubuntu   4096 May 13 13:15 frontend
+-rw-rw-r--  1 ubuntu ubuntu 693104 May 13 12:49 generated-icon.png
+-rw-rw-r--  1 ubuntu ubuntu   4282 May 13 12:49 index.html
+-rw-rw-r--  1 ubuntu ubuntu    600 May 13 12:49 index.js
+-rwxrwxr-x  1 ubuntu ubuntu   3725 May 13 12:49 init-ssl.sh
+drwxrwxr-x  4 ubuntu ubuntu   4096 May 13 12:49 nginx
+-rw-rw-r--  1 ubuntu ubuntu 116771 May 13 12:49 package-lock.json
+-rw-rw-r--  1 ubuntu ubuntu    578 May 13 12:49 package.json
+-rwxrwxr-x  1 ubuntu ubuntu   4943 May 13 12:49 pre-deploy-validate.sh
+drwxrwxr-x  2 ubuntu ubuntu   4096 May 13 12:49 probe
+drwxrwxr-x  3 ubuntu ubuntu   4096 May 13 12:49 public
+-rw-rw-r--  1 ubuntu ubuntu    480 May 13 12:49 pyproject.toml
+-rw-rw-r--  1 ubuntu ubuntu   1031 May 13 12:49 server.js
+-rwxrwxr-x  1 ubuntu ubuntu   4797 May 13 13:15 simple-deploy.sh
+-rw-rw-r--  1 ubuntu ubuntu  74507 May 13 12:49 uv.lock
+-rwxrwxr-x  1 ubuntu ubuntu   4134 May 13 12:49 verify-frontend.sh
+-rwxrwxr-x  1 ubuntu ubuntu   3652 May 13 12:49 verify-ssl.sh
+ubuntu@ip-172-16-0-80:~/ProbeNetworkTools$ ./deploy.sh
+🔄 Checking for uncommitted changes...
+⚠️ Uncommitted changes detected. This could cause merge conflicts during deployment.
+⚠️ Uncommitted changes detected, but proceeding with deployment anyway.
+⚠️ This is likely due to SSL certificate files that shouldn't be tracked by Git.
+✅ Added SSL files to .git/info/exclude to prevent future issues
+✅ Proceeding with deployment
+🔄 Pulling latest code from GitHub (main branch)
+From https://github.com/kumarsecurityfocal/ProbeNetworkTools
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+✅ Pulling latest code from GitHub (main branch) completed successfully
+✅ Code successfully updated from main branch
+🔒 Setting executable permissions on scripts
+🔄 Setting permissions on *.sh
+✅ Setting permissions on *.sh completed successfully
+✅ Permissions set for *.sh
+🔄 Setting permissions on init-ssl.sh
+✅ Setting permissions on init-ssl.sh completed successfully
+✅ Permissions set for init-ssl.sh
+🔄 Setting permissions on cert-renewal.sh
+✅ Setting permissions on cert-renewal.sh completed successfully
+✅ Permissions set for cert-renewal.sh
+🔄 Setting permissions on deploy.sh
+✅ Setting permissions on deploy.sh completed successfully
+✅ Permissions set for deploy.sh
+🛡️ Checking if backend/.env.backend.template has changed...
+✅ .env.backend structure matches template. Proceeding with env file copy...
+🔄 Copying production environment file
+✅ Copying production environment file completed successfully
+✅ Environment variables properly set
+🔄 Building frontend assets...
+🔄 Building frontend assets
+
+up to date, audited 145 packages in 950ms
+
+27 packages are looking for funding
+  run `npm fund` for details
+
+2 moderate severity vulnerabilities
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+> probeops-frontend@0.1.0 build
+> vite build
+
+vite v4.5.14 building for production...
+transforming...
+✓ 11574 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.72 kB │ gzip:   0.41 kB
+dist/assets/index-f21ec40d.css    0.96 kB │ gzip:   0.53 kB
+dist/assets/index-689a1fbf.js   539.01 kB │ gzip: 171.23 kB
+
+(!) Some chunks are larger than 500 kBs after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 22.86s
+✅ Building frontend assets completed successfully
+✅ Frontend assets built successfully
+🔄 Copying frontend assets to NGINX build directory
+./deploy.sh: line 35: ./copy-frontend-assets.sh: No such file or directory
+❌ Copying frontend assets to NGINX build directory failed with exit code 127
+❌ Failed to copy frontend assets. Deployment may fail.
+ubuntu@ip-172-16-0-80:~/ProbeNetworkTools$
