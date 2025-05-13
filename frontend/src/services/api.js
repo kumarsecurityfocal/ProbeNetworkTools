@@ -54,11 +54,16 @@ const handleApiError = (error) => {
 // Auth APIs
 export const loginUser = async (username, password) => {
   try {
-    const formData = new FormData();
+    // Use URLSearchParams for form-urlencoded format required by FastAPI OAuth2
+    const formData = new URLSearchParams();
     formData.append('username', username);
     formData.append('password', password);
     
-    const response = await api.post('/login', formData);
+    const response = await api.post('/api/login', formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    });
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -67,7 +72,7 @@ export const loginUser = async (username, password) => {
 
 export const registerUser = async (username, email, password) => {
   try {
-    const response = await api.post('/register', {
+    const response = await api.post('/api/register', {
       username,
       email,
       password
@@ -80,7 +85,7 @@ export const registerUser = async (username, email, password) => {
 
 export const getUserProfile = async () => {
   try {
-    const response = await api.get('/api/me');
+    const response = await api.get('/me');
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -90,8 +95,8 @@ export const getUserProfile = async () => {
 // Diagnostic APIs
 export const runDiagnostic = async (tool, params = {}) => {
   try {
-    // The API endpoint is now just /api/{tool} since we fixed the router paths
-    const endpoint = `/api/${tool}`;
+    // The API endpoint is just /{tool} since we have baseURL set with /api in server.js
+    const endpoint = `/${tool}`;
     const response = await api.get(endpoint, { params });
     return response.data;
   } catch (error) {
@@ -101,7 +106,7 @@ export const runDiagnostic = async (tool, params = {}) => {
 
 export const getDiagnosticHistory = async (params = {}) => {
   try {
-    const response = await api.get('/api/history', { params });
+    const response = await api.get('/history', { params });
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -111,7 +116,7 @@ export const getDiagnosticHistory = async (params = {}) => {
 // API Key APIs
 export const getApiKeys = async () => {
   try {
-    const response = await api.get('/api/keys');
+    const response = await api.get('/keys');
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -120,7 +125,7 @@ export const getApiKeys = async () => {
 
 export const createApiKey = async (data) => {
   try {
-    const response = await api.post('/api/keys', {
+    const response = await api.post('/keys', {
       name: data.name
     }, {
       params: {
@@ -135,7 +140,7 @@ export const createApiKey = async (data) => {
 
 export const deleteApiKey = async (keyId) => {
   try {
-    const response = await api.delete(`/api/keys/${keyId}`);
+    const response = await api.delete(`/keys/${keyId}`);
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -144,7 +149,7 @@ export const deleteApiKey = async (keyId) => {
 
 export const deactivateApiKey = async (keyId) => {
   try {
-    const response = await api.put(`/api/keys/${keyId}/deactivate`);
+    const response = await api.put(`/keys/${keyId}/deactivate`);
     return response.data;
   } catch (error) {
     return handleApiError(error);
