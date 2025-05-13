@@ -95,8 +95,8 @@ export const getUserProfile = async () => {
 // Diagnostic APIs
 export const runDiagnostic = async (tool, params = {}) => {
   try {
-    // The API endpoint is just /{tool} since we have baseURL set with /api in server.js
-    const endpoint = `/${tool}`;
+    // The API endpoint must include the /api prefix
+    const endpoint = `/api/${tool}`;
     const response = await api.get(endpoint, { params });
     return response.data;
   } catch (error) {
@@ -106,7 +106,7 @@ export const runDiagnostic = async (tool, params = {}) => {
 
 export const getDiagnosticHistory = async (params = {}) => {
   try {
-    const response = await api.get('/history', { params });
+    const response = await api.get('/api/history', { params });
     return response.data;
   } catch (error) {
     return handleApiError(error);
