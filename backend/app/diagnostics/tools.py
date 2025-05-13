@@ -9,7 +9,8 @@ from typing import Tuple, List, Dict, Any, Optional
 
 def run_ping(target: str, count: int = 4) -> Tuple[bool, str]:
     """
-    Run ping against a target using the ping3 library.
+    Run ping against a target using a TCP socket approach.
+    This is safer than using ICMP packets which require root privileges.
     
     Args:
         target: The hostname or IP address to ping
@@ -20,33 +21,48 @@ def run_ping(target: str, count: int = 4) -> Tuple[bool, str]:
     """
     try:
         # Validate target
-        socket.getaddrinfo(target, None)
+        addr_info = socket.getaddrinfo(target, None)
+        ip_address = addr_info[0][4][0]  # Extract IP address
         
         # Validate count
         if count < 1 or count > 100:
             count = 4  # Default to 4 for safety
             
-        # Run ping using ping3 library
-        result_output = f"PING {target}\n"
+        # Use TCP socket connection to simulate ping
+        # We'll try standard HTTP port (80) for the connection test
+        result_output = f"PING {target} ({ip_address})\n"
         success = False
         total_time = 0
         successful_pings = 0
         
         for i in range(count):
-            response_time = ping(target, timeout=2)
-            if response_time is not None and response_time is not False:
+            try:
+                start_time = time.time()
+                # Create a socket and attempt to connect
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.settimeout(2)  # 2 second timeout
+                
+                # Connect to port 80 (HTTP)
+                s.connect((ip_address, 80))
+                s.close()
+                
+                # Calculate response time
+                response_time = time.time() - start_time
                 success = True
                 total_time += response_time
                 successful_pings += 1
-                result_output += f"64 bytes from {target}: icmp_seq={i+1} time={response_time*1000:.3f} ms\n"
-            else:
-                result_output += f"Request timeout for icmp_seq {i+1}\n"
+                result_output += f"Connected to {target}: tcp_seq={i+1} time={response_time*1000:.3f} ms\n"
+            except (socket.timeout, ConnectionRefusedError):
+                result_output += f"Connection timeout for tcp_seq {i+1}\n"
+            except Exception as e:
+                result_output += f"Error in tcp_seq {i+1}: {str(e)}\n"
+            
             time.sleep(0.2)  # Small delay between pings
             
         # Add ping statistics
         packet_loss = ((count - successful_pings) / count) * 100
-        result_output += f"\n--- {target} ping statistics ---\n"
-        result_output += f"{count} packets transmitted, {successful_pings} received, {packet_loss:.1f}% packet loss\n"
+        result_output += f"\n--- {target} TCP connection statistics ---\n"
+        result_output += f"{count} attempts, {successful_pings} successful, {packet_loss:.1f}% failure rate\n"
         
         if successful_pings > 0:
             avg_time = total_time / successful_pings * 1000  # Convert to ms
