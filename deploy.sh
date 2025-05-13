@@ -50,7 +50,7 @@ else
 fi
 
 # Step 2: Stop and remove existing containers
-if execute_and_log "docker-compose down" "Stopping existing containers"; then
+if execute_and_log "docker compose down" "Stopping existing containers"; then
     :  # Success case handled in function
 else
     log_message "⚠️ Warning: Issues stopping containers (they may not exist yet)"
@@ -58,7 +58,7 @@ else
 fi
 
 # Step 3: Rebuild and start containers
-if execute_and_log "docker-compose up -d --build" "Rebuilding and starting containers"; then
+if execute_and_log "docker compose up -d --build" "Rebuilding and starting containers"; then
     :  # Success case handled in function
 else
     log_message "Deployment failed at container build step"
@@ -71,7 +71,7 @@ echo "$ sleep 15  # Waiting for services to initialize" >> $LOG_FILE
 sleep 15  # Give the backend container time to start
 
 # Step 5: Apply database migrations
-if execute_and_log "docker-compose exec -T backend alembic upgrade head" "Applying database migrations to AWS RDS"; then
+if execute_and_log "docker compose exec -T backend alembic upgrade head" "Applying database migrations to AWS RDS"; then
     :  # Success case handled in function
 else
     log_message "⚠️ Database migration failed, but continuing with deployment"
@@ -80,8 +80,8 @@ fi
 
 # Step 6: Verify services are running
 log_message "🔄 Verifying services..."
-echo "$ docker-compose ps" >> $LOG_FILE
-docker_ps_output=$(docker-compose ps)
+echo "$ docker compose ps" >> $LOG_FILE
+docker_ps_output=$(docker compose ps)
 echo "$docker_ps_output" >> $LOG_FILE
 
 RUNNING_CONTAINERS=$(echo "$docker_ps_output" | grep "Up" | wc -l)
@@ -162,5 +162,5 @@ log_message "📝 See $LOG_FILE for detailed logs"
 echo ""
 echo "Deployment completed. Check deployment.log for details."
 echo "To view logs: tail -f deployment.log"
-echo "To view running containers: docker-compose ps"
+echo "To view running containers: docker compose ps"
 echo ""

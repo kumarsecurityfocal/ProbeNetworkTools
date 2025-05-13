@@ -10,7 +10,8 @@ COPY nginx.conf /etc/nginx/nginx.conf
 RUN mkdir -p /etc/letsencrypt
 
 # Copy the built frontend files to nginx html directory
-COPY --from=frontend /app/dist /usr/share/nginx/html
+# This will be handled by volume mounting in docker-compose.yml
+# or can be built as a multi-stage build when needed
 
 # Expose ports
 EXPOSE 80

@@ -58,8 +58,8 @@ fi
 
 # Step 3: Stop NGINX if it's running to free port 80
 log_message "🔄 Checking if NGINX is running..."
-if docker-compose ps | grep -q nginx; then
-    execute_and_log "docker-compose stop nginx" "Stopping NGINX container"
+if docker compose ps | grep -q nginx; then
+    execute_and_log "docker compose stop nginx" "Stopping NGINX container"
 fi
 
 # Step 4: Run Certbot to generate certificates
@@ -68,7 +68,7 @@ execute_and_log "docker run --rm -v $(pwd)/nginx/ssl:/etc/letsencrypt -v $(pwd)/
 
 # Step 5: Restart NGINX with the new certificates
 log_message "🔄 Starting NGINX with SSL certificates..."
-execute_and_log "docker-compose start nginx" "Starting NGINX container"
+execute_and_log "docker compose start nginx" "Starting NGINX container"
 
 # Step 6: Set up renewal cron job
 log_message "🔄 Setting up certificate renewal cron job..."
@@ -85,7 +85,7 @@ fi
 log_message "===== SSL SETUP COMPLETED: $(date +"%Y-%m-%d %H:%M:%S") ====="
 log_message "📝 Next steps:"
 log_message "1. Update nginx/nginx.conf to use the SSL certificates"
-log_message "2. Restart NGINX with: docker-compose restart nginx"
+log_message "2. Restart NGINX with: docker compose restart nginx"
 log_message "3. Use https://probeops.com to access your site securely"
 
 echo ""

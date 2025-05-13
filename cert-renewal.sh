@@ -55,13 +55,13 @@ if [ ! -f "./nginx/ssl/live/probeops.com/fullchain.pem" ]; then
     log_message "🔄 First-time certificate issuance detected"
     
     # Stop nginx to free up port 80
-    execute_and_log "docker-compose stop nginx" "Stopping NGINX container"
+    execute_and_log "docker compose stop nginx" "Stopping NGINX container"
     
     # Issue new certificates
     execute_and_log "docker run --rm -v $(pwd)/nginx/ssl:/etc/letsencrypt -v $(pwd)/nginx/ssl/webroot:/var/www/certbot -p 80:80 certbot/certbot certonly --standalone --preferred-challenges http --email $EMAIL --agree-tos --no-eff-email -d $DOMAINS" "Issuing new SSL certificates"
     
     # Start nginx again
-    execute_and_log "docker-compose start nginx" "Starting NGINX container"
+    execute_and_log "docker compose start nginx" "Starting NGINX container"
     
     log_message "✅ SSL certificates have been issued successfully"
     log_message "⚠️ Remember to update nginx/nginx.conf to use the SSL certificates"
@@ -70,13 +70,13 @@ else
     log_message "🔄 Certificate renewal process"
     
     # Stop nginx to free up port 80
-    execute_and_log "docker-compose stop nginx" "Stopping NGINX container"
+    execute_and_log "docker compose stop nginx" "Stopping NGINX container"
     
     # Renew certificates
     execute_and_log "docker run --rm -v $(pwd)/nginx/ssl:/etc/letsencrypt -v $(pwd)/nginx/ssl/webroot:/var/www/certbot -p 80:80 certbot/certbot renew" "Renewing SSL certificates"
     
     # Start nginx again
-    execute_and_log "docker-compose start nginx" "Starting NGINX container"
+    execute_and_log "docker compose start nginx" "Starting NGINX container"
     
     log_message "✅ SSL certificate renewal process completed"
 fi

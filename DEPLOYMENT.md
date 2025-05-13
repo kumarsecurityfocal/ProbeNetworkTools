@@ -161,17 +161,17 @@ LOG_LEVEL=INFO
 
 ```bash
 # Build and start the containers
-docker-compose up -d --build
+docker compose up -d --build
 
 # Check if all containers are running
-docker-compose ps
+docker compose ps
 ```
 
 ### 3.4 Run Database Migrations
 
 ```bash
 # Run Alembic migrations
-docker-compose exec backend alembic upgrade head
+docker compose exec backend alembic upgrade head
 
 # Alternatively, if the container name is different
 docker exec -it probeops-backend alembic upgrade head
@@ -184,7 +184,7 @@ docker exec -it probeops-backend alembic upgrade head
 curl http://localhost:8000/
 
 # Check the logs for any issues
-docker-compose logs
+docker compose logs
 ```
 
 ## 4. Setting Up Domain and SSL
@@ -217,7 +217,7 @@ We'll use the official Certbot Docker image to generate certificates:
 
 ```bash
 # Stop nginx container temporarily to free port 80
-docker-compose stop nginx
+docker compose stop nginx
 
 # Run Certbot Docker container using standalone mode
 docker run -it --rm \
@@ -233,7 +233,7 @@ docker run -it --rm \
   -d probeops.com -d www.probeops.com
 
 # Start nginx again
-docker-compose start nginx
+docker compose start nginx
 ```
 
 #### 4.2.3 Update NGINX Configuration
@@ -294,7 +294,7 @@ After updating the NGINX configuration:
 
 ```bash
 # Restart NGINX container to apply the changes
-docker-compose restart nginx
+docker compose restart nginx
 ```
 
 #### 4.2.4 Setting Up Certificate Auto-Renewal
@@ -311,7 +311,7 @@ Add the following content:
 #!/bin/bash
 
 # Stop nginx container temporarily
-docker-compose stop nginx
+docker compose stop nginx
 
 # Run certbot renewal
 docker run --rm \
@@ -321,7 +321,7 @@ docker run --rm \
   certbot/certbot renew
 
 # Start nginx again
-docker-compose start nginx
+docker compose start nginx
 ```
 
 Make the script executable:
