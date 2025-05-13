@@ -11,7 +11,6 @@ const apiProxyOptions = {
   ws: true,
   xfwd: true,
   logLevel: 'debug',
-  // Don't rewrite path - let the full /api path pass through
   onProxyReq: (proxyReq, req, res) => {
     // Log proxy request for debugging
     console.log(`Proxying to: ${req.method} ${proxyReq.path}`);
@@ -35,8 +34,15 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Also serve files from the frontend directory for development
 app.use('/src', express.static(path.join(__dirname, 'frontend', 'src')));
 
-// Use API proxy for /api/* routes
-app.use('/api', apiProxy);
+// Use a custom handler for /api/* routes that preserves the /api prefix
+app.use('/api', (req, res, next) => {
+  const fullPath = '/api' + req.url;
+  console.log(`API request received: ${req.method} ${req.url} -> full path: ${fullPath}`);
+  
+  // Modify the request URL to include /api prefix when forwarded
+  req.url = '/api' + req.url;
+  return apiProxy(req, res, next);
+});
 
 // We no longer need separate proxies for login and register
 // as they are now properly prefixed with /api and handled by the main proxy
