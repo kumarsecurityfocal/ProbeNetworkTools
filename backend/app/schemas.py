@@ -1,10 +1,8 @@
+from pydantic import BaseModel, EmailStr
+from typing import Optional, List
 from datetime import datetime
-from typing import List, Optional
-
-from pydantic import BaseModel, EmailStr, Field, validator
 
 
-# User schemas
 class UserBase(BaseModel):
     username: str
     email: EmailStr
@@ -24,12 +22,11 @@ class UserResponse(UserBase):
     is_active: bool
     is_superuser: bool
     created_at: datetime
-
+    
     class Config:
         orm_mode = True
 
 
-# API Key schemas
 class ApiKeyBase(BaseModel):
     name: str
 
@@ -45,12 +42,11 @@ class ApiKeyResponse(ApiKeyBase):
     is_active: bool
     created_at: datetime
     expires_at: Optional[datetime] = None
-
+    
     class Config:
         orm_mode = True
 
 
-# Diagnostic schemas
 class DiagnosticCreate(BaseModel):
     tool: str
     target: str
@@ -63,12 +59,11 @@ class DiagnosticResponse(DiagnosticCreate):
     user_id: int
     created_at: datetime
     execution_time: int
-
+    
     class Config:
         orm_mode = True
 
 
-# Token schemas
 class Token(BaseModel):
     access_token: str
     token_type: str
