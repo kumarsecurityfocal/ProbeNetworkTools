@@ -76,8 +76,20 @@ execute_command "chmod +x *.sh" "Setting executable permissions on scripts" true
 log_message "Step 3: Building frontend..."
 if [ -d "frontend" ]; then
     execute_command "cd frontend && npm install && npm run build" "Installing frontend dependencies and building" true
-    # Copy frontend assets for NGINX
-    execute_command "./copy-frontend-assets.sh" "Copying frontend assets for NGINX" true
+    
+    # Instead of relying on the copy script, manually copy the assets
+    log_message "Manually copying frontend assets to nginx/frontend-build..."
+    execute_command "mkdir -p nginx/frontend-build" "Creating nginx/frontend-build directory" true
+    
+    # Check if public directory exists and has files
+    if [ -d "public" ] && [ -f "public/index.html" ]; then
+        execute_command "cp -r public/* nginx/frontend-build/" "Copying public/* to nginx/frontend-build/" true
+        execute_command "echo 'ProbeOps frontend build copied at $(date)' > nginx/frontend-build/.probeops-build-copied" "Creating build marker" true
+        log_message "✅ Frontend assets copied manually to nginx/frontend-build"
+    else
+        log_warning "Public directory or index.html not found. Will try to create a fallback index.html"
+        execute_command "echo '<html><head><title>ProbeOps</title></head><body><h1>ProbeOps</h1><p>Frontend assets not found. This is a placeholder.</p></body></html>' > nginx/frontend-build/index.html" "Creating fallback index.html" true
+    fi
 else
     log_warning "Frontend directory not found. Skipping frontend build."
 fi

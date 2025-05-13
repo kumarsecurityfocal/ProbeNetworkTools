@@ -1,0 +1,45 @@
+✅ Frontend assets built successfully
+🔄 Copying frontend assets to NGINX build directory
+./deploy.sh: line 35: ./copy-frontend-assets.sh: No such file or directory
+❌ Copying frontend assets to NGINX build directory failed with exit code 127
+❌ Failed to copy frontend assets. Deployment may fail.
+ubuntu@ip-172-16-0-80:~/ProbeNetworkTools$ ls -al
+total 1056
+drwxrwxr-x  9 ubuntu ubuntu   4096 May 13 13:10 .
+drwxr-x--- 10 ubuntu ubuntu   4096 May 13 12:49 ..
+-rw-rw-r--  1 ubuntu ubuntu    231 May 13 12:49 .dockerignore
+-rw-rw-r--  1 ubuntu ubuntu    415 May 13 12:49 .env.template
+drwxrwxr-x  8 ubuntu ubuntu   4096 May 13 13:12 .git
+-rw-rw-r--  1 ubuntu ubuntu    104 May 13 12:49 .gitignore
+-rw-rw-r--  1 ubuntu ubuntu    808 May 13 12:49 .replit
+-rw-rw-r--  1 ubuntu ubuntu  11598 May 13 12:49 DEPLOYMENT.md
+-rw-rw-r--  1 ubuntu ubuntu   4453 May 13 12:49 FRONTEND-DEPLOYMENT.md
+-rw-rw-r--  1 ubuntu ubuntu   5638 May 13 12:49 PROJECT_STATUS.md
+-rw-rw-r--  1 ubuntu ubuntu   4387 May 13 12:49 SSL-DEPLOYMENT.md
+drwxrwxr-x  2 ubuntu ubuntu   4096 May 13 12:49 attached_assets
+drwxrwxr-x  4 ubuntu ubuntu   4096 May 13 12:49 backend
+-rwxrwxr-x  1 ubuntu ubuntu   4862 May 13 12:49 cert-renewal.sh
+-rwxrwxr-x  1 ubuntu ubuntu   1739 May 13 13:10 copy-frontend-assets.sh
+-rwxrwxr-x  1 ubuntu ubuntu  15842 May 13 12:49 deploy.sh
+-rw-rw-r--  1 ubuntu ubuntu   3808 May 13 13:12 deployment.log
+-rw-rw-r--  1 ubuntu ubuntu   1289 May 13 12:49 docker-compose.dev.yml
+-rw-rw-r--  1 ubuntu ubuntu   2619 May 13 12:49 docker-compose.yml
+-rwxrwxr-x  1 ubuntu ubuntu   3900 May 13 12:49 fix-frontend-deployment.sh
+drwxrwxr-x  6 ubuntu ubuntu   4096 May 13 13:12 frontend
+-rw-rw-r--  1 ubuntu ubuntu 693104 May 13 12:49 generated-icon.png
+-rw-rw-r--  1 ubuntu ubuntu   4282 May 13 12:49 index.html
+-rw-rw-r--  1 ubuntu ubuntu    600 May 13 12:49 index.js
+-rwxrwxr-x  1 ubuntu ubuntu   3725 May 13 12:49 init-ssl.sh
+drwxrwxr-x  4 ubuntu ubuntu   4096 May 13 12:49 nginx
+-rw-rw-r--  1 ubuntu ubuntu 116771 May 13 12:49 package-lock.json
+-rw-rw-r--  1 ubuntu ubuntu    578 May 13 12:49 package.json
+-rwxrwxr-x  1 ubuntu ubuntu   4943 May 13 12:49 pre-deploy-validate.sh
+drwxrwxr-x  2 ubuntu ubuntu   4096 May 13 12:49 probe
+drwxrwxr-x  3 ubuntu ubuntu   4096 May 13 12:49 public
+-rw-rw-r--  1 ubuntu ubuntu    480 May 13 12:49 pyproject.toml
+-rw-rw-r--  1 ubuntu ubuntu   1031 May 13 12:49 server.js
+-rwxrwxr-x  1 ubuntu ubuntu   3850 May 13 12:49 simple-deploy.sh
+-rw-rw-r--  1 ubuntu ubuntu  74507 May 13 12:49 uv.lock
+-rwxrwxr-x  1 ubuntu ubuntu   4134 May 13 12:49 verify-frontend.sh
+-rwxrwxr-x  1 ubuntu ubuntu   3652 May 13 12:49 verify-ssl.sh
+ubuntu@ip-172-16-0-80:~/ProbeNetworkTools$
