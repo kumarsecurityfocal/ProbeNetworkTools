@@ -1,2 +1,46 @@
-# This file intentionally left empty
-# The actual gitignore will be maintained on your production server
+# ProbeOps .gitignore
+
+# SSL Certificates - Never commit these to git
+nginx/ssl/
+nginx/ssl/live/
+nginx/ssl/live/probeops.com-0001/
+*.pem
+*.crt
+*.key
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.template
+!.env.example
+!.env.sample
+
+# Build artifacts
+frontend/dist/
+frontend/build/
+public/assets/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+.env/
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Database
+*.sqlite
+*.db
+
+# Operating System
+.DS_Store
+Thumbs.db
