@@ -26,6 +26,23 @@ if [ -d "/var/www/html" ] && [ -f "/var/www/html/index.html" ]; then
     rm -f /var/www/html/index.html
 fi
 
+# Check SSL certificate paths
+echo "Checking SSL certificate paths..."
+# Check for certificates in standard path
+STANDARD_CERT="/etc/letsencrypt/live/probeops.com/fullchain.pem"
+NUMBERED_CERT="/etc/letsencrypt/live/probeops.com-0001/fullchain.pem"
+
+if [ -f "$NUMBERED_CERT" ]; then
+    echo "✅ Found certificate at numbered path: $NUMBERED_CERT"
+    # Ensure our config is pointing to the correct certificate
+    if grep -q "ssl_certificate /etc/letsencrypt/live/probeops.com/fullchain.pem" /etc/nginx/nginx.conf; then
+        echo "⚠️ NGINX config uses incorrect certificate path, but we can't modify it here."
+        echo "⚠️ Please update nginx.conf to point to: $NUMBERED_CERT"
+    fi
+elif [ -f "$STANDARD_CERT" ]; then
+    echo "✅ Found certificate at standard path: $STANDARD_CERT"
+fi
+
 # Create directory if it doesn't exist
 mkdir -p /usr/share/nginx/html
 

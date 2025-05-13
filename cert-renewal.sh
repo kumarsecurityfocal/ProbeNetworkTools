@@ -49,8 +49,26 @@ if [ ! -d "./nginx/ssl/live" ]; then
     execute_and_log "mkdir -p ./nginx/ssl/webroot/.well-known/acme-challenge" "Creating webroot challenge directories"
 fi
 
+# Function to find the current certificate directory
+find_cert_dir() {
+    # Check for directories matching probeops.com or probeops.com-NNNN
+    local cert_dirs=$(find ./nginx/ssl/live -maxdepth 1 -name "probeops.com*" -type d 2>/dev/null | sort)
+    
+    if [ -n "$cert_dirs" ]; then
+        # Use the most recent one (usually the one with the highest suffix)
+        echo "$cert_dirs" | tail -n 1
+    else
+        echo "./nginx/ssl/live/probeops.com"  # Default path
+    fi
+}
+
 # Determine if this is first-time setup or renewal
-if [ ! -f "./nginx/ssl/live/probeops.com/fullchain.pem" ]; then
+CERT_DIR=$(find_cert_dir)
+CERT_PATH="$CERT_DIR/fullchain.pem"
+
+log_message "Checking for certificates at $CERT_PATH"
+
+if [ ! -f "$CERT_PATH" ]; then
     # First-time certificate issuance
     log_message "🔄 First-time certificate issuance detected"
     
@@ -64,10 +82,21 @@ if [ ! -f "./nginx/ssl/live/probeops.com/fullchain.pem" ]; then
     execute_and_log "docker compose start nginx" "Starting NGINX container"
     
     log_message "✅ SSL certificates have been issued successfully"
-    log_message "⚠️ Remember to update nginx/nginx.conf to use the SSL certificates"
+    
+    # Find the actual certificate directory (may include a suffix)
+    NEW_CERT_DIR=$(find_cert_dir)
+    NEW_CERT_NAME=$(basename "$NEW_CERT_DIR")
+    
+    log_message "⚠️ Certificates created at: $NEW_CERT_DIR"
+    log_message "⚠️ Remember to update nginx/nginx.conf to use the certificate path: /etc/letsencrypt/live/$NEW_CERT_NAME/fullchain.pem"
+    
+    # Check if we need to update nginx.conf
+    if grep -q "/etc/letsencrypt/live/probeops.com/fullchain.pem" ./nginx/nginx.conf && [ "$NEW_CERT_NAME" != "probeops.com" ]; then
+        log_message "⚠️ Certificate path in nginx.conf needs to be updated to: $NEW_CERT_NAME"
+    fi
 else
     # Certificate renewal
-    log_message "🔄 Certificate renewal process"
+    log_message "🔄 Certificate renewal process for existing certificates"
     
     # Stop nginx to free up port 80
     execute_and_log "docker compose stop nginx" "Stopping NGINX container"
@@ -78,7 +107,17 @@ else
     # Start nginx again
     execute_and_log "docker compose start nginx" "Starting NGINX container"
     
+    # Check if the certificate directory has changed
+    NEW_CERT_DIR=$(find_cert_dir)
+    NEW_CERT_NAME=$(basename "$NEW_CERT_DIR")
+    
     log_message "✅ SSL certificate renewal process completed"
+    
+    # Check if we need to update nginx.conf due to a new certificate path
+    if [ "$NEW_CERT_DIR" != "$CERT_DIR" ]; then
+        log_message "⚠️ Certificate path has changed from $(basename "$CERT_DIR") to $NEW_CERT_NAME"
+        log_message "⚠️ Update nginx/nginx.conf to use: /etc/letsencrypt/live/$NEW_CERT_NAME/fullchain.pem"
+    fi
 fi
 
 # Final status

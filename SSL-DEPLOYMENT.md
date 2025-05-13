@@ -28,22 +28,39 @@ On your production server, follow these steps to obtain real Let's Encrypt certi
 
 3. **Copy certificates to the project structure**:
    ```bash
-   sudo mkdir -p ./nginx/ssl/live/probeops.com
-   sudo cp /etc/letsencrypt/live/probeops.com/*.pem ./nginx/ssl/live/probeops.com/
+   # First, determine the actual certificate directory name (it may include a suffix like -0001)
+   CERT_DIR=$(ls -d /etc/letsencrypt/live/probeops.com* | head -n 1)
+   CERT_NAME=$(basename $CERT_DIR)
+   
+   # Create directories and copy files
+   sudo mkdir -p ./nginx/ssl/live/$CERT_NAME
+   sudo cp $CERT_DIR/*.pem ./nginx/ssl/live/$CERT_NAME/
    sudo cp /etc/letsencrypt/ssl-dhparams.pem ./nginx/ssl/
    sudo chown -R $(whoami):$(whoami) ./nginx/ssl/
+   
+   echo "Certificates copied from $CERT_DIR"
    ```
+   
+   **Note:** Let's Encrypt may create numbered directories (e.g., `probeops.com-0001`) for certificate renewals.
 
 ## Step 2: Verify NGINX Configuration
 
-The NGINX configuration should already be set up to use the certificates:
+The NGINX configuration should be set up to use the certificates with the correct path:
 
 ```nginx
-# SSL certificate configuration
-ssl_certificate /etc/letsencrypt/live/probeops.com/fullchain.pem;
-ssl_certificate_key /etc/letsencrypt/live/probeops.com/privkey.pem;
+# SSL certificate configuration - make sure the path matches your actual certificate location
+ssl_certificate /etc/letsencrypt/live/probeops.com-0001/fullchain.pem;
+ssl_certificate_key /etc/letsencrypt/live/probeops.com-0001/privkey.pem;
 include /etc/nginx/ssl-params.conf;
 ```
+
+**Important:** You must update the path in `nginx/nginx.conf` to match the actual certificate location. When Let's Encrypt renews certificates, it may create numbered directories (e.g., `probeops.com-0001`). Always check the certificate path with:
+
+```bash
+ls -la /etc/letsencrypt/live/
+```
+
+If the directory name changes, update the paths in your NGINX configuration.
 
 ## Step 3: Start Services with HTTPS Support
 
@@ -91,6 +108,17 @@ Let's Encrypt certificates expire after 90 days. The `cert-renewal.sh` script is
 2. **NGINX fails to start**:
    - Check NGINX logs: `docker compose logs nginx`
    - Verify certificate paths and permissions
+   - Make sure certificate paths in `nginx.conf` match the actual location:
+     ```bash
+     # Check actual certificate location
+     ls -la /etc/letsencrypt/live/
+     
+     # Update NGINX configuration if needed
+     vi nginx/nginx.conf
+     
+     # Restart NGINX container
+     docker compose restart nginx
+     ```
 
 3. **Certificate renewal failures**:
    - Check the renewal log: `cat ssl-renewal.log`
