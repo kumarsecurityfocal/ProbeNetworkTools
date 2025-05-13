@@ -25,7 +25,14 @@ const apiProxyOptions = {
   },
   onError: (err, req, res) => {
     console.error('Proxy error:', err);
-    res.status(500).json({ error: 'API Proxy Error', message: err.message });
+    console.error('Failed URL:', req.method, req.originalUrl);
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        error: 'API Proxy Error', 
+        message: err.message,
+        path: req.originalUrl 
+      });
+    }
   }
 };
 

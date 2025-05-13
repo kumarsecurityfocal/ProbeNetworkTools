@@ -3,7 +3,8 @@ import { getToken, clearToken } from './auth';
 
 // Create axios instance
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/'
+  baseURL: import.meta.env.VITE_API_URL || '/',
+  timeout: 10000 // 10 second timeout
 });
 
 // Request interceptor to add auth header
