@@ -10,7 +10,7 @@ from app.database import get_db
 router = APIRouter()
 
 
-@router.post("/api/keys", response_model=schemas.ApiKeyResponse)
+@router.post("/keys", response_model=schemas.ApiKeyResponse)
 async def create_api_key(
     key_data: schemas.ApiKeyCreate,
     expires_days: Optional[int] = Query(None, description="Number of days until the key expires"),
