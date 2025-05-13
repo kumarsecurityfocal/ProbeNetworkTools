@@ -68,11 +68,65 @@ execute_and_log() {
     fi
 }
 
-# Step 1: Pull the latest code from GitHub
-if execute_and_log "git pull origin $BRANCH" "Pulling latest code from GitHub ($BRANCH branch)"; then
-    :  # Success case handled in function
+# Step 1: Check for uncommitted changes before git pull
+log_message "🔄 Checking for uncommitted changes..."
+echo "$ git status --porcelain" >> $LOG_FILE
+uncommitted_changes=$(git status --porcelain)
+
+if [[ -n "$uncommitted_changes" ]]; then
+    log_message "⚠️ Uncommitted changes detected. This could cause merge conflicts during deployment."
+    echo "$uncommitted_changes" >> $LOG_FILE
+    
+    # Display list of uncommitted files
+    echo "Uncommitted files:" >> $LOG_FILE
+    echo "$uncommitted_changes" | awk '{print $2}' >> $LOG_FILE
+    
+    log_message "❓ You have three options:"
+    log_message "  1. Abort the deployment (default)"
+    log_message "  2. Stash changes and continue"
+    log_message "  3. Force pull (may overwrite local changes)"
+    
+    # Ask for user input with 30 second timeout
+    log_message "⏱️ Waiting 30 seconds for input (default: abort)..."
+    echo "$ read -t 30 -p 'Enter choice [1-3]: ' choice" >> $LOG_FILE
+    
+    # Prompt for input with timeout
+    read -t 30 -p "Enter choice [1-3]: " choice || choice=1
+    echo "User choice: $choice" >> $LOG_FILE
+    
+    case $choice in
+        2)
+            log_message "🔄 Stashing local changes..."
+            if execute_and_log "git stash --include-untracked" "Stashing local changes"; then
+                log_message "✅ Changes stashed. Proceeding with git pull."
+            else
+                log_message "❌ Failed to stash changes. Aborting deployment."
+                exit 1
+            fi
+            ;;
+        3)
+            log_message "⚠️ Force pull selected. Local changes may be lost."
+            if execute_and_log "git reset --hard" "Resetting local changes"; then
+                log_message "✅ Local changes reset. Proceeding with git pull."
+            else
+                log_message "❌ Failed to reset local changes. Aborting deployment."
+                exit 1
+            fi
+            ;;
+        *)
+            log_message "❌ Deployment aborted to prevent merge conflicts."
+            exit 1
+            ;;
+    esac
 else
-    log_message "Deployment failed at git pull step"
+    log_message "✅ No uncommitted changes detected. Proceeding with git pull."
+fi
+
+# Now proceed with git pull
+if execute_and_log "git pull origin $BRANCH" "Pulling latest code from GitHub ($BRANCH branch)"; then
+    log_message "✅ Code successfully updated from $BRANCH branch"
+else
+    log_message "❌ Deployment failed at git pull step"
     exit 1
 fi
 
