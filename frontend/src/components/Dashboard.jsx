@@ -329,7 +329,7 @@ const Dashboard = () => {
         
         <Grid item xs={12} sm={6} md={3}>
           <Card sx={getCardStyle(darkMode)}>
-            <CardContent sx={{ p: 3 }}>
+            <CardContent sx={{ p: 2 }}>
               <Box sx={{
                 ...iconContainerStyle,
                 backgroundColor: stats.successRate > 80 
@@ -344,10 +344,10 @@ const Dashboard = () => {
                 <SuccessIcon fontSize="medium" />
               </Box>
               <Typography 
-                variant="h4" 
+                variant="h5" 
                 sx={{ 
                   fontWeight: 600, 
-                  mb: 1, 
+                  mb: 0.5, 
                   color: darkMode ? '#ffffff' : '#111827',
                   fontFamily: '"Inter", sans-serif'
                 }}
@@ -382,7 +382,7 @@ const Dashboard = () => {
         
         <Grid item xs={12} sm={6} md={3}>
           <Card sx={getCardStyle(darkMode)}>
-            <CardContent sx={{ p: 3 }}>
+            <CardContent sx={{ p: 2 }}>
               <Box sx={{
                 ...iconContainerStyle,
                 backgroundColor: darkMode ? 'rgba(156, 39, 176, 0.15)' : 'rgba(156, 39, 176, 0.08)', 
@@ -391,10 +391,10 @@ const Dashboard = () => {
                 <TimeIcon fontSize="medium" />
               </Box>
               <Typography 
-                variant="h4" 
+                variant="h5" 
                 sx={{ 
                   fontWeight: 600, 
-                  mb: 1, 
+                  mb: 0.5, 
                   color: darkMode ? '#ffffff' : '#111827',
                   fontFamily: '"Inter", sans-serif'
                 }}
@@ -454,11 +454,11 @@ const Dashboard = () => {
                 }}
               />
             </Box>
-            <Divider sx={{ mb: 3 }} />
+            <Divider sx={{ mb: 2 }} />
             
             <Box 
               sx={{ 
-                py: 3, 
+                py: 2, 
                 display: 'flex', 
                 flexDirection: 'column', 
                 alignItems: 'center',
