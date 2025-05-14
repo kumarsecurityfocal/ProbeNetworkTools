@@ -203,11 +203,13 @@ const Dashboard = () => {
     <Container maxWidth="lg" sx={{ mt: 0, mb: 3 }}>
       <Box sx={{ 
         display: 'flex', 
+        flexDirection: { xs: 'column', sm: 'row' },
         justifyContent: 'space-between', 
-        alignItems: 'center', 
+        alignItems: { xs: 'flex-start', sm: 'center' }, 
         mb: 2,
         pb: 1,
         borderBottom: '1px solid #f0f0f5',
+        gap: { xs: 2, sm: 0 }
       }}>
         <Typography 
           variant="h5" 
@@ -215,10 +217,12 @@ const Dashboard = () => {
             fontWeight: 600, 
             color: darkMode ? '#ffffff' : '#111827',
             fontFamily: '"Inter", sans-serif', 
-            letterSpacing: '-0.01em'
+            letterSpacing: '-0.01em',
+            fontSize: { xs: '1.25rem', sm: '1.5rem' },
+            maxWidth: { xs: '100%', sm: '60%' }
           }}
         >
-          Dashboard
+          Network Monitoring Dashboard
         </Typography>
         
         <Box 
