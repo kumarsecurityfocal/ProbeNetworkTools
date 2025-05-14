@@ -3,7 +3,8 @@ import { getToken, clearToken } from './auth';
 
 // Create axios instance
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/',
+  // Make sure we have a proper absolute URL, or use the current origin if none provided
+  baseURL: import.meta.env.VITE_API_URL || window.location.origin,
   timeout: 60000 // 60 second timeout for slower network conditions
 });
 
@@ -213,8 +214,8 @@ export const createApiKey = async (data) => {
   try {
     console.log("Creating API key with data:", data);
     
-    // Go back to using axios which handles base URL properly
-    const response = await api.post('/keys/', {
+    // Use the format expected by the backend
+    const response = await api.post('/keys', {
       name: data.name
     }, {
       params: {
@@ -226,16 +227,14 @@ export const createApiKey = async (data) => {
     return response.data;
   } catch (error) {
     console.error("Error creating API key:", error);
-    console.error("Full error object:", JSON.stringify(error, null, 2));
     
-    // Throw a more descriptive error message
+    // Log the full error for debugging
     if (error.response) {
-      throw new Error(`Server error: ${error.response.status} - ${JSON.stringify(error.response.data)}`);
-    } else if (error.request) {
-      throw new Error(`No response from server. Network issue or CORS problem.`);
-    } else {
-      throw new Error(`Error creating API key: ${error.message}`);
+      console.error("Error response data:", error.response.data);
+      console.error("Error status:", error.response.status);
     }
+    
+    throw error;
   }
 };
 
