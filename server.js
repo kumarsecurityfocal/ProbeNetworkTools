@@ -137,23 +137,19 @@ app.use('/whois', (req, res, next) => {
   console.log(`WHOIS diagnostic request received: ${req.method} ${req.url}`);
   console.log(`Original URL: ${req.originalUrl}`);
   
-  // Modify the request URL to ensure proper forwarding
-  req.url = req.url || '/';
-  
-  // This ensures the URL starts with a slash
-  if (!req.url.startsWith('/')) {
-    req.url = '/' + req.url;
-  }
-  
-  // Explicitly set the path for the proxy
-  req.originalUrl = '/whois' + req.url;
-  req.path = '/whois';
+  // Create a dedicated proxy for WHOIS requests
+  const whoisProxy = createProxyMiddleware({
+    ...apiProxyOptions,
+    pathRewrite: {
+      '^/whois': '/whois' // Rewrite path to ensure proper forwarding
+    }
+  });
   
   console.log(`Forwarding to backend: ${apiProxyOptions.target}/whois${req.url}`);
   console.log(`============================================`);
   
-  // Let the proxy middleware handle the request with the fixed URL
-  return apiProxy(req, res, next);
+  // Use the dedicated proxy
+  return whoisProxy(req, res, next);
 });
 
 app.use('/port', (req, res, next) => {
@@ -161,23 +157,19 @@ app.use('/port', (req, res, next) => {
   console.log(`Port check diagnostic request received: ${req.method} ${req.url}`);
   console.log(`Original URL: ${req.originalUrl}`);
   
-  // Modify the request URL to ensure proper forwarding
-  req.url = req.url || '/';
-  
-  // This ensures the URL starts with a slash
-  if (!req.url.startsWith('/')) {
-    req.url = '/' + req.url;
-  }
-  
-  // Explicitly set the path for the proxy
-  req.originalUrl = '/port' + req.url;
-  req.path = '/port';
+  // Create a dedicated proxy for PORT requests
+  const portProxy = createProxyMiddleware({
+    ...apiProxyOptions,
+    pathRewrite: {
+      '^/port': '/port' // Rewrite path to ensure proper forwarding
+    }
+  });
   
   console.log(`Forwarding to backend: ${apiProxyOptions.target}/port${req.url}`);
   console.log(`============================================`);
   
-  // Let the proxy middleware handle the request with the fixed URL
-  return apiProxy(req, res, next);
+  // Use the dedicated proxy
+  return portProxy(req, res, next);
 });
 
 app.use('/http', (req, res, next) => {
@@ -185,23 +177,19 @@ app.use('/http', (req, res, next) => {
   console.log(`HTTP diagnostic request received: ${req.method} ${req.url}`);
   console.log(`Original URL: ${req.originalUrl}`);
   
-  // Modify the request URL to ensure proper forwarding
-  req.url = req.url || '/';
-  
-  // This ensures the URL starts with a slash
-  if (!req.url.startsWith('/')) {
-    req.url = '/' + req.url;
-  }
-  
-  // Explicitly set the path for the proxy
-  req.originalUrl = '/http' + req.url;
-  req.path = '/http';
+  // Create a dedicated proxy for HTTP requests
+  const httpProxy = createProxyMiddleware({
+    ...apiProxyOptions,
+    pathRewrite: {
+      '^/http': '/http' // Rewrite path to ensure proper forwarding
+    }
+  });
   
   console.log(`Forwarding to backend: ${apiProxyOptions.target}/http${req.url}`);
   console.log(`============================================`);
   
-  // Let the proxy middleware handle the request with the fixed URL
-  return apiProxy(req, res, next);
+  // Use the dedicated proxy
+  return httpProxy(req, res, next);
 });
 
 // Diagnostics history endpoint
@@ -210,23 +198,19 @@ app.use('/history', (req, res, next) => {
   console.log(`Diagnostics history request received: ${req.method} ${req.url}`);
   console.log(`Original URL: ${req.originalUrl}`);
   
-  // Modify the request URL to ensure proper forwarding
-  req.url = req.url || '/';
-  
-  // This ensures the URL starts with a slash
-  if (!req.url.startsWith('/')) {
-    req.url = '/' + req.url;
-  }
-  
-  // Explicitly set the path for the proxy
-  req.originalUrl = '/history' + req.url;
-  req.path = '/history';
+  // Create a dedicated proxy for history requests
+  const historyProxy = createProxyMiddleware({
+    ...apiProxyOptions,
+    pathRewrite: {
+      '^/history': '/history' // Rewrite path to ensure proper forwarding
+    }
+  });
   
   console.log(`Forwarding to backend: ${apiProxyOptions.target}/history${req.url}`);
   console.log(`============================================`);
   
-  // Let the proxy middleware handle the request with the fixed URL
-  return apiProxy(req, res, next);
+  // Use the dedicated proxy
+  return historyProxy(req, res, next);
 });
 
 // Metrics endpoints
