@@ -36,19 +36,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getDiagnosticHistory, getApiKeys, getScheduledProbes, getDashboardMetrics } from '../services/api';
 
-// Airtable-inspired card style
-const cardStyle = {
-  borderRadius: '12px', 
-  border: '1px solid rgba(0,0,0,0.04)', 
-  boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-  backgroundColor: '#fcfcff',
-  '&:hover': {
-    transform: 'translateY(-2px)',
-    boxShadow: '0 4px 8px rgba(0,0,0,0.05)'
-  }
-};
-
 // Card styles for Airtable-inspired UI
 const cardStyle = {
   borderRadius: '8px', 
@@ -231,27 +218,9 @@ const Dashboard = () => {
       <Grid container spacing={3}>
         {/* Stats Cards - First Row with Airtable-inspired styling */}
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
-            borderRadius: '12px', 
-            border: '1px solid rgba(0,0,0,0.07)', 
-            boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
-            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              boxShadow: '0 6px 12px rgba(0,0,0,0.08)'
-            }
-          }}>
+          <Card sx={cardStyle}>
             <CardContent sx={{ p: 3 }}>
-              <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                mb: 2.5,
-                backgroundColor: 'rgba(25, 118, 210, 0.1)', 
-                color: '#1976d2',
-                width: 'fit-content',
-                p: 1.5,
-                borderRadius: '8px'
-              }}>
+              <Box sx={iconContainerStyle}>
                 <NetworkIcon fontSize="medium" />
               </Box>
               <Typography 

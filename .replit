@@ -28,6 +28,10 @@ args = "Backend API"
 task = "workflow.run"
 args = "Build Frontend with Dependencies"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Build Frontend Fixed"
+
 [[workflows.workflow]]
 name = "Server"
 author = "agent"
@@ -61,6 +65,14 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd frontend && npm install dayjs @mui/x-date-pickers && npm run build -- --outDir=../public"
+
+[[workflows.workflow]]
+name = "Build Frontend Fixed"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd frontend && npx vite build --outDir=../public"
 
 [deployment]
 run = ["sh", "-c", "cd frontend && npm install && npm run dev"]
