@@ -75,8 +75,8 @@ function App() {
             component="main"
             sx={{
               flexGrow: 1,
-              p: { xs: 1.5, md: 2 },
-              pt: { xs: 0.5, md: 1 }, // Further reduced top padding to bring content up
+              p: { xs: 1, md: 1.5 },
+              pt: { xs: 0, md: 0.5 }, // Minimum top padding
               bgcolor: darkMode ? '#1a1a1a' : '#FFFFFF', // Respecting dark/light mode
               width: { 
                 sm: `calc(100% - ${sidebarCollapsed ? '72px' : '240px'})` 

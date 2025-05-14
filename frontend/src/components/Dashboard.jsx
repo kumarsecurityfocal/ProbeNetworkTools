@@ -596,61 +596,7 @@ const Dashboard = () => {
                 </Box>
               </Box>
               
-              <Divider sx={{ width: '100%', my: 3 }} />
-              
-              <Box sx={{ 
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                backgroundColor: 'white',
-                p: 3,
-                borderRadius: '8px',
-                border: '1px dashed rgba(0, 0, 0, 0.1)',
-                width: '100%'
-              }}>
-                <Typography 
-                  variant="subtitle1" 
-                  sx={{ 
-                    mb: 2,
-                    fontWeight: 600,
-                    color: darkMode ? '#ffffff' : '#111827',
-                    fontFamily: '"Inter", sans-serif'
-                  }}
-                >
-                  Command Type Distribution
-                </Typography>
-                <Typography 
-                  variant="body2" 
-                  sx={{
-                    color: darkMode ? '#b0bec5' : '#6b7280',
-                    fontFamily: '"Inter", sans-serif'
-                  }}
-                >
-                  Available in Standard and Enterprise tiers
-                </Typography>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  sx={{
-                    mt: 2,
-                    borderRadius: '8px',
-                    textTransform: 'none',
-                    fontFamily: '"Inter", sans-serif',
-                    fontWeight: 500,
-                    fontSize: '0.875rem',
-                    px: 2,
-                    py: 0.75,
-                    color: '#4f46e5',
-                    borderColor: '#4f46e5',
-                    '&:hover': {
-                      backgroundColor: 'rgba(79, 70, 229, 0.04)',
-                      borderColor: '#4f46e5'
-                    }
-                  }}
-                >
-                  Upgrade to view
-                </Button>
-              </Box>
+              {/* Command Type Distribution removed */}
             </Box>
           </Paper>
         </Grid>
