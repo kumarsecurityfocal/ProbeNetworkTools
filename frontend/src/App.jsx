@@ -59,7 +59,8 @@ function App() {
       <CssBaseline />
       <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <Navbar />
-        <Box component="main" sx={{ flexGrow: 1, p: 0 }}>
+        <Box sx={{ display: 'flex', flexGrow: 1 }}>
+          <Box component="main" sx={{ flexGrow: 1, pl: { sm: '240px' }, width: { sm: 'calc(100% - 240px)' } }}>
           <Routes>
             <Route path="/login" element={!isAuthenticated ? <AuthForm mode="login" /> : <Navigate to="/dashboard" replace />} />
             <Route path="/register" element={!isAuthenticated ? <AuthForm mode="register" /> : <Navigate to="/dashboard" replace />} />
@@ -114,6 +115,7 @@ function App() {
             
             <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
           </Routes>
+          </Box>
         </Box>
       </Box>
     </ThemeProvider>
