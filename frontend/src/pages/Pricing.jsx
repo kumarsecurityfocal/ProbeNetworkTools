@@ -441,7 +441,7 @@ const Pricing = () => {
               }
             }}
           >
-            Sign Up Now
+            Login/Sign Up Now
           </Button>
         </Box>
       </Container>
