@@ -138,14 +138,40 @@ const Dashboard = () => {
   }
   
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Welcome, {user?.username || 'User'}!
-      </Typography>
-      
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
-        <FormControl sx={{ minWidth: 150 }}>
-          <InputLabel id="time-range-label">Time Range</InputLabel>
+    <Container maxWidth="lg" sx={{ mt: 5, mb: 6 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        mb: 4 
+      }}>
+        <Typography 
+          variant="h4" 
+          sx={{ 
+            fontWeight: 600, 
+            color: '#111827',
+            fontFamily: '"Inter", sans-serif', 
+            letterSpacing: '-0.01em'
+          }}
+        >
+          Welcome, {user?.username || 'User'}!
+        </Typography>
+        
+        <FormControl 
+          sx={{ 
+            minWidth: 170,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '8px',
+              backgroundColor: '#fcfcfc',
+              border: '1px solid #eaecef',
+              '&:hover': {
+                backgroundColor: '#ffffff',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
+              },
+            }
+          }}
+        >
+          <InputLabel id="time-range-label" sx={{ fontSize: '0.9rem' }}>Time Range</InputLabel>
           <Select
             labelId="time-range-label"
             id="time-range-select"
@@ -163,15 +189,50 @@ const Dashboard = () => {
       </Box>
 
       <Grid container spacing={3}>
-        {/* Stats Cards - First Row */}
+        {/* Stats Cards - First Row with Airtable-inspired styling */}
         <Grid item xs={12} sm={6} md={3}>
-          <Card className="dashboard-stat-card">
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <NetworkIcon color="primary" fontSize="large" />
+          <Card sx={{ 
+            borderRadius: '12px', 
+            border: '1px solid rgba(0,0,0,0.07)', 
+            boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              boxShadow: '0 6px 12px rgba(0,0,0,0.08)'
+            }
+          }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                mb: 2.5,
+                backgroundColor: 'rgba(25, 118, 210, 0.1)', 
+                color: '#1976d2',
+                width: 'fit-content',
+                p: 1.5,
+                borderRadius: '8px'
+              }}>
+                <NetworkIcon fontSize="medium" />
               </Box>
-              <Typography variant="h5">{stats.diagnosticCount}</Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography 
+                variant="h4" 
+                sx={{ 
+                  fontWeight: 600, 
+                  mb: 1, 
+                  color: '#111827',
+                  fontFamily: '"Inter", sans-serif'
+                }}
+              >
+                {stats.diagnosticCount}
+              </Typography>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  color: '#6b7280', 
+                  fontFamily: '"Inter", sans-serif',
+                  fontSize: '0.875rem'
+                }}
+              >
                 Network Diagnostics Run
               </Typography>
             </CardContent>
@@ -179,13 +240,48 @@ const Dashboard = () => {
         </Grid>
         
         <Grid item xs={12} sm={6} md={3}>
-          <Card className="dashboard-stat-card">
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <ScheduleIcon color="primary" fontSize="large" />
+          <Card sx={{ 
+            borderRadius: '12px', 
+            border: '1px solid rgba(0,0,0,0.07)', 
+            boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              boxShadow: '0 6px 12px rgba(0,0,0,0.08)'
+            }
+          }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                mb: 2.5,
+                backgroundColor: 'rgba(76, 175, 80, 0.1)', 
+                color: '#4caf50',
+                width: 'fit-content',
+                p: 1.5,
+                borderRadius: '8px'
+              }}>
+                <ScheduleIcon fontSize="medium" />
               </Box>
-              <Typography variant="h5">{stats.scheduledProbeCount}</Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography 
+                variant="h4" 
+                sx={{ 
+                  fontWeight: 600, 
+                  mb: 1, 
+                  color: '#111827',
+                  fontFamily: '"Inter", sans-serif'
+                }}
+              >
+                {stats.scheduledProbeCount}
+              </Typography>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  color: '#6b7280', 
+                  fontFamily: '"Inter", sans-serif',
+                  fontSize: '0.875rem'
+                }}
+              >
                 Active Scheduled Probes
               </Typography>
             </CardContent>
@@ -193,34 +289,114 @@ const Dashboard = () => {
         </Grid>
         
         <Grid item xs={12} sm={6} md={3}>
-          <Card className="dashboard-stat-card">
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <SuccessIcon color="primary" fontSize="large" />
+          <Card sx={{ 
+            borderRadius: '12px', 
+            border: '1px solid rgba(0,0,0,0.07)', 
+            boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              boxShadow: '0 6px 12px rgba(0,0,0,0.08)'
+            }
+          }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                mb: 2.5,
+                backgroundColor: stats.successRate > 80 ? 'rgba(76, 175, 80, 0.1)' : 
+                              stats.successRate > 50 ? 'rgba(255, 193, 7, 0.1)' : 
+                              'rgba(244, 67, 54, 0.1)', 
+                color: stats.successRate > 80 ? '#4caf50' : 
+                     stats.successRate > 50 ? '#ff9800' : 
+                     '#f44336',
+                width: 'fit-content',
+                p: 1.5,
+                borderRadius: '8px'
+              }}>
+                <SuccessIcon fontSize="medium" />
               </Box>
-              <Typography variant="h5">{stats.successRate}%</Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography 
+                variant="h4" 
+                sx={{ 
+                  fontWeight: 600, 
+                  mb: 1, 
+                  color: '#111827',
+                  fontFamily: '"Inter", sans-serif'
+                }}
+              >
+                {stats.successRate}%
+              </Typography>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  color: '#6b7280', 
+                  fontFamily: '"Inter", sans-serif',
+                  fontSize: '0.875rem',
+                  mb: 1
+                }}
+              >
                 Success Rate
               </Typography>
               <LinearProgress 
                 variant="determinate" 
                 value={stats.successRate} 
                 color={stats.successRate > 80 ? "success" : stats.successRate > 50 ? "warning" : "error"}
-                sx={{ mt: 1, height: 8, borderRadius: 4 }}
+                sx={{ 
+                  mt: 1, 
+                  height: 6, 
+                  borderRadius: 3,
+                  backgroundColor: 'rgba(0,0,0,0.05)'
+                }}
               />
             </CardContent>
           </Card>
         </Grid>
         
         <Grid item xs={12} sm={6} md={3}>
-          <Card className="dashboard-stat-card">
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <TimeIcon color="primary" fontSize="large" />
+          <Card sx={{ 
+            borderRadius: '12px', 
+            border: '1px solid rgba(0,0,0,0.07)', 
+            boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              boxShadow: '0 6px 12px rgba(0,0,0,0.08)'
+            }
+          }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                mb: 2.5,
+                backgroundColor: 'rgba(156, 39, 176, 0.1)', 
+                color: '#9c27b0',
+                width: 'fit-content',
+                p: 1.5,
+                borderRadius: '8px'
+              }}>
+                <TimeIcon fontSize="medium" />
               </Box>
-              <Typography variant="h5">{stats.avgResponseTime} ms</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Average Response Time
+              <Typography 
+                variant="h4" 
+                sx={{ 
+                  fontWeight: 600, 
+                  mb: 1, 
+                  color: '#111827',
+                  fontFamily: '"Inter", sans-serif'
+                }}
+              >
+                {stats.avgResponseTime}
+              </Typography>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  color: '#6b7280', 
+                  fontFamily: '"Inter", sans-serif',
+                  fontSize: '0.875rem'
+                }}
+              >
+                Average Response Time (ms)
               </Typography>
             </CardContent>
           </Card>
@@ -228,135 +404,512 @@ const Dashboard = () => {
         
         {/* Visualizations - Second Row */}
         <Grid item xs={12} md={8}>
-          <Paper sx={{ p: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">
-                <AssessmentIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+          <Paper sx={{ 
+            p: 4, 
+            borderRadius: '12px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+            border: '1px solid rgba(0,0,0,0.07)'
+          }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  fontWeight: 600, 
+                  color: '#111827',
+                  fontFamily: '"Inter", sans-serif',
+                  fontSize: '1.125rem',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <Box sx={{ 
+                  mr: 1.5, 
+                  backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                  color: '#4f46e5',
+                  p: 1,
+                  borderRadius: '8px',
+                  display: 'flex'
+                }}>
+                  <AssessmentIcon />
+                </Box>
                 Diagnostic Visualizations
               </Typography>
+
+              <Chip 
+                label="Last 30 days" 
+                variant="outlined"
+                sx={{ 
+                  borderRadius: '8px', 
+                  backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                  border: '1px solid rgba(0, 0, 0, 0.1)',
+                  px: 1
+                }}
+              />
             </Box>
-            <Divider sx={{ mb: 2 }} />
+            <Divider sx={{ mb: 3 }} />
             
-            <Box sx={{ textAlign: 'center', py: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <Typography variant="body1" sx={{ mb: 2 }}>Success/Failure Ratio</Typography>
+            <Box 
+              sx={{ 
+                py: 3, 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center',
+                backgroundColor: 'rgba(249, 250, 251, 0.7)',
+                borderRadius: '8px',
+                border: '1px solid rgba(0, 0, 0, 0.03)',
+                px: 3
+              }}
+            >
+              <Typography 
+                variant="subtitle1" 
+                sx={{ 
+                  mb: 3, 
+                  fontWeight: 600,
+                  color: '#111827',
+                  fontFamily: '"Inter", sans-serif'
+                }}
+              >
+                Success/Failure Ratio
+              </Typography>
               
-              <Box sx={{ width: '100%', maxWidth: 300, mb: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <Box sx={{ width: 16, height: 16, bgcolor: 'success.main', borderRadius: '50%', mr: 1 }} />
-                  <Typography variant="body2" sx={{ mr: 1 }}>Success</Typography>
-                  <Box sx={{ flexGrow: 1 }}>
+              <Box sx={{ width: '100%', maxWidth: 400, mb: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Box sx={{ 
+                    width: 12, 
+                    height: 12, 
+                    bgcolor: '#10b981', 
+                    borderRadius: '50%', 
+                    mr: 1.5 
+                  }} />
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      mr: 2,
+                      fontFamily: '"Inter", sans-serif',
+                      fontWeight: 500,
+                      color: '#374151',
+                      minWidth: '60px'
+                    }}
+                  >
+                    Success
+                  </Typography>
+                  <Box sx={{ flexGrow: 1, position: 'relative' }}>
                     <LinearProgress 
                       variant="determinate" 
                       value={stats.successRate}
-                      color="success"
-                      sx={{ height: 8, borderRadius: 4 }}
+                      sx={{ 
+                        height: 10, 
+                        borderRadius: 5,
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)', 
+                        '& .MuiLinearProgress-bar': {
+                          backgroundColor: '#10b981',
+                          borderRadius: 5
+                        }
+                      }}
                     />
+                    <Box sx={{
+                      position: 'absolute',
+                      right: 0,
+                      top: 0,
+                      transform: 'translateX(calc(100% + 8px))',
+                      display: 'flex',
+                      alignItems: 'center',
+                      height: '100%'
+                    }}>
+                      <Typography 
+                        variant="body2" 
+                        sx={{ 
+                          fontWeight: 600,
+                          color: '#10b981',
+                          fontFamily: '"Inter", sans-serif'
+                        }}
+                      >
+                        {stats.successRate}%
+                      </Typography>
+                    </Box>
                   </Box>
-                  <Typography variant="body2" sx={{ ml: 1 }}>{stats.successRate}%</Typography>
                 </Box>
                 
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Box sx={{ width: 16, height: 16, bgcolor: 'error.main', borderRadius: '50%', mr: 1 }} />
-                  <Typography variant="body2" sx={{ mr: 1 }}>Failure</Typography>
-                  <Box sx={{ flexGrow: 1 }}>
+                  <Box sx={{ 
+                    width: 12, 
+                    height: 12, 
+                    bgcolor: '#ef4444', 
+                    borderRadius: '50%', 
+                    mr: 1.5 
+                  }} />
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      mr: 2,
+                      fontFamily: '"Inter", sans-serif',
+                      fontWeight: 500,
+                      color: '#374151',
+                      minWidth: '60px'
+                    }}
+                  >
+                    Failure
+                  </Typography>
+                  <Box sx={{ flexGrow: 1, position: 'relative' }}>
                     <LinearProgress 
                       variant="determinate" 
                       value={100 - stats.successRate}
-                      color="error"
-                      sx={{ height: 8, borderRadius: 4 }}
+                      sx={{ 
+                        height: 10, 
+                        borderRadius: 5,
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)', 
+                        '& .MuiLinearProgress-bar': {
+                          backgroundColor: '#ef4444',
+                          borderRadius: 5
+                        }
+                      }}
                     />
+                    <Box sx={{
+                      position: 'absolute',
+                      right: 0,
+                      top: 0,
+                      transform: 'translateX(calc(100% + 8px))',
+                      display: 'flex',
+                      alignItems: 'center',
+                      height: '100%'
+                    }}>
+                      <Typography 
+                        variant="body2"
+                        sx={{
+                          fontWeight: 600,
+                          color: '#ef4444',
+                          fontFamily: '"Inter", sans-serif'
+                        }}
+                      >
+                        {100 - stats.successRate}%
+                      </Typography>
+                    </Box>
                   </Box>
-                  <Typography variant="body2" sx={{ ml: 1 }}>{100 - stats.successRate}%</Typography>
                 </Box>
               </Box>
               
-              <Divider sx={{ width: '100%', my: 2 }} />
+              <Divider sx={{ width: '100%', my: 3 }} />
               
-              <Typography variant="body1" sx={{ mb: 1 }}>Command Type Distribution</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Available in Standard and Enterprise tiers
-              </Typography>
+              <Box sx={{ 
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                backgroundColor: 'white',
+                p: 3,
+                borderRadius: '8px',
+                border: '1px dashed rgba(0, 0, 0, 0.1)',
+                width: '100%'
+              }}>
+                <Typography 
+                  variant="subtitle1" 
+                  sx={{ 
+                    mb: 2,
+                    fontWeight: 600,
+                    color: '#111827',
+                    fontFamily: '"Inter", sans-serif'
+                  }}
+                >
+                  Command Type Distribution
+                </Typography>
+                <Typography 
+                  variant="body2" 
+                  sx={{
+                    color: '#6b7280',
+                    fontFamily: '"Inter", sans-serif'
+                  }}
+                >
+                  Available in Standard and Enterprise tiers
+                </Typography>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    mt: 2,
+                    borderRadius: '8px',
+                    textTransform: 'none',
+                    fontFamily: '"Inter", sans-serif',
+                    fontWeight: 500,
+                    fontSize: '0.875rem',
+                    px: 2,
+                    py: 0.75,
+                    color: '#4f46e5',
+                    borderColor: '#4f46e5',
+                    '&:hover': {
+                      backgroundColor: 'rgba(79, 70, 229, 0.04)',
+                      borderColor: '#4f46e5'
+                    }
+                  }}
+                >
+                  Upgrade to view
+                </Button>
+              </Box>
             </Box>
           </Paper>
         </Grid>
         
         {/* Subscription Status - Second Row */}
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 2, height: '100%' }}>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              Subscription Status
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
+          <Paper sx={{ 
+            p: 4, 
+            height: '100%',
+            borderRadius: '12px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+            border: '1px solid rgba(0,0,0,0.07)',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+              <Box sx={{ 
+                mr: 1.5, 
+                backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                color: '#4f46e5',
+                p: 1,
+                borderRadius: '8px',
+                display: 'flex'
+              }}>
+                <ApiKeyIcon />
+              </Box>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  fontWeight: 600, 
+                  color: '#111827',
+                  fontFamily: '"Inter", sans-serif',
+                  fontSize: '1.125rem'
+                }}
+              >
+                Subscription Status
+              </Typography>
+            </Box>
+            <Divider sx={{ mb: 3 }} />
             
-            <Box sx={{ mt: 2 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="body2">Current Plan:</Typography>
-                <Chip 
-                  label={user?.subscription?.tier?.name || 'FREE'} 
-                  color={
-                    user?.subscription?.tier?.name === 'ENTERPRISE' ? 'primary' :
-                    user?.subscription?.tier?.name === 'STANDARD' ? 'secondary' :
-                    'default'
-                  }
-                  size="small"
-                />
+            <Box sx={{ flexGrow: 1 }}>
+              <Box sx={{ mb: 3 }}>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    mb: 1,
+                    fontWeight: 500,
+                    color: '#6b7280',
+                    fontFamily: '"Inter", sans-serif'
+                  }}
+                >
+                  Current Plan
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Chip 
+                    label={user?.subscription?.tier?.name || 'FREE'} 
+                    sx={{
+                      fontWeight: 600,
+                      backgroundColor: user?.subscription?.tier?.name === 'ENTERPRISE' ? 'rgba(79, 70, 229, 0.1)' :
+                                     user?.subscription?.tier?.name === 'STANDARD' ? 'rgba(14, 165, 233, 0.1)' :
+                                     'rgba(168, 162, 158, 0.1)',
+                      color: user?.subscription?.tier?.name === 'ENTERPRISE' ? '#4f46e5' :
+                             user?.subscription?.tier?.name === 'STANDARD' ? '#0ea5e9' :
+                             '#78716c',
+                      borderRadius: '6px',
+                      fontSize: '0.875rem',
+                      height: '28px'
+                    }}
+                    size="small"
+                  />
+                </Box>
               </Box>
               
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="body2">API Key Limit:</Typography>
-                <Typography variant="body2">
-                  {stats.apiKeyCount} / {user?.subscription?.tier?.max_api_keys || 'Unlimited'}
+              <Box sx={{ mb: 2 }}>
+                <Typography 
+                  variant="body2"
+                  sx={{ 
+                    mb: 1,
+                    fontWeight: 500,
+                    color: '#6b7280',
+                    fontFamily: '"Inter", sans-serif'
+                  }}
+                >
+                  API Key Usage
                 </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <Box sx={{ flexGrow: 1, mr: 2 }}>
+                    <LinearProgress 
+                      variant="determinate" 
+                      value={user?.subscription?.tier?.max_api_keys ? (stats.apiKeyCount / user.subscription.tier.max_api_keys) * 100 : 0}
+                      sx={{ 
+                        height: 6, 
+                        borderRadius: 3,
+                        backgroundColor: 'rgba(0,0,0,0.05)',
+                        '& .MuiLinearProgress-bar': {
+                          backgroundColor: '#4f46e5'
+                        }
+                      }}
+                    />
+                  </Box>
+                  <Typography 
+                    variant="body2"
+                    sx={{
+                      fontWeight: 600,
+                      color: '#111827',
+                      fontFamily: '"Inter", sans-serif'
+                    }}
+                  >
+                    {stats.apiKeyCount} / {user?.subscription?.tier?.max_api_keys || '∞'}
+                  </Typography>
+                </Box>
               </Box>
               
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="body2">Scheduled Probes Limit:</Typography>
-                <Typography variant="body2">
-                  {stats.scheduledProbeCount} / {user?.subscription?.tier?.max_scheduled_probes || 'Unlimited'}
+              <Box sx={{ mb: 2 }}>
+                <Typography 
+                  variant="body2"
+                  sx={{ 
+                    mb: 1,
+                    fontWeight: 500,
+                    color: '#6b7280',
+                    fontFamily: '"Inter", sans-serif'
+                  }}
+                >
+                  Scheduled Probes
                 </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <Box sx={{ flexGrow: 1, mr: 2 }}>
+                    <LinearProgress 
+                      variant="determinate" 
+                      value={user?.subscription?.tier?.max_scheduled_probes ? (stats.scheduledProbeCount / user.subscription.tier.max_scheduled_probes) * 100 : 0}
+                      sx={{ 
+                        height: 6, 
+                        borderRadius: 3,
+                        backgroundColor: 'rgba(0,0,0,0.05)',
+                        '& .MuiLinearProgress-bar': {
+                          backgroundColor: '#0ea5e9'
+                        }
+                      }}
+                    />
+                  </Box>
+                  <Typography 
+                    variant="body2"
+                    sx={{
+                      fontWeight: 600,
+                      color: '#111827',
+                      fontFamily: '"Inter", sans-serif'
+                    }}
+                  >
+                    {stats.scheduledProbeCount} / {user?.subscription?.tier?.max_scheduled_probes || '∞'}
+                  </Typography>
+                </Box>
               </Box>
               
               {user?.subscription?.expires_at && (
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2">Renews On:</Typography>
-                  <Typography variant="body2">
-                    {new Date(user.subscription.expires_at).toLocaleDateString()}
+                <Box sx={{ mb: 3 }}>
+                  <Typography 
+                    variant="body2"
+                    sx={{ 
+                      mb: 1,
+                      fontWeight: 500,
+                      color: '#6b7280',
+                      fontFamily: '"Inter", sans-serif'
+                    }}
+                  >
+                    Renews On
+                  </Typography>
+                  <Typography 
+                    variant="body2"
+                    sx={{
+                      fontWeight: 600,
+                      color: '#111827',
+                      fontFamily: '"Inter", sans-serif'
+                    }}
+                  >
+                    {new Date(user.subscription.expires_at).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
                   </Typography>
                 </Box>
               )}
-              
-              {!user?.subscription?.tier?.name || user?.subscription?.tier?.name !== 'ENTERPRISE' ? (
-                <Button 
-                  variant="contained" 
-                  color="primary" 
-                  fullWidth
-                  sx={{ mt: 2 }}
-                  onClick={() => navigate('/subscriptions')}
-                >
-                  Upgrade Plan
-                </Button>
-              ) : (
-                <Button 
-                  variant="outlined" 
-                  fullWidth
-                  sx={{ mt: 2 }}
-                  onClick={() => navigate('/profile')}
-                >
-                  Manage Subscription
-                </Button>
-              )}
             </Box>
+            
+            {!user?.subscription?.tier?.name || user?.subscription?.tier?.name !== 'ENTERPRISE' ? (
+              <Button 
+                variant="contained" 
+                fullWidth
+                sx={{ 
+                  mt: 2,
+                  backgroundColor: '#4f46e5',
+                  color: 'white',
+                  textTransform: 'none',
+                  fontFamily: '"Inter", sans-serif',
+                  fontWeight: 500,
+                  fontSize: '0.9rem',
+                  borderRadius: '8px',
+                  py: 1.2,
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+                  '&:hover': {
+                    backgroundColor: '#4338ca'
+                  }
+                }}
+                onClick={() => navigate('/subscriptions')}
+              >
+                Upgrade Plan
+              </Button>
+            ) : (
+              <Button 
+                variant="outlined" 
+                fullWidth
+                sx={{ 
+                  mt: 2,
+                  borderColor: '#4f46e5',
+                  color: '#4f46e5',
+                  textTransform: 'none',
+                  fontFamily: '"Inter", sans-serif',
+                  fontWeight: 500,
+                  fontSize: '0.9rem',
+                  borderRadius: '8px',
+                  py: 1.2,
+                  '&:hover': {
+                    backgroundColor: 'rgba(79, 70, 229, 0.04)',
+                    borderColor: '#4f46e5'
+                  }
+                }}
+                onClick={() => navigate('/profile')}
+              >
+                Manage Subscription
+              </Button>
+            )}
           </Paper>
         </Grid>
         
         {/* Recent Activity - Third Row */}
         <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">
-                <HistoryIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+          <Paper sx={{ 
+            p: 4, 
+            borderRadius: '12px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+            border: '1px solid rgba(0,0,0,0.07)'
+          }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  fontWeight: 600, 
+                  color: '#111827',
+                  fontFamily: '"Inter", sans-serif',
+                  fontSize: '1.125rem',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <Box sx={{ 
+                  mr: 1.5, 
+                  backgroundColor: 'rgba(236, 72, 153, 0.1)',
+                  color: '#ec4899',
+                  p: 1,
+                  borderRadius: '8px',
+                  display: 'flex'
+                }}>
+                  <HistoryIcon />
+                </Box>
                 Recent Diagnostics
               </Typography>
+              
               <Button 
                 variant="outlined" 
                 size="small"
