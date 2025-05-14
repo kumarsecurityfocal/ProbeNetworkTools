@@ -470,6 +470,20 @@ The application uses different API routing approaches in development and product
   }
   ```
 
+**Important Note on FastAPI Router Configuration**:
+Due to the NGINX prefix stripping, the backend FastAPI routers must be mounted with an empty prefix in `main.py`:
+
+```python
+# Correct configuration for production compatibility
+app.include_router(auth.router, prefix="", tags=["Authentication"])
+app.include_router(diagnostics.router, prefix="", tags=["Diagnostics"])
+```
+
+If routers are mounted with `/api` prefix, they won't be reachable because:
+1. Frontend requests `/api/login`
+2. NGINX strips `/api/` and forwards to backend as `/login`
+3. If backend expects `/api/login`, this will result in 404 errors
+
 ### 5.3.1.1 Frontend API Path Consistency
 
 ⚠️ **IMPORTANT**: All frontend API requests must use relative paths for cross-environment compatibility.
@@ -605,14 +619,22 @@ Before deploying to production, review this checklist to ensure compatibility:
 - [ ] Test backend initialization without connection to database
 - [ ] Validate JWT token generation and validation dependencies
 
-### 7.5 Environment Variables
+### 7.5 Backend API Routing
+
+- [x] Configure FastAPI routers with empty prefix (`prefix=""`) in main.py
+- [x] Verify that health check endpoint is at `/health` not `/api/health`
+- [ ] Test API routes after NGINX proxy configuration
+- [ ] Ensure all backend routes match frontend expectations after prefix stripping
+- [ ] Validate authentication endpoints are accessible
+
+### 7.6 Environment Variables
 
 - [ ] Review all required environment variables in `.env.backend.template`
 - [ ] Create production-specific environment files in a secure location
 - [ ] Update `SECRET_KEY` and other security-related environment variables
 - [ ] Configure proper `CORS_ORIGINS` including production domain
 
-### 7.6 Express Server Removal
+### 7.7 Express Server Removal
 
 - [ ] Verify that production setup does not depend on the Express server
 - [ ] Ensure API requests work properly through NGINX without Express

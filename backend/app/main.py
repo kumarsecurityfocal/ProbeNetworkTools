@@ -33,19 +33,20 @@ app.add_middleware(
 )
 
 # Include routers with proper prefix
-app.include_router(auth.router, prefix="/api", tags=["Authentication"])
-app.include_router(diagnostics.router, prefix="/api", tags=["Diagnostics"])
-app.include_router(api_keys.router, prefix="/api", tags=["API Keys"])
-app.include_router(subscriptions.router, prefix="/api", tags=["Subscriptions"])
-app.include_router(scheduled_probes.router, prefix="/api", tags=["Scheduled Probes"])
-# Fix metrics router to match frontend API calls
-app.include_router(metrics.router, prefix="/api", tags=["Metrics"])
+# Note: In production, NGINX strips the /api prefix, so these routes need to match
+# what the frontend expects after the /api is stripped
+app.include_router(auth.router, prefix="", tags=["Authentication"])
+app.include_router(diagnostics.router, prefix="", tags=["Diagnostics"])
+app.include_router(api_keys.router, prefix="", tags=["API Keys"])
+app.include_router(subscriptions.router, prefix="", tags=["Subscriptions"])
+app.include_router(scheduled_probes.router, prefix="", tags=["Scheduled Probes"])
+app.include_router(metrics.router, prefix="", tags=["Metrics"])
 
 @app.get("/", tags=["Root"])
 async def root():
     return {"message": "Welcome to ProbeOps API"}
 
-@app.get("/api/health", tags=["Health"])
+@app.get("/health", tags=["Health"])
 async def health_check(db: Session = Depends(get_db)):
     """
     Health check endpoint to verify API and database connection.
