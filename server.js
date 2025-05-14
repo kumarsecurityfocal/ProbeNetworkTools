@@ -145,11 +145,16 @@ app.use('/login', (req, res, next) => {
   console.log(`Login request received: ${req.method} ${req.url}`);
   console.log(`Original URL: ${req.originalUrl}`);
   console.log(`Content-Type: ${req.headers['content-type']}`);
-  console.log(`Forwarding to backend: ${apiProxyOptions.target}/login`);
-  console.log(`============================================`);
   
-  // Override the URL to ensure it points to exactly /login
-  req.url = '/login';
+  // Check if this is a JSON request
+  if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
+    console.log(`Forwarding JSON login to backend: ${apiProxyOptions.target}/login/json`);
+    req.url = '/login/json';
+  } else {
+    console.log(`Forwarding form login to backend: ${apiProxyOptions.target}/login`);
+    req.url = '/login';
+  }
+  console.log(`============================================`);
   
   // Let the proxy middleware handle the request
   return apiProxy(req, res, next);
