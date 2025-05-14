@@ -3,7 +3,8 @@ from typing import List, Dict, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
+from pydantic import ValidationError
 
 from app import models, schemas, auth
 from app.database import get_db
@@ -67,9 +68,6 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
 
 @router.get("/me", response_model=schemas.UserDetailResponse)
 def read_users_me(current_user: models.User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
-    # Import joinedload
-    from sqlalchemy.orm import joinedload
-    
     # Get user with subscription details, eagerly loading the user_subscription and tier relationships
     user_with_subscription = db.query(models.User).options(
         joinedload(models.User.user_subscription).joinedload(models.UserSubscription.tier)
@@ -82,24 +80,31 @@ def read_users_me(current_user: models.User = Depends(auth.get_current_active_us
         if hasattr(user_with_subscription.user_subscription, "tier") and user_with_subscription.user_subscription.tier:
             print("🏆 Subscription tier:", user_with_subscription.user_subscription.tier.__dict__)
     
-    # Use model_validate to ensure proper serialization of SQLAlchemy models to Pydantic
     try:
-        # This explicitly validates and converts the SQLAlchemy model to the Pydantic model
-        return schemas.UserDetailResponse.model_validate(user_with_subscription)
+        response = schemas.UserDetailResponse.model_validate(user_with_subscription)
+        print("✅ Final Pydantic object:", response)
+        return response
+    except ValidationError as e:
+        print("❌ ValidationError in /me route:\n", e.json())
+        raise HTTPException(status_code=500, detail="Response model validation failed")
     except Exception as e:
-        print(f"❌ Error validating user model: {str(e)}")
-        # If validation fails, fall back to dictionary conversion
-        user_dict = {
-            "id": user_with_subscription.id,
-            "username": user_with_subscription.username, 
-            "email": user_with_subscription.email,
-            "is_active": user_with_subscription.is_active,
-            "is_admin": user_with_subscription.is_admin,
-            "email_verified": user_with_subscription.email_verified,
-            "created_at": user_with_subscription.created_at,
-            "user_subscription": user_with_subscription.user_subscription
-        }
-        return schemas.UserDetailResponse.model_validate(user_dict)
+        print(f"❌ Unexpected error in /me route: {str(e)}")
+        # If validation fails, try with dictionary conversion
+        try:
+            user_dict = {
+                "id": user_with_subscription.id,
+                "username": user_with_subscription.username, 
+                "email": user_with_subscription.email,
+                "is_active": user_with_subscription.is_active,
+                "is_admin": user_with_subscription.is_admin,
+                "email_verified": user_with_subscription.email_verified,
+                "created_at": user_with_subscription.created_at,
+                "user_subscription": user_with_subscription.user_subscription
+            }
+            return schemas.UserDetailResponse.model_validate(user_dict)
+        except ValidationError as e:
+            print("❌ ValidationError with dict conversion:\n", e.json())
+            raise HTTPException(status_code=500, detail="Response model validation failed even with dict conversion")
 
 
 @router.get("/users", response_model=List[schemas.UserResponse])
