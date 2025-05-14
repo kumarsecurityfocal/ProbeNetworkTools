@@ -13,12 +13,22 @@ const apiProxyOptions = {
   logLevel: 'debug',
   timeout: 60000, // Increase timeout to 60 seconds
   proxyTimeout: 60000, // Increase proxy timeout as well
+  // Preserve the authorization header
+  preserveHeaderKeyCase: true,
   // No prefix rewrite - we'll handle this manually in our middleware
   onProxyReq: (proxyReq, req, res) => {
     // Log proxy request for debugging
     console.log(`Proxying to: ${req.method} ${proxyReq.path}`);
     console.log(`Original URL: ${req.originalUrl}, URL: ${req.url}`);
     console.log(`Target URL: ${apiProxyOptions.target}${proxyReq.path}`);
+    
+    // Make sure the Authorization header is preserved
+    if (req.headers.authorization) {
+      console.log('Authorization header present, forwarding to backend');
+      proxyReq.setHeader('Authorization', req.headers.authorization);
+    } else {
+      console.log('No Authorization header present in request');
+    }
   },
   onProxyRes: (proxyRes, req, res) => {
     // Log proxy response for debugging
@@ -205,7 +215,14 @@ app.use('/diagnostics/:tool', (req, res, next) => {
   const backendPath = `/${tool}`;
   console.log(`Forwarding to backend: ${apiProxyOptions.target}${backendPath}`);
   
-  // Super detailed proxy options for debugging
+  // Auth header debugging
+  if (req.headers.authorization) {
+    console.log(`Authorization header found in original request`);
+  } else {
+    console.log(`No Authorization header in original request!`);
+  }
+  
+  // Super detailed proxy options for debugging and special auth handling
   const diagnosticProxy = createProxyMiddleware({
     ...apiProxyOptions,
     pathRewrite: (path, req) => {
@@ -214,6 +231,12 @@ app.use('/diagnostics/:tool', (req, res, next) => {
       return newPath;
     },
     onProxyReq: (proxyReq, req, res) => {
+      // Ensure the authorization header is correctly forwarded
+      if (req.headers.authorization) {
+        console.log(`Setting Authorization header on proxy request`);
+        proxyReq.setHeader('Authorization', req.headers.authorization);
+      }
+      
       console.log(`PROXY REQUEST: ${proxyReq.method} ${proxyReq.path}`);
       console.log(`PROXY HEADERS: ${JSON.stringify(proxyReq.getHeaders())}`);
     },
