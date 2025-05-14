@@ -617,20 +617,12 @@ function ScheduledProbes() {
           {formMode === 'create' ? 'Create New Scheduled Probe' : 'Edit Scheduled Probe'}
         </DialogTitle>
         <DialogContent>
-          <Tabs 
-            value={selectedTab} 
-            onChange={handleTabChange} 
-            sx={{ mb: 2 }}
-          >
-            <Tab label="Basic Information" />
-            <Tab label="Schedule Settings" />
-            <Tab label="Notification Settings" />
-          </Tabs>
-          
-          {/* Basic Information Tab */}
-          {selectedTab === 0 && (
+          <Box sx={{ mb: 4, mt: 1 }}>
+            <Typography variant="h6" gutterBottom sx={{ borderBottom: '1px solid #eee', pb: 1, mb: 2 }}>
+              Basic Information
+            </Typography>
             <Grid container spacing={2}>
-              <Grid item xs={12}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   name="name"
                   label="Probe Name"
@@ -638,17 +630,6 @@ function ScheduledProbes() {
                   onChange={handleFormChange}
                   fullWidth
                   required
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  name="description"
-                  label="Description"
-                  value={formData.description}
-                  onChange={handleFormChange}
-                  fullWidth
-                  multiline
-                  rows={2}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -686,13 +667,24 @@ function ScheduledProbes() {
                   }
                 />
               </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  name="description"
+                  label="Description"
+                  value={formData.description}
+                  onChange={handleFormChange}
+                  fullWidth
+                />
+              </Grid>
             </Grid>
-          )}
+          </Box>
           
-          {/* Schedule Settings Tab */}
-          {selectedTab === 1 && (
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" gutterBottom sx={{ borderBottom: '1px solid #eee', pb: 1, mb: 2 }}>
+              Schedule Settings
+            </Typography>
             <Grid container spacing={2}>
-              <Grid item xs={12}>
+              <Grid item xs={12} sm={6}>
                 <FormControl fullWidth>
                   <InputLabel>Interval</InputLabel>
                   <Select
@@ -711,7 +703,7 @@ function ScheduledProbes() {
                   </FormHelperText>
                 </FormControl>
               </Grid>
-              <Grid item xs={12}>
+              <Grid item xs={12} sm={6}>
                 <FormControlLabel
                   control={
                     <Switch
@@ -722,15 +714,18 @@ function ScheduledProbes() {
                     />
                   }
                   label="Active (start running immediately)"
+                  sx={{ mt: 2 }}
                 />
               </Grid>
             </Grid>
-          )}
+          </Box>
           
-          {/* Notification Settings Tab */}
-          {selectedTab === 2 && (
+          <Box>
+            <Typography variant="h6" gutterBottom sx={{ borderBottom: '1px solid #eee', pb: 1, mb: 2 }}>
+              Notification Settings
+            </Typography>
             <Grid container spacing={2}>
-              <Grid item xs={12}>
+              <Grid item xs={12} sm={6}>
                 <FormControlLabel
                   control={
                     <Switch
@@ -743,7 +738,7 @@ function ScheduledProbes() {
                   label="Alert on Failure"
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid item xs={12} sm={6}>
                 <FormControlLabel
                   control={
                     <Switch
@@ -776,7 +771,7 @@ function ScheduledProbes() {
                 </Typography>
               </Grid>
             </Grid>
-          )}
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
