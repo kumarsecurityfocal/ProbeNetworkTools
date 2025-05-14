@@ -137,7 +137,7 @@ app.use('/diagnostics/history', (req, res, next) => {
   const historyProxy = createProxyMiddleware({
     ...apiProxyOptions,
     pathRewrite: {
-      '^/diagnostics/history': '/diagnostics/history' // Keep full path
+      '^/diagnostics/history': '/history' // Rewrite to match the correct backend endpoint
     },
     onProxyReq: (proxyReq, req, res) => {
       // Pass through authorization header
@@ -148,7 +148,7 @@ app.use('/diagnostics/history', (req, res, next) => {
     }
   });
   
-  console.log(`Forwarding to backend: ${apiProxyOptions.target}/diagnostics/history${req.url}`);
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}/history${req.url}`);
   console.log(`============================================`);
   
   return historyProxy(req, res, next);
