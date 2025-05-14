@@ -459,6 +459,20 @@ app.get('/profile', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// For GET requests to /app, serve the React app for authentication
+app.get('/app', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// For GET requests to /app/login or /app/register, serve the React app
+app.get('/app/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/app/register', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // For GET requests to /login, serve the React app
 // POST requests are already handled by the proxy middleware above
 app.get('/login', (req, res) => {
