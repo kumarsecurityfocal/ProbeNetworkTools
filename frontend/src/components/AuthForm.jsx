@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
+import Logo from './Logo';
 
 const AuthForm = ({ mode }) => {
   const navigate = useNavigate();
@@ -100,22 +101,48 @@ const AuthForm = ({ mode }) => {
   };
   
   return (
-    <Container maxWidth="sm">
-      <Box 
-        sx={{ 
-          mt: 8, 
-          display: 'flex', 
-          flexDirection: 'column', 
-          alignItems: 'center' 
-        }}
-      >
-        <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
-          <Typography component="h1" variant="h4" align="center" gutterBottom>
+    <Container maxWidth="sm" className="pt-20 pb-10">
+      <Box className="flex flex-col items-center">
+        <div className="mb-6 flex flex-col items-center">
+          <Logo size="lg" />
+          <Typography 
+            variant="h4" 
+            component="h1" 
+            className="font-bold mt-4 text-center text-gray-800"
+          >
+            ProbeOps
+          </Typography>
+          <Typography 
+            variant="body1" 
+            className="text-gray-600 mt-2"
+          >
+            Network diagnostics platform
+          </Typography>
+        </div>
+        
+        <Paper 
+          elevation={3} 
+          className="p-8 w-full rounded-xl shadow-card"
+          sx={{ 
+            boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.08)',
+            borderRadius: '16px'
+          }}
+        >
+          <Typography 
+            component="h2" 
+            variant="h5" 
+            align="center" 
+            gutterBottom
+            className="font-semibold mb-6"
+          >
             {title}
           </Typography>
           
           {apiError && (
-            <Alert severity="error" sx={{ mb: 2 }}>
+            <Alert 
+              severity="error" 
+              className="mb-4 rounded-lg"
+            >
               {apiError}
             </Alert>
           )}
@@ -135,6 +162,7 @@ const AuthForm = ({ mode }) => {
               error={!!errors.username}
               helperText={errors.username}
               disabled={loading}
+              sx={{ mb: 2 }}
             />
             
             {!isLogin && (
@@ -151,6 +179,7 @@ const AuthForm = ({ mode }) => {
                 error={!!errors.email}
                 helperText={errors.email}
                 disabled={loading}
+                sx={{ mb: 2 }}
               />
             )}
             
@@ -168,6 +197,7 @@ const AuthForm = ({ mode }) => {
               error={!!errors.password}
               helperText={errors.password}
               disabled={loading}
+              sx={{ mb: 3 }}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -188,16 +218,27 @@ const AuthForm = ({ mode }) => {
               fullWidth
               variant="contained"
               color="primary"
-              sx={{ mt: 3, mb: 2 }}
               disabled={loading}
+              className="py-3 text-base font-medium mt-4 mb-4"
+              sx={{ 
+                borderRadius: "10px",
+                py: 1.5,
+                textTransform: "none",
+                fontSize: "1rem",
+                fontWeight: 500
+              }}
             >
               {loading ? 'Processing...' : isLogin ? 'Sign In' : 'Sign Up'}
             </Button>
             
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="body2">
+            <Box sx={{ textAlign: 'center', mt: 2 }}>
+              <Typography variant="body2" className="text-gray-600">
                 {isLogin ? "Don't have an account? " : "Already have an account? "}
-                <Link component={RouterLink} to={isLogin ? "/register" : "/login"}>
+                <Link 
+                  component={RouterLink} 
+                  to={isLogin ? "/register" : "/login"}
+                  className="text-primary-600 font-medium hover:text-primary-700"
+                >
                   {isLogin ? "Sign Up" : "Sign In"}
                 </Link>
               </Typography>
