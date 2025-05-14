@@ -32,7 +32,7 @@ export const lightTheme = createTheme({
       dark: '#ba000d',
     },
     background: {
-      default: '#f5f7fa', // Slightly blueish light gray
+      default: '#ffffff', // Pure white background like Airtable
       paper: '#ffffff',
     },
     text: {

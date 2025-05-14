@@ -76,7 +76,7 @@ function App() {
             sx={{
               flexGrow: 1,
               p: 3,
-              bgcolor: '#FFFFFF',
+              bgcolor: '#FFFFFF', // Pure white background
               width: { 
                 sm: `calc(100% - ${sidebarCollapsed ? '72px' : '240px'})` 
               },
@@ -85,6 +85,8 @@ function App() {
               },
               mt: '64px',
               transition: 'margin 0.2s ease-out, width 0.2s ease-out',
+              minHeight: 'calc(100vh - 64px)', // Full height minus the app bar
+              overflowY: 'auto'
             }}
           >
             <Routes>
