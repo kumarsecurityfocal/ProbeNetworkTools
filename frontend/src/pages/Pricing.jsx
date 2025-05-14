@@ -400,7 +400,7 @@ const Pricing = () => {
               How secure is my data?
             </Typography>
             <Typography variant="body1" paragraph>
-              All data is encrypted in transit and at rest. We implement industry-standard security practices and regular security audits to ensure your diagnostic data remains secure.
+              All data is encrypted in transit. We follow security best practices to protect your diagnostic data and credentials, and are continuously improving our platform's security.
             </Typography>
           </Grid>
           <Grid item xs={12} md={6}>
