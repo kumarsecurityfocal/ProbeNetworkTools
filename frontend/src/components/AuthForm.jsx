@@ -157,7 +157,7 @@ const AuthForm = ({ mode }) => {
             className="text-gray-500 mt-2"
             sx={{ fontFamily: '"Inter", sans-serif' }}
           >
-            Network Monitoring Dashboard
+            ProbeOps Dashboard
           </Typography>
         </div>
         
