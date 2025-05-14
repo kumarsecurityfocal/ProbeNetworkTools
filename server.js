@@ -219,9 +219,9 @@ function handleHistory(req, res) {
   const url = new URL(`http://localhost${req.url}`);
   const searchParams = url.searchParams.toString();
   
-  // The history endpoint is defined in the diagnostics router in the backend
-  // So we need to use /diagnostics/history instead of just /history
-  const pathWithParams = `/diagnostics/history${searchParams ? '?' + searchParams : ''}`;
+  // Looking at main.py, the routers don't have a prefix, so the history endpoint
+  // should be accessible at /history directly
+  const pathWithParams = `/history${searchParams ? '?' + searchParams : ''}`;
   
   console.log(`Forwarding to backend: ${pathWithParams}`);
   
@@ -437,8 +437,9 @@ function handleDiagnostics(req, res) {
   // Get the query parameters
   const searchParams = url.searchParams.toString();
   
-  // Construct the backend path
-  let backendPath = `/diagnostics/${toolName}`;
+  // Construct the backend path - looking at main.py, there's no prefix for the router
+  // so tool endpoints like /ping are accessed directly
+  let backendPath = `/${toolName}`;
   if (searchParams) {
     backendPath += `?${searchParams}`;
   }
@@ -538,12 +539,12 @@ function handleProbes(req, res) {
   const pathPart = url.pathname;
   const searchParams = url.searchParams.toString();
   
-  // Determine backend path - the probes endpoint is in the scheduled_probes router
-  // in the backend, so we need to use the correct path prefix
-  let backendPath = '/scheduled_probes' + pathPart;
-  if (backendPath === '/scheduled_probes/probes') {
+  // Determine backend path - looking at main.py, there's no prefix for the router
+  // Since the frontend expects /probes, we'll map that directly
+  let backendPath = pathPart;
+  if (backendPath === '/probes') {
     // Make sure collections have trailing slash
-    backendPath = '/scheduled_probes/probes/';
+    backendPath = '/probes/';
   }
   
   // Add query parameters if any
