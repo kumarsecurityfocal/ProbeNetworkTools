@@ -1,0 +1,12 @@
+Feature,Free (Starter),Standard (Pro),Enterprise (OpsEdge)
+Price (USD/month),$0,$19.99,$49.99
+Max Active Probes,3,10,50
+Max API Keys,1,5,15
+Allowed Probe Intervals,"15m, 1h, 1d","5m, 15m, 1h, 1d","1m (future), 5m, 15m, 1h, 1d"
+History Retention,7 days,30 days,90 days
+Export Capability,❌,✅ CSV,✅ CSV + JSON
+Scheduled Probes,❌,✅,✅
+Alerting,❌,✅ Email,✅ Email + Webhook
+Usage Stats,Basic,Detailed per probe,Full analytics + export
+Diagnostic Types,"Ping, Traceroute","Ping, Traceroute, DNS, WHOIS","All tools incl. curl, reverse DNS"
+Priority Support,Community only,Email,Email + Slack (future)

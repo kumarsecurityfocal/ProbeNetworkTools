@@ -1,0 +1,104 @@
+1. Hero Section (Top Fold)
+Headline:
+🚀 API-First Network Diagnostics — Built for AI Agents & Automation
+
+Subheading:
+Trigger Ping, DNS, Traceroute, or WHOIS with a simple API call.
+Get JSON results instantly — for DevOps workflows, LLM agents, and monitoring systems.
+
+CTAs:
+
+🔵 “Start Free with 3 Probes”
+
+⚙️ “Explore the API”
+
+Visual:
+Animated chart or mock dashboard with JSON output. Optional toggle to show curl request + response.
+
+2. The Problem We Solve (Before/After Format)
+❌ Without ProbeOps:
+“Why did curl timeout on prod?”
+
+“Why is DNS breaking but I have no logs?”
+
+“My AI agent says ‘API failed’ — but why?”
+
+✅ With ProbeOps:
+Run structured probes via API or GUI
+
+Parse JSON responses in agents or scripts
+
+Visualize status in dashboards
+
+Schedule checks or run instantly
+
+3. Who Is It For? (Use Case Tiles)
+🧠 AI Agents / LLM Workflows
+Run probes as part of Langchain or Flowise actions
+
+🛠️ DevOps & SREs
+Add diagnostics into GitHub Actions, Jenkins, etc.
+
+🔁 Automation Engineers
+Use in n8n, Make, Zapier — get structured data back
+
+🖥️ Manual Testing Teams
+Use GUI to run ad-hoc probes without writing code
+
+4. Key Features Section
+Use card or grid layout — each with an icon and short text:
+
+✅ JSON Output for All Diagnostics
+
+🧠 AI Agent-Ready Endpoints
+
+🔐 API Key Auth + Rate Limits
+
+🕒 Probe Intervals: 5m, 15m, 1h, 1d
+
+✍️ Manual Probe via GUI (Yes, users can also click to test) 👈 Highlight this
+
+📊 Usage Stats & History
+
+🧩 Ping, DNS, Traceroute, WHOIS, Curl, Reverse DNS
+
+5. Live API Example (Curl Box)
+Dark block with copy-paste curl request and example JSON output:
+
+bash
+Copy
+Edit
+curl https://probeops.com/ping \
+  -H "Authorization: Bearer <token>" \
+  -d '{ "target": "example.com" }'
+Response:
+
+json
+Copy
+Edit
+{
+  "target": "example.com",
+  "latency_ms": 42,
+  "status": "reachable"
+}
+6. Pricing Preview (3-Tier Table)
+Please use the content from CSV File that is attached
+
+7. Footer
+Links: Docs, API Reference, Pricing, Contact, Privacy
+
+Socials or GitHub badge
+
+Email opt-in (optional)
+
+💡 Design Notes:
+📐 UI Inspiration: Airtable-style soft palette, rounded cards, clean layout
+
+📱 Fully responsive
+
+🎨 Use Tailwind for styling
+
+💾 Modular React components (ex: <FeatureCard />, <CurlExample />, <TierTable />)
+
+💻 Nav links: Home | Pricing | Docs | Login
+
