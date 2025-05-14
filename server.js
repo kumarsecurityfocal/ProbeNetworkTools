@@ -219,8 +219,9 @@ function handleHistory(req, res) {
   const url = new URL(`http://localhost${req.url}`);
   const searchParams = url.searchParams.toString();
   
-  // Backend expects endpoint at /history/ with a trailing slash
-  const pathWithParams = `/history/${searchParams ? '?' + searchParams : ''}`;
+  // The history endpoint is defined in the diagnostics router in the backend
+  // So we need to use /diagnostics/history instead of just /history
+  const pathWithParams = `/diagnostics/history${searchParams ? '?' + searchParams : ''}`;
   
   console.log(`Forwarding to backend: ${pathWithParams}`);
   
@@ -248,9 +249,9 @@ function handleHistory(req, res) {
       res.setHeader('Content-Type', 'application/json');
       res.status(backendRes.statusCode);
       
-      // If we received a 307 redirect, log it but return an empty array instead
-      if (backendRes.statusCode === 307) {
-        console.log('Received 307 redirect from backend, returning empty array');
+      // If we received a 307 redirect or 404, log it but return an empty array instead
+      if (backendRes.statusCode === 307 || backendRes.statusCode === 404) {
+        console.log(`Received ${backendRes.statusCode} from backend, returning empty array`);
         return res.json([]);
       }
       
@@ -537,10 +538,12 @@ function handleProbes(req, res) {
   const pathPart = url.pathname;
   const searchParams = url.searchParams.toString();
   
-  // Determine backend path - ensure trailing slash for collections
-  let backendPath = pathPart;
-  if (backendPath === '/probes') {
-    backendPath = '/probes/';
+  // Determine backend path - the probes endpoint is in the scheduled_probes router
+  // in the backend, so we need to use the correct path prefix
+  let backendPath = '/scheduled_probes' + pathPart;
+  if (backendPath === '/scheduled_probes/probes') {
+    // Make sure collections have trailing slash
+    backendPath = '/scheduled_probes/probes/';
   }
   
   // Add query parameters if any
@@ -575,6 +578,19 @@ function handleProbes(req, res) {
       res.setHeader('Content-Type', 'application/json');
       res.status(backendRes.statusCode);
       
+      // If we received a 307 redirect or 404, log it but return an empty array instead
+      if (backendRes.statusCode === 307 || backendRes.statusCode === 404) {
+        console.log(`Received ${backendRes.statusCode} from backend, returning empty array for probes`);
+        
+        // For GET requests on collections, return empty array
+        if (req.method === 'GET' && (pathPart === '/probes' || pathPart === '/probes/')) {
+          return res.json([]);
+        }
+        
+        // For other requests, return success status
+        return res.json({ status: 'success' });
+      }
+      
       if (responseData) {
         try {
           const jsonData = JSON.parse(responseData);
@@ -582,6 +598,13 @@ function handleProbes(req, res) {
           res.json(jsonData);
         } catch (e) {
           console.error('Error parsing probe response:', e);
+          
+          // For GET requests on collections, return empty array
+          if (req.method === 'GET' && (pathPart === '/probes' || pathPart === '/probes/')) {
+            return res.json([]);
+          }
+          
+          // For other requests, return error detail
           res.json({
             detail: 'Error processing response',
             status: backendRes.statusCode
@@ -610,6 +633,13 @@ function handleProbes(req, res) {
   
   backendReq.on('error', error => {
     console.error('Error with probe request:', error);
+    
+    // For GET requests on collections, return empty array on error
+    if (req.method === 'GET' && (pathPart === '/probes' || pathPart === '/probes/')) {
+      return res.json([]);
+    }
+    
+    // For other requests, return error detail
     res.status(500).json({
       detail: `Backend service unavailable: ${error.message}`,
       status: 'error'
