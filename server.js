@@ -44,6 +44,21 @@ const apiProxy = createProxyMiddleware(apiProxyOptions);
 
 // No need for separate routes to add /api prefix since we're using it consistently now
 
+// Explicitly proxy the /users/me endpoint to the backend
+app.use('/users/me', (req, res, next) => {
+  console.log(`============================================`);
+  console.log(`User profile request received: ${req.method} ${req.url}`);
+  console.log(`Original URL: ${req.originalUrl}`);
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}/users/me`);
+  console.log(`============================================`);
+  
+  // Override the URL to ensure it points to exactly /users/me
+  req.url = '/users/me';
+  
+  // Let the proxy middleware handle the request
+  return apiProxy(req, res, next);
+});
+
 // Handle routes with /api prefix and prevent duplicate prefixes
 app.use('/api', (req, res, next) => {
   // Create a custom path to avoid double /api prefixes
@@ -69,8 +84,11 @@ app.use('/login', (req, res, next) => {
   console.log(`============================================`);
   console.log(`Login request received: ${req.method} ${req.url}`);
   console.log(`Original URL: ${req.originalUrl}`);
-  console.log(`Forwarding to backend: ${apiProxyOptions.target}/login${req.url}`);
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}/login`);
   console.log(`============================================`);
+  
+  // Override the URL to ensure it points to exactly /login
+  req.url = '/login';
   
   // Let the proxy middleware handle the request
   return apiProxy(req, res, next);
@@ -81,8 +99,11 @@ app.use('/register', (req, res, next) => {
   console.log(`============================================`);
   console.log(`Register request received: ${req.method} ${req.url}`);
   console.log(`Original URL: ${req.originalUrl}`);
-  console.log(`Forwarding to backend: ${apiProxyOptions.target}/register${req.url}`);
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}/register`);
   console.log(`============================================`);
+  
+  // Override the URL to ensure it points to exactly /register
+  req.url = '/register';
   
   // Let the proxy middleware handle the request
   return apiProxy(req, res, next);
