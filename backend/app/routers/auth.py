@@ -67,7 +67,7 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
 
 
 @router.get("/me", response_model=schemas.UserDetailResponse)
-def read_users_me(current_user: models.User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
+def read_me(current_user: models.User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
     # Get user with subscription details, eagerly loading the user_subscription and tier relationships
     user_with_subscription = db.query(models.User).options(
         joinedload(models.User.user_subscription).joinedload(models.UserSubscription.tier)
