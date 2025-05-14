@@ -44,6 +44,7 @@ import {
   TableBody,
   Toolbar
 } from '@mui/material';
+import * as sharedStyles from '../theme/sharedStyles';
 import {
   Add as AddIcon,
   Delete as DeleteIcon,

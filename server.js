@@ -170,7 +170,7 @@ app.use('/keys', (req, res, next) => {
     
     console.log(`Direct target URL: ${finalUrl}`);
     
-    // For POST requests, manually forward to the backend
+    // For POST, PUT and DELETE requests, manually forward to the backend
     const http = require('http');
     
     // Collect the body data
@@ -180,12 +180,23 @@ app.use('/keys', (req, res, next) => {
     });
     
     req.on('end', () => {
+      // Build the path based on the method and URL
+      let path;
+      
+      if (req.method === 'PUT' || req.method === 'DELETE') {
+        // For PUT and DELETE, we need to preserve the original path
+        path = `/keys${req.url}`;
+      } else {
+        // For POST, use the same finalUrl logic we had before
+        path = finalUrl.replace('http://localhost:8000', '');
+      }
+      
       // Create the options for the request to the backend
       const options = {
         hostname: 'localhost',
         port: 8000,
-        path: finalUrl.replace('http://localhost:8000', ''),
-        method: 'POST',
+        path: path,
+        method: req.method, // Use the original request method
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
