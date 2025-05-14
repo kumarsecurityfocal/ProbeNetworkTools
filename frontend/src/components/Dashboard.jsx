@@ -613,7 +613,7 @@ const Dashboard = () => {
                   sx={{ 
                     mb: 2,
                     fontWeight: 600,
-                    color: '#111827',
+                    color: darkMode ? '#ffffff' : '#111827',
                     fontFamily: '"Inter", sans-serif'
                   }}
                 >
@@ -622,7 +622,7 @@ const Dashboard = () => {
                 <Typography 
                   variant="body2" 
                   sx={{
-                    color: '#6b7280',
+                    color: darkMode ? '#b0bec5' : '#6b7280',
                     fontFamily: '"Inter", sans-serif'
                   }}
                 >
