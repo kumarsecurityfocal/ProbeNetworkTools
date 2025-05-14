@@ -107,7 +107,8 @@ export const registerUser = async (username, email, password) => {
 export const getUserProfile = async () => {
   try {
     console.log("Fetching user profile...");
-    const response = await api.get('/api/me');
+    // Use /me without the /api prefix to match the backend route
+    const response = await api.get('/me');
     console.log("User profile response:", response.data);
     return response.data;
   } catch (error) {
@@ -118,7 +119,8 @@ export const getUserProfile = async () => {
 
 export const updateUserProfile = async (profileData) => {
   try {
-    const response = await api.put('/api/me', profileData);
+    // Use /me without the /api prefix to match the backend route
+    const response = await api.put('/me', profileData);
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -158,8 +160,8 @@ export const logoutAllDevices = async () => {
 // Diagnostic APIs
 export const runDiagnostic = async (tool, params = {}, data = null) => {
   try {
-    // The API endpoint must include the /api prefix
-    const endpoint = `/api/${tool}`;
+    // Use the direct tool endpoint without /api prefix to match backend routes
+    const endpoint = `/${tool}`;
     
     // For HTTP requests, we need to use POST with a body
     if (tool === 'http') {

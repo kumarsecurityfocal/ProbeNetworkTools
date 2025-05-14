@@ -1,0 +1,34 @@
+le.com&count=4 HTTP/1.1" 404 Not Found
+backend-1  | INFO:     172.18.0.5:52468 - "GET / HTTP/1.1" 200 OK
+backend-1  | INFO:     172.18.0.5:52474 - "GET /api/diagnostics/ping?target=example.com&count=4 HTTP/1.1" 404 Not Found
+backend-1  | INFO:     172.18.0.5:52482 - "GET /api/diagnostics/ping?target=google.com&count=4 HTTP/1.1" 404 Not Found
+backend-1  | 2025-05-14 06:03:46,753 - python_multipart.multipart - DEBUG - Calling on_part_begin with no data
+backend-1  | 2025-05-14 06:03:46,754 - python_multipart.multipart - DEBUG - Calling on_header_field with data[42:61]
+backend-1  | 2025-05-14 06:03:46,754 - python_multipart.multipart - DEBUG - Calling on_header_value with data[63:89]
+backend-1  | 2025-05-14 06:03:46,754 - python_multipart.multipart - DEBUG - Calling on_header_end with no data
+backend-1  | 2025-05-14 06:03:46,754 - python_multipart.multipart - DEBUG - Calling on_headers_finished with no data
+backend-1  | 2025-05-14 06:03:46,754 - python_multipart.multipart - DEBUG - Calling on_part_data with data[93:111]
+backend-1  | 2025-05-14 06:03:46,754 - python_multipart.multipart - DEBUG - Calling on_part_end with no data
+backend-1  | 2025-05-14 06:03:46,754 - python_multipart.multipart - DEBUG - Calling on_part_begin with no data
+backend-1  | 2025-05-14 06:03:46,754 - python_multipart.multipart - DEBUG - Calling on_header_field with data[155:174]
+backend-1  | 2025-05-14 06:03:46,754 - python_multipart.multipart - DEBUG - Calling on_header_value with data[176:202]
+backend-1  | 2025-05-14 06:03:46,754 - python_multipart.multipart - DEBUG - Calling on_header_end with no data
+backend-1  | 2025-05-14 06:03:46,754 - python_multipart.multipart - DEBUG - Calling on_headers_finished with no data
+backend-1  | 2025-05-14 06:03:46,754 - python_multipart.multipart - DEBUG - Calling on_part_data with data[206:216]
+backend-1  | 2025-05-14 06:03:46,754 - python_multipart.multipart - DEBUG - Calling on_part_end with no data
+backend-1  | 2025-05-14 06:03:46,754 - python_multipart.multipart - DEBUG - Calling on_end with no data
+backend-1  | Login attempt for username: admin@probeops.com
+backend-1  | Auth attempt - Input username/email: admin@probeops.com
+backend-1  | Treating as email first: admin@probeops.com
+backend-1  | Found user by email: admin
+backend-1  | Authentication successful for user: admin
+backend-1  | Authentication successful for user: admin (email: admin@probeops.com)
+backend-1  | INFO:     172.18.0.4:40518 - "POST /login HTTP/1.0" 200 OK
+backend-1  | 🔍 Decoded JWT payload: {'sub': 'admin@probeops.com', 'exp': 1747204427}
+backend-1  | 2025-05-14 06:03:47,269 - app.auth - DEBUG - Decoded JWT payload: {'sub': 'admin@probeops.com', 'exp': 1747204427}
+backend-1  | 2025-05-14 06:03:47,269 - app.auth - DEBUG - TokenPayload validated: {'sub': 'admin@probeops.com'}
+backend-1  | 📧 Found email in token: admin@probeops.com
+backend-1  | ✅ TokenPayload validated: {'sub': 'admin@probeops.com'}
+backend-1  | ✅ User found: admin (email: admin@probeops.com)
+backend-1  | INFO:     172.18.0.4:40532 - "GET /users/me HTTP/1.0" 422 Unprocessable Entity
+
