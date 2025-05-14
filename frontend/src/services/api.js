@@ -129,7 +129,7 @@ export const updateUserProfile = async (profileData) => {
 
 export const changePassword = async (currentPassword, newPassword) => {
   try {
-    const response = await api.post('/api/me/change-password', {
+    const response = await api.post('/me/change-password', {
       current_password: currentPassword,
       new_password: newPassword
     });
@@ -141,7 +141,7 @@ export const changePassword = async (currentPassword, newPassword) => {
 
 export const resendVerificationEmail = async () => {
   try {
-    const response = await api.post('/api/me/resend-verification');
+    const response = await api.post('/me/resend-verification');
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -150,7 +150,7 @@ export const resendVerificationEmail = async () => {
 
 export const logoutAllDevices = async () => {
   try {
-    const response = await api.post('/api/me/logout-all');
+    const response = await api.post('/me/logout-all');
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -178,7 +178,7 @@ export const runDiagnostic = async (tool, params = {}, data = null) => {
 
 export const getDiagnosticHistory = async (params = {}) => {
   try {
-    const response = await api.get('/api/history', { params });
+    const response = await api.get('/history', { params });
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -188,7 +188,7 @@ export const getDiagnosticHistory = async (params = {}) => {
 // Dashboard metrics
 export const getDashboardMetrics = async () => {
   try {
-    const response = await api.get('/api/metrics/dashboard');
+    const response = await api.get('/metrics/dashboard');
     return response.data;
   } catch (error) {
     // For now, if the endpoint doesn't exist, return mock data structure that will be
@@ -209,7 +209,7 @@ export const getDashboardMetrics = async () => {
 // API Key APIs
 export const getApiKeys = async () => {
   try {
-    const response = await api.get('/api/keys');
+    const response = await api.get('/keys');
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -218,7 +218,7 @@ export const getApiKeys = async () => {
 
 export const createApiKey = async (data) => {
   try {
-    const response = await api.post('/api/keys', {
+    const response = await api.post('/keys', {
       name: data.name
     }, {
       params: {
@@ -233,7 +233,7 @@ export const createApiKey = async (data) => {
 
 export const deleteApiKey = async (keyId) => {
   try {
-    const response = await api.delete(`/api/keys/${keyId}`);
+    const response = await api.delete(`/keys/${keyId}`);
     return response.data;
   } catch (error) {
     return handleApiError(error);
