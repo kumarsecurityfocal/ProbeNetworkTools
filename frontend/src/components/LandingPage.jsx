@@ -153,7 +153,7 @@ const LandingPage = () => {
     return (
       <Box>
         <AppBar 
-          position="fixed" 
+          position="static" 
           elevation={0}
           sx={{ 
             bgcolor: 'white', 
@@ -202,7 +202,7 @@ const LandingPage = () => {
           </Container>
         </AppBar>
 
-        <Box sx={{ pt: 8 }}>
+        <Box sx={{ pt: 2 }}>
           <AuthForm mode={authMode} />
         </Box>
       </Box>
@@ -218,7 +218,7 @@ const LandingPage = () => {
     }}>
       {/* Navigation Bar */}
       <AppBar 
-        position="fixed" 
+        position="static" 
         elevation={0}
         sx={{ 
           bgcolor: 'white', 
