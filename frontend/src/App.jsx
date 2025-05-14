@@ -9,7 +9,7 @@ import AuthForm from './components/AuthForm';
 import Dashboard from './components/Dashboard';
 import Navbar from './components/Navbar';
 import Diagnostics from './components/Diagnostics';
-import ApiKeys from './components/ApiKeys';
+import ApiTokens from './components/ApiTokens';
 import SubscriptionTiers from './components/SubscriptionTiers';
 import AdminPanel from './components/AdminPanel';
 import ScheduledProbes from './components/ScheduledProbes';
