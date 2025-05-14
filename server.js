@@ -71,6 +71,24 @@ app.use('/history', (req, res, next) => {
   return apiProxy(req, res, next);
 });
 
+// Diagnostics endpoints
+app.use('/diagnostics', (req, res, next) => {
+  console.log(`============================================`);
+  console.log(`Diagnostics endpoint request received: ${req.method} ${req.url}`);
+  console.log(`Original URL: ${req.originalUrl}`);
+  
+  // The backend expects /diagnostics/run, so we need to keep the original URL structure
+  // Express server strips the /diagnostics prefix and adds it to req.url
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}${req.originalUrl}`);
+  console.log(`============================================`);
+  
+  // Override the URL with the original URL to preserve the full path
+  req.url = req.originalUrl;
+  
+  // Let the proxy middleware handle the request
+  return apiProxy(req, res, next);
+});
+
 // Metrics endpoints
 app.use('/metrics', (req, res, next) => {
   console.log(`============================================`);

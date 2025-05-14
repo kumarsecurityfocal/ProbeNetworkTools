@@ -159,15 +159,18 @@ export const logoutAllDevices = async () => {
 // Diagnostic APIs
 export const runDiagnostic = async (tool, params = {}, data = null) => {
   try {
-    // Use the direct tool endpoint without /api prefix to match backend routes
-    const endpoint = `/${tool}`;
+    // Use the proper diagnostics/run endpoint
+    const endpoint = '/diagnostics/run';
+    
+    // Add tool to params
+    params = { ...params, tool };
     
     // For HTTP requests, we need to use POST with a body
     if (tool === 'http') {
       const response = await api.post(endpoint, data, { params });
       return response.data;
     } else {
-      const response = await api.get(endpoint, { params });
+      const response = await api.post(endpoint, null, { params });
       return response.data;
     }
   } catch (error) {
