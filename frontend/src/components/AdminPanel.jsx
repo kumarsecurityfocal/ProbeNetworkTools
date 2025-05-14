@@ -86,6 +86,14 @@ const AdminPanel = () => {
   const [selectedTierId, setSelectedTierId] = useState('');
   const [renewMonths, setRenewMonths] = useState(1);
   
+  // Debug state
+  const [debugInfo, setDebugInfo] = useState({
+    loadAttempted: false,
+    tiersLoaded: false,
+    subsLoaded: false,
+    usersLoaded: false
+  });
+  
   // User management state
   const [users, setUsers] = useState([]);
   const [userLoading, setUserLoading] = useState(true);
@@ -126,15 +134,38 @@ const AdminPanel = () => {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      setDebugInfo(prev => ({ ...prev, loadAttempted: true }));
+      
       try {
-        const [subsData, tiersData] = await Promise.all([
-          getAllSubscriptions(),
-          getSubscriptionTiers()
-        ]);
-        setSubscriptions(subsData);
-        setTiers(tiersData);
+        // Fetch each separately for better error tracking
+        try {
+          console.log("Fetching subscription tiers in AdminPanel...");
+          const tiersData = await getSubscriptionTiers();
+          console.log("Tiers data in AdminPanel:", tiersData);
+          setTiers(tiersData);
+          setDebugInfo(prev => ({ ...prev, tiersLoaded: true }));
+        } catch (tierErr) {
+          console.error('Error loading subscription tiers:', tierErr);
+        }
+        
+        try {
+          console.log("Fetching all subscriptions in AdminPanel...");
+          const subsData = await getAllSubscriptions();
+          console.log("Subscriptions data in AdminPanel:", subsData);
+          setSubscriptions(subsData);
+          setDebugInfo(prev => ({ ...prev, subsLoaded: true }));
+        } catch (subErr) {
+          console.error('Error loading subscriptions:', subErr);
+        }
+        
+        // If we got this far without any data, show an error
+        if (tiers.length === 0 && subscriptions.length === 0) {
+          setError('Failed to load subscription data. Please try again later.');
+        } else {
+          setError(null);
+        }
       } catch (err) {
-        console.error('Error loading admin data:', err);
+        console.error('Error in admin data loading:', err);
         setError('Failed to load data. Please try again later.');
       } finally {
         setLoading(false);
@@ -151,9 +182,12 @@ const AdminPanel = () => {
     const fetchUsers = async () => {
       setUserLoading(true);
       try {
+        console.log("Fetching users in AdminPanel...");
         const usersData = await getAllUsers();
+        console.log("Users data in AdminPanel:", usersData);
         setUsers(usersData);
         setUserError(null);
+        setDebugInfo(prev => ({ ...prev, usersLoaded: true }));
       } catch (err) {
         console.error('Error loading users:', err);
         setUserError('Failed to load users. Please try again later.');
@@ -430,10 +464,26 @@ const AdminPanel = () => {
     return tier ? tier.name : 'Unknown';
   };
 
+  // Show debug information if there are load errors
   if (error) {
     return (
       <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Typography color="error">{error}</Typography>
+        <Typography color="error" gutterBottom>{error}</Typography>
+        <Box sx={{ mt: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
+          <Typography variant="subtitle2" gutterBottom>Debug Information:</Typography>
+          <Typography variant="body2">Load attempted: {debugInfo.loadAttempted ? 'Yes' : 'No'}</Typography>
+          <Typography variant="body2">Tiers loaded: {debugInfo.tiersLoaded ? 'Yes' : 'No'}</Typography>
+          <Typography variant="body2">Subscriptions loaded: {debugInfo.subsLoaded ? 'Yes' : 'No'}</Typography>
+          <Typography variant="body2">Users loaded: {debugInfo.usersLoaded ? 'Yes' : 'No'}</Typography>
+          <Button 
+            variant="outlined" 
+            size="small" 
+            sx={{ mt: 2 }}
+            onClick={() => window.location.reload()}
+          >
+            Reload Page
+          </Button>
+        </Box>
       </Box>
     );
   }
@@ -441,6 +491,7 @@ const AdminPanel = () => {
   if (loading) {
     return (
       <Box sx={{ p: 3, textAlign: 'center' }}>
+        <CircularProgress size={40} sx={{ mb: 2 }} />
         <Typography>Loading admin panel...</Typography>
       </Box>
     );

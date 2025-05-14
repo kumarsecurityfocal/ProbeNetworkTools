@@ -14,11 +14,13 @@ export const getUserSubscription = async () => {
 // Get all subscription tiers
 export const getSubscriptionTiers = async () => {
   try {
-    const response = await api.get('/subscription/tiers');
+    console.log("Fetching subscription tiers...");
+    const response = await api.get('/subscription-tiers');
+    console.log("Subscription tiers response:", response);
     return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
     console.error('Error fetching subscription tiers:', error);
-    throw error;
+    return []; // Return empty array instead of throwing
   }
 };
 
@@ -41,11 +43,13 @@ export const createSubscription = async (userId, tierId, paymentDetails = {}) =>
 // Admin: List all subscriptions
 export const getAllSubscriptions = async () => {
   try {
+    console.log("Fetching all subscriptions...");
     const response = await api.get('/subscriptions');
+    console.log("Subscriptions response:", response);
     return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
     console.error('Error fetching all subscriptions:', error);
-    throw error;
+    return []; // Return empty array instead of throwing
   }
 };
 
