@@ -102,7 +102,7 @@ async def get_system_metrics(
     
     if recent_diagnostics:
         successful_diagnostics = [d for d in recent_diagnostics if d.status == 'success']
-        success_rate = round((len(successful_diagnostics) / len(recent_diagnostics)) * 100)
+        success_rate = int((len(successful_diagnostics) / len(recent_diagnostics)) * 100)
     else:
         success_rate = 0
     
