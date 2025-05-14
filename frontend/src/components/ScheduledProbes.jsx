@@ -128,9 +128,12 @@ function ScheduledProbes() {
     setLoading(true);
     try {
       const data = await getScheduledProbes();
-      setProbes(data);
+      // Ensure data is an array before setting it
+      setProbes(Array.isArray(data) ? data : []);
     } catch (error) {
+      console.error("Error fetching scheduled probes:", error);
       showSnackbar(`Error fetching probes: ${error.message}`, 'error');
+      setProbes([]); // Set to empty array on error
     } finally {
       setLoading(false);
     }

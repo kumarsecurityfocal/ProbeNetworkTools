@@ -211,15 +211,19 @@ export const getApiKeys = async () => {
 
 export const createApiKey = async (data) => {
   try {
-    const response = await api.post('/keys', {
+    // The backend expects query parameters in the URL rather than in the request body
+    // Construct the URL with the expires_days as a query parameter
+    const expires = data.expires_days === 0 ? null : data.expires_days;
+    const queryParam = expires ? `?expires_days=${expires}` : '';
+    
+    // Send the name in the request body
+    const response = await api.post(`/keys${queryParam}`, {
       name: data.name
-    }, {
-      params: {
-        expires_days: data.expires_days === 0 ? null : data.expires_days
-      }
     });
+    
     return response.data;
   } catch (error) {
+    console.log("Error creating API key:", error);
     return handleApiError(error);
   }
 };
