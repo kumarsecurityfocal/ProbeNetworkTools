@@ -89,14 +89,18 @@ app.use('/metrics', (req, res, next) => {
   return apiProxy(req, res, next);
 });
 
-// API keys endpoints
+// API keys endpoints - Completely rewritten with simpler approach
 app.use('/keys', (req, res, next) => {
   console.log(`============================================`);
   console.log(`API keys endpoint request received: ${req.method} ${req.url}`);
   console.log(`Original URL: ${req.originalUrl}`);
+
+  // For direct CURL debugging
+  console.log(`Request path: ${req.path}`);
+  console.log(`Authorization header present: ${req.headers.authorization ? 'YES' : 'NO'}`);
   
+  // Capture and log request body for POST requests
   if (req.method === 'POST') {
-    // Log request body for debugging if it's a JSON content type
     if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
       let bodyData = '';
       req.on('data', chunk => {
@@ -111,35 +115,123 @@ app.use('/keys', (req, res, next) => {
         }
       });
     }
-    
-    // Log all headers for debugging
+
+    // Log headers for debugging
     console.log('Request Headers:', JSON.stringify(req.headers, null, 2));
-    
-    // Modify the url for POST requests to ensure proper routing
-    if (req.originalUrl.includes('?')) {
-      // Extract the query string
-      const queryString = req.originalUrl.split('?')[1];
-      
-      // Set the URL to include the query parameters correctly
-      req.url = `/?${queryString}`;
-      console.log(`Modified URL for POST with query params: ${req.url}`);
-    } else {
-      // Ensure we have a trailing slash for POST requests without query params
-      req.url = '/';
-    }
-    
-    console.log(`Forwarding API key creation to backend: ${apiProxyOptions.target}/keys${req.url}`);
-  } else {
-    // For all other requests, add trailing slash to /keys if it's an empty path
-    if (req.url === '' || req.url === '/') {
-      req.url = '/';
-    }
-    console.log(`Forwarding to backend: ${apiProxyOptions.target}/keys${req.url}`);
   }
+
+  // Use a simpler approach - always ensure we have a trailing slash for keys endpoint
+  // This is critical for FastAPI to correctly recognize the endpoint
+  let url = req.url;
+  
+  // For all requests, ensure the URL starts with a slash
+  if (!url.startsWith('/')) {
+    url = '/' + url;
+  }
+  
+  // If it's just the root path or no path, enforce a trailing slash
+  if (url === '' || url === '/') {
+    url = '/';
+  }
+  
+  // Save the modified URL
+  req.url = url;
+  
+  console.log(`Modified URL: ${req.url}`);
+  console.log(`Target: ${apiProxyOptions.target}/keys${url}`);
   console.log(`============================================`);
   
-  // Let the proxy middleware handle the request
-  return apiProxy(req, res, next);
+  // Override the proxy target path completely to ensure the right endpoint
+  const proxyReq = req.method === 'POST' ? 
+    `${apiProxyOptions.target}/keys/` :  // Always use /keys/ for POST requests
+    `${apiProxyOptions.target}/keys${url}`;  // Use the modified url for others
+  
+  console.log(`Final proxy target: ${proxyReq}`);
+  
+  // Create a new request directly to the backend to bypass any middleware issues
+  if (req.method === 'POST') {
+    // Extract the token from the Authorization header
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
+    
+    // Extract query parameters
+    const queryParams = new URLSearchParams();
+    if (req.url.includes('?')) {
+      const queryString = req.url.split('?')[1];
+      new URLSearchParams(queryString).forEach((value, key) => {
+        queryParams.append(key, value);
+      });
+    }
+    
+    // Append query parameters to the URL
+    const finalUrl = queryParams.toString() ? 
+      `${apiProxyOptions.target}/keys/?${queryParams.toString()}` : 
+      `${apiProxyOptions.target}/keys/`;
+    
+    console.log(`Direct target URL: ${finalUrl}`);
+    
+    // For POST requests, manually forward to the backend
+    const http = require('http');
+    
+    // Collect the body data
+    let bodyData = '';
+    req.on('data', chunk => {
+      bodyData += chunk;
+    });
+    
+    req.on('end', () => {
+      // Create the options for the request to the backend
+      const options = {
+        hostname: 'localhost',
+        port: 8000,
+        path: finalUrl.replace('http://localhost:8000', ''),
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      };
+      
+      console.log(`Making direct backend request to: ${options.path}`);
+      
+      // Create the request to the backend
+      const backendReq = http.request(options, (backendRes) => {
+        console.log(`Backend status: ${backendRes.statusCode}`);
+        
+        // Forward the status code and headers
+        res.status(backendRes.statusCode);
+        Object.keys(backendRes.headers).forEach(key => {
+          res.setHeader(key, backendRes.headers[key]);
+        });
+        
+        // Forward the response data
+        let responseData = '';
+        backendRes.on('data', (chunk) => {
+          responseData += chunk;
+        });
+        
+        backendRes.on('end', () => {
+          console.log(`Backend response: ${responseData}`);
+          res.end(responseData);
+        });
+      });
+      
+      backendReq.on('error', (error) => {
+        console.error(`Backend request error: ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error', message: error.message });
+      });
+      
+      // Send the body data to the backend
+      if (bodyData) {
+        backendReq.write(bodyData);
+      }
+      
+      backendReq.end();
+    });
+  } else {
+    // For all other methods, use the proxy middleware
+    return apiProxy(req, res, next);
+  }
 });
 
 // Probes endpoints
