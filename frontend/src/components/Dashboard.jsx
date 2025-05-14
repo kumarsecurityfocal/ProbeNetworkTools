@@ -235,7 +235,8 @@ const Dashboard = () => {
               },
             },
             '& .MuiInputLabel-root': {
-              color: darkMode ? 'rgba(255, 255, 255, 0.7)' : 'inherit',
+              color: darkMode ? 'rgba(255, 255, 255, 0.9)' : 'inherit',
+              fontWeight: darkMode ? 500 : 400,
             },
             '& .MuiSelect-icon': {
               color: darkMode ? 'rgba(255, 255, 255, 0.5)' : 'inherit',
@@ -245,7 +246,19 @@ const Dashboard = () => {
             },
           }}
         >
-          <InputLabel id="time-range-label" sx={{ fontSize: '0.9rem' }}>Time Range</InputLabel>
+          <InputLabel 
+            id="time-range-label" 
+            sx={{ 
+              fontSize: '0.9rem',
+              color: darkMode ? 'rgba(255, 255, 255, 0.95)' : undefined,
+              fontWeight: darkMode ? 500 : 400,
+              backgroundColor: darkMode ? 'rgba(0, 0, 0, 0.2)' : undefined,
+              padding: darkMode ? '0 4px' : undefined,
+              borderRadius: darkMode ? '4px' : undefined,
+            }}
+          >
+            Time Range
+          </InputLabel>
           <Select
             labelId="time-range-label"
             id="time-range-select"
