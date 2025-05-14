@@ -44,18 +44,30 @@ const apiProxy = createProxyMiddleware(apiProxyOptions);
 
 // No need for separate routes to add /api prefix since we're using it consistently now
 
-// Explicitly proxy the /users/me endpoint to the backend
-app.use('/users/me', (req, res, next) => {
+// Legacy route for /me (redirects to /users/me for backward compatibility)
+app.use('/me', (req, res, next) => {
   console.log(`============================================`);
-  console.log(`User profile request received: ${req.method} ${req.url}`);
+  console.log(`Legacy /me endpoint request received: ${req.method} ${req.url}`);
   console.log(`Original URL: ${req.originalUrl}`);
   console.log(`Forwarding to backend: ${apiProxyOptions.target}/users/me`);
   console.log(`============================================`);
   
-  // Override the URL to ensure it points to exactly /users/me
+  // Override the URL to point to the new endpoint
   req.url = '/users/me';
   
   // Let the proxy middleware handle the request
+  return apiProxy(req, res, next);
+});
+
+// Explicitly proxy all /users/* endpoints to the backend
+app.use('/users', (req, res, next) => {
+  console.log(`============================================`);
+  console.log(`User endpoint request received: ${req.method} ${req.url}`);
+  console.log(`Original URL: ${req.originalUrl}`);
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}/users${req.url}`);
+  console.log(`============================================`);
+  
+  // Let the proxy middleware handle the request - keep the original URL intact
   return apiProxy(req, res, next);
 });
 
