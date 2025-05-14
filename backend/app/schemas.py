@@ -208,8 +208,9 @@ class ApiUsageLogResponse(ApiUsageLogBase):
     user_id: int
     created_at: datetime
     
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class SystemMetricBase(BaseModel):
