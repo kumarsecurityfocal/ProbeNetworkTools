@@ -71,6 +71,15 @@ const getPaperStyle = (darkMode) => ({
   backgroundColor: darkMode ? '#1e1e1e' : '#ffffff'
 });
 
+// This is a fallback in case paperStyle is accessed incorrectly somewhere
+const paperStyle = {
+  p: 4, 
+  borderRadius: '8px',
+  boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+  border: '1px solid rgba(0,0,0,0.05)',
+  backgroundColor: '#ffffff'
+};
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -927,7 +936,7 @@ const Dashboard = () => {
         <Grid item xs={12} md={6}>
           <Paper sx={{ ...getPaperStyle(darkMode), p: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">
+              <Typography variant="h6" sx={{ color: darkMode ? '#ffffff' : '#111827' }}>
                 <ScheduleIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
                 Active Scheduled Probes
               </Typography>
@@ -963,7 +972,7 @@ const Dashboard = () => {
         {/* Quick Actions - Fourth Row */}
         <Grid item xs={12}>
           <Paper sx={{ ...getPaperStyle(darkMode), p: 3 }}>
-            <Typography variant="h6" gutterBottom>
+            <Typography variant="h6" gutterBottom sx={{ color: darkMode ? '#ffffff' : '#111827' }}>
               Quick Actions
             </Typography>
             <Divider sx={{ mb: 2 }} />
