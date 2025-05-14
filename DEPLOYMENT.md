@@ -505,6 +505,18 @@ The following dependencies **must** be present in the frontend `package.json` un
 - **dayjs**: Required for date handling in the ScheduledProbes component
 - **@mui/x-date-pickers**: Required for date picker components
 
+#### 5.3.2.2 Critical Backend Dependencies
+
+The following dependencies are required for the backend to function properly:
+
+- **email-validator**: Required for Pydantic EmailStr validation in user schemas
+- **pydantic[email]**: Alternatively, this installs both pydantic and email-validator
+
+Without this dependency, you'll see the following error at runtime:
+```
+ImportError: email-validator is not installed, run `pip install pydantic[email]`
+```
+
 Example of the proper dependencies section in `frontend/package.json`:
 
 ```json
@@ -585,20 +597,28 @@ Before deploying to production, review this checklist to ensure compatibility:
 - [ ] Set up proper database credentials with least privilege access
 - [ ] Verify RDS security group allows connections from EC2 instance only
 
-### 7.4 Environment Variables
+### 7.4 Backend Dependencies
+
+- [x] Ensure `email-validator` is installed for Pydantic EmailStr validation
+- [ ] Verify all required Python packages are in requirements.txt
+- [ ] Check SQLAlchemy and PostgreSQL dependencies
+- [ ] Test backend initialization without connection to database
+- [ ] Validate JWT token generation and validation dependencies
+
+### 7.5 Environment Variables
 
 - [ ] Review all required environment variables in `.env.backend.template`
 - [ ] Create production-specific environment files in a secure location
 - [ ] Update `SECRET_KEY` and other security-related environment variables
 - [ ] Configure proper `CORS_ORIGINS` including production domain
 
-### 7.5 Express Server Removal
+### 7.6 Express Server Removal
 
 - [ ] Verify that production setup does not depend on the Express server
 - [ ] Ensure API requests work properly through NGINX without Express
 - [ ] Remove any Express-specific code from production deployment
 
-### 7.6 Frontend API Path Verification
+### 7.7 Frontend API Path Verification
 
 - [x] Review all API calls in the frontend code for absolute URL usage
 - [x] Convert any hardcoded URLs to relative paths (`/api/endpoint` format)
@@ -606,7 +626,7 @@ Before deploying to production, review this checklist to ensure compatibility:
 - [ ] Verify all Axios/fetch requests will work in both environments
 - [ ] Test API calls after deployment to confirm routing works correctly
 
-### 7.7 Frontend Build Dependencies
+### 7.8 Frontend Build Dependencies
 
 - [x] Add dayjs to package.json dependencies
 - [x] Add @mui/x-date-pickers to package.json dependencies
