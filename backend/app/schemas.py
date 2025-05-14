@@ -34,8 +34,9 @@ class UserResponse(UserBase):
     email_verified: bool
     created_at: datetime
     
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class UserDetailResponse(UserResponse):
@@ -60,8 +61,9 @@ class ApiKeyResponse(ApiKeyBase):
     created_at: datetime
     expires_at: Optional[datetime] = None
     
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class DiagnosticCreate(BaseModel):
@@ -77,8 +79,9 @@ class DiagnosticResponse(DiagnosticCreate):
     created_at: datetime
     execution_time: int
     
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class SubscriptionTierBase(BaseModel):
@@ -109,8 +112,9 @@ class SubscriptionTierResponse(SubscriptionTierBase):
     created_at: datetime
     updated_at: datetime
     
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class UserSubscriptionBase(BaseModel):
@@ -134,8 +138,9 @@ class UserSubscriptionResponse(UserSubscriptionBase):
     created_at: datetime
     updated_at: datetime  # ✅ Required for full model conversion
     
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class ScheduledProbeBase(BaseModel):
@@ -160,8 +165,9 @@ class ScheduledProbeResponse(ScheduledProbeBase):
     created_at: datetime
     updated_at: datetime
     
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class ProbeResultBase(BaseModel):
@@ -179,8 +185,9 @@ class ProbeResultResponse(ProbeResultBase):
     scheduled_probe_id: int
     created_at: datetime
     
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class ApiUsageLogBase(BaseModel):
@@ -201,9 +208,8 @@ class ApiUsageLogResponse(ApiUsageLogBase):
     user_id: int
     created_at: datetime
     
-    model_config = {
-        "from_attributes": True
-    }
+    class Config:
+        orm_mode = True
 
 
 class SystemMetricBase(BaseModel):
