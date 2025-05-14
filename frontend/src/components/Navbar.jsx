@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   AppBar,
@@ -19,7 +19,9 @@ import {
   Tooltip,
   Switch,
   Badge,
-  Container
+  Container,
+  useMediaQuery,
+  useTheme
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -42,17 +44,27 @@ import {
 import { useAuth } from '../context/AuthContext';
 import Logo from './Logo';
 
-const drawerWidth = 240;
+const drawerWidthExpanded = 240;
+const drawerWidthCollapsed = 72;
 
 const Navbar = ({ darkMode, toggleDarkMode }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [drawerCollapsed, setDrawerCollapsed] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
+  const drawerWidth = drawerCollapsed ? drawerWidthCollapsed : drawerWidthExpanded;
   
   const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
+    if (isMobile) {
+      setMobileOpen(!mobileOpen);
+    } else {
+      setDrawerCollapsed(!drawerCollapsed);
+    }
   };
   
   const handleMenuOpen = (event) => {
@@ -91,7 +103,7 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
   
   // Airtable-style sidebar
   const drawer = (
-    <Box sx={{ height: '100%', bgcolor: '#f8f9fa', overflowY: 'auto' }}>
+    <Box sx={{ height: '100%', bgcolor: '#ffffff', overflowY: 'auto' }}>
       <Box 
         sx={{ 
           display: 'flex', 
@@ -105,7 +117,7 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
           variant="h6" 
           sx={{ 
             mt: 2, 
-            fontFamily: '"DM Sans", sans-serif', 
+            fontFamily: '"Inter", sans-serif', 
             fontWeight: 600,
             color: '#202124'
           }}
@@ -128,20 +140,20 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
               sx={{
                 borderRadius: '8px',
                 mb: 0.5,
-                color: isActive ? 'primary.600' : 'gray.700',
-                bgcolor: isActive ? 'rgba(66, 133, 244, 0.08)' : 'transparent',
+                color: isActive ? '#2563EB' : '#4B5563',
+                bgcolor: isActive ? 'rgba(37, 99, 235, 0.08)' : 'transparent',
                 '&:hover': {
-                  bgcolor: 'rgba(66, 133, 244, 0.04)',
+                  bgcolor: 'rgba(37, 99, 235, 0.04)',
                 },
                 '& .MuiListItemIcon-root': {
-                  color: isActive ? 'primary.500' : 'gray.600',
+                  color: isActive ? '#2563EB' : '#6B7280',
                   minWidth: '40px',
                 }
               }}
             >
               <ListItemIcon>
                 {React.cloneElement(item.icon, { 
-                  style: { color: isActive ? '#4285F4' : '#5f6368' } 
+                  style: { color: isActive ? '#2563EB' : '#6B7280' } 
                 })}
               </ListItemIcon>
               <ListItemText 
@@ -159,7 +171,7 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
       <Divider sx={{ my: 1, mx: 2 }} />
       
       <Box sx={{ px: 3, py: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Typography variant="body2" sx={{ color: '#5f6368', fontWeight: 500 }}>
+        <Typography variant="body2" sx={{ color: '#6B7280', fontWeight: 500 }}>
           {darkMode ? 'Dark Mode' : 'Light Mode'}
         </Typography>
         <Switch
@@ -169,10 +181,10 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
           size="small"
           sx={{
             '& .MuiSwitch-switchBase.Mui-checked': {
-              color: '#4285F4',
+              color: '#2563EB',
             },
             '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-              backgroundColor: '#4285F4',
+              backgroundColor: '#2563EB',
             },
           }}
         />
@@ -200,7 +212,11 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
               aria-label="open drawer"
               edge="start"
               onClick={handleDrawerToggle}
-              sx={{ mr: 1, display: { sm: 'none' } }}
+              sx={{ 
+                mr: 1, 
+                display: 'flex',
+                color: darkMode ? '#ffffff' : '#6B7280' 
+              }}
             >
               <MenuIcon />
             </IconButton>
@@ -243,47 +259,7 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
           
           {isAuthenticated ? (
             <>
-              <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-                {navItems.slice(0, 4).map((item) => {
-                  const isActive = location.pathname === item.path;
-                  return (
-                    <Button
-                      key={item.name}
-                      component={RouterLink}
-                      to={item.path}
-                      sx={{ 
-                        mx: 0.5,
-                        px: 2,
-                        py: 1,
-                        color: isActive 
-                          ? (darkMode ? '#8AB4F8' : '#1a73e8') 
-                          : (darkMode ? '#DADCE0' : '#5f6368'),
-                        fontWeight: isActive ? 600 : 500,
-                        textTransform: 'none',
-                        borderRadius: '8px',
-                        fontSize: '0.95rem',
-                        backgroundColor: isActive 
-                          ? (darkMode ? 'rgba(138, 180, 248, 0.08)' : 'rgba(66, 133, 244, 0.04)') 
-                          : 'transparent',
-                        '&:hover': {
-                          backgroundColor: darkMode 
-                            ? 'rgba(138, 180, 248, 0.04)' 
-                            : 'rgba(66, 133, 244, 0.04)'
-                        }
-                      }}
-                      startIcon={React.cloneElement(item.icon, { 
-                        style: { 
-                          color: isActive 
-                            ? (darkMode ? '#8AB4F8' : '#1a73e8') 
-                            : (darkMode ? '#DADCE0' : '#5f6368')
-                        }
-                      })}
-                    >
-                      {item.name}
-                    </Button>
-                  );
-                })}
-              </Box>
+              <Box sx={{ flexGrow: 1 }}></Box>
               
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 {/* Search */}
