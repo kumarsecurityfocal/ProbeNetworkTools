@@ -399,6 +399,44 @@ The script will:
 4. Apply database migrations
 5. Verify the deployment
 
+### 5.1.1 Migration from Replit to Production
+
+When migrating from Replit to production, follow these additional steps:
+
+1. **Update the GitHub Repository URL**:
+   - Before deployment, update the `REPO_URL` variable in `deploy.sh` (line 11):
+   ```bash
+   REPO_URL="https://github.com/yourusername/ProbeNetworkTools.git"  # Replace with your actual repo URL
+   ```
+
+2. **Express Server Migration**:
+   - The Replit development environment uses an Express server (`server.js`) to proxy API requests between frontend and backend.
+   - In production, this is handled by NGINX instead.
+   - No changes to the Express server are needed as it's only used in development.
+
+3. **Environment Variable Migration**:
+   - Create a production `.env.backend` file based on the template:
+   ```bash
+   mkdir -p ../environment
+   cp backend/.env.backend.template ../environment/.env.backend
+   nano ../environment/.env.backend  # Edit with your production values
+   ```
+   - The deployment script will check for and use these production environment variables.
+
+4. **SSL Certificate Handling**:
+   - If existing SSL certificates are present in the `nginx/ssl/live/probeops.com-0001/` directory, ensure they are properly backed up before migration:
+   ```bash
+   # Create backup of existing SSL certificates
+   tar -czf nginx-ssl-backup-$(date +%Y%m%d).tar.gz nginx/ssl/
+   ```
+
+5. **Database Migration Verification**:
+   - Verify RDS connection details before running migrations:
+   ```bash
+   # Test database connection
+   docker compose exec backend python -c "from app.database import engine; print('Database connection successful')"
+   ```
+
 ### 5.2 Setting Up Continuous Deployment (Optional)
 
 For a more automated workflow, consider setting up a CI/CD pipeline using GitHub Actions or AWS CodePipeline. An example GitHub Actions workflow could:
@@ -407,6 +445,44 @@ For a more automated workflow, consider setting up a CI/CD pipeline using GitHub
 2. Build Docker images
 3. Push images to Amazon ECR
 4. Deploy to EC2 using the deploy script
+
+## 5.3 API Proxy Configuration
+
+### 5.3.1 Development vs Production API Routing
+
+The application uses different API routing approaches in development and production:
+
+#### Development (Replit)
+- In development, an Express server (`server.js`) acts as a proxy between the frontend and backend
+- Express handles API requests by forwarding them to the backend with path prefixes
+- The proxy handles potential duplicate prefixes to avoid `/api/api/endpoint` issues
+- API calls from the frontend are directed to `/api/endpoint` and forwarded to `http://localhost:8000/api/endpoint`
+
+#### Production (AWS)
+- In production, NGINX performs this proxy functionality
+- As configured in `nginx.conf`, API requests to `/api/` are forwarded to the backend
+- Production NGINX configuration strips the `/api/` prefix to avoid duplication:
+  ```nginx
+  location /api/ {
+      proxy_pass http://backend:8000/;  # Note the trailing slash - removes /api prefix
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+  }
+  ```
+
+### 5.3.2 Frontend Build Handling
+
+The frontend build process differs between environments:
+
+#### Development (Replit)
+- In development, frontend assets are built and stored in the `public/` directory
+- The Express server serves these static assets
+
+#### Production (AWS)
+- In production, a multi-stage Docker build process is used
+- Frontend assets are built in the frontend container
+- Built assets are copied to the NGINX container
+- The `deploy.sh` script includes logic to ensure frontend assets are properly copied to the `nginx/frontend-build` directory
 
 ## 6. Monitoring and Maintenance
 
@@ -428,6 +504,46 @@ For a more automated workflow, consider setting up a CI/CD pipeline using GitHub
 - Keep Docker and Docker Compose updated
 - Schedule maintenance windows for application updates
 
+## 7. Production Compatibility Checklist
+
+Before deploying to production, review this checklist to ensure compatibility:
+
+### 7.1 Docker Compose Configuration
+
+- [ ] Ensure `docker-compose.yml` is using the latest version format (not specifying version at the top)
+- [ ] Verify no development-only volumes are enabled in the production YAML
+- [ ] Check environment variables are properly set for production
+- [ ] Confirm the database section is commented out in favor of using AWS RDS
+- [ ] Ensure all containers have proper restart policies set to `always`
+
+### 7.2 NGINX Configuration 
+
+- [ ] Verify the domain names in `nginx.conf` match your actual production domains
+- [ ] Confirm SSL certificate paths are correct and match the Let's Encrypt pattern
+- [ ] Ensure API proxy configuration correctly forwards to the backend service
+- [ ] Check that the NGINX configuration correctly serves frontend static assets
+- [ ] Validate that HTTP to HTTPS redirection is properly configured
+
+### 7.3 Database Migration Safety
+
+- [ ] Create a database backup before running migrations
+- [ ] Review all migration scripts for potentially destructive operations
+- [ ] Set up proper database credentials with least privilege access
+- [ ] Verify RDS security group allows connections from EC2 instance only
+
+### 7.4 Environment Variables
+
+- [ ] Review all required environment variables in `.env.backend.template`
+- [ ] Create production-specific environment files in a secure location
+- [ ] Update `SECRET_KEY` and other security-related environment variables
+- [ ] Configure proper `CORS_ORIGINS` including production domain
+
+### 7.5 Express Server Removal
+
+- [ ] Verify that production setup does not depend on the Express server
+- [ ] Ensure API requests work properly through NGINX without Express
+- [ ] Remove any Express-specific code from production deployment
+
 ## Troubleshooting
 
 ### Common Issues
@@ -448,3 +564,73 @@ For a more automated workflow, consider setting up a CI/CD pipeline using GitHub
    - Ensure DNS records are pointing to the correct IP
 
 For further assistance, consult the application documentation or contact the development team.
+
+## 8. Recommended Deployment Script Modifications
+
+The following modifications to `deploy.sh` are recommended for production deployment:
+
+### 8.1 GitHub Repository URL
+
+Update the repository URL at line 11:
+
+```bash
+# Original
+REPO_URL="https://github.com/yourusername/ProbeNetworkTools.git"  # Replace with your actual repo URL
+
+# Updated
+REPO_URL="https://github.com/your-org/ProbeOps.git"  # Use your actual organization and repository name
+```
+
+### 8.2 Environment Handling
+
+Ensure the environment directory check is properly set for your production server:
+
+```bash
+# Check if the environment directory exists
+if [ -d "../environment" ] && [ -f "../environment/.env.backend" ]; then
+    # Extract keys from template and actual env files
+    TEMPLATE_KEYS=$(grep -v '^#' ./backend/.env.backend.template | cut -d= -f1 | sort)
+    ACTUAL_KEYS=$(grep -v '^#' ../environment/.env.backend | cut -d= -f1 | sort)
+    
+    # ... rest of environment checking code ...
+fi
+```
+
+### 8.3 Frontend Assets Path
+
+To handle frontend assets correctly, modify the copy commands if needed:
+
+```bash
+# If your build process places assets in a different location, update this path
+if [ -d "frontend/dist" ] && [ -f "frontend/dist/index.html" ]; then
+    # Copy from frontend/dist to nginx/frontend-build
+    if execute_and_log "cp -r frontend/dist/* nginx/frontend-build/" "Copying frontend/dist assets"; then
+        log_message "✅ Frontend assets successfully copied from frontend/dist to NGINX container"
+    fi
+fi
+```
+
+### 8.4 API Key Configuration
+
+To ensure API keys are properly set for the probe service:
+
+```bash
+# Add this after deployment to ensure the probe service has an API key
+if execute_and_log "docker-compose exec -T backend python -c \"from app.auth import create_api_key; from app.database import get_db; db = next(get_db()); key = create_api_key(db, 'probe-service', 1, None); print(f'API_KEY={key.key}')\" > probe_api_key.txt" "Creating probe API key"; then
+    PROBE_API_KEY=$(grep "API_KEY=" probe_api_key.txt | cut -d= -f2)
+    log_message "✅ Probe API key generated: ${PROBE_API_KEY:0:5}..."
+    
+    # Update environment variables
+    if [ -f "probe/.env.probe" ]; then
+        sed -i "s/^API_KEY=.*/API_KEY=${PROBE_API_KEY}/" probe/.env.probe
+        log_message "✅ Updated probe/.env.probe with new API key"
+    else
+        echo "API_KEY=${PROBE_API_KEY}" > probe/.env.probe
+        log_message "✅ Created probe/.env.probe with API key"
+    fi
+    
+    # Restart probe service to use new key
+    docker-compose restart probe
+    log_message "✅ Restarted probe service with new API key"
+fi
+```
