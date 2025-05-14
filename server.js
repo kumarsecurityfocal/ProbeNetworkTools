@@ -144,6 +144,7 @@ app.use('/login', (req, res, next) => {
   console.log(`============================================`);
   console.log(`Login request received: ${req.method} ${req.url}`);
   console.log(`Original URL: ${req.originalUrl}`);
+  console.log(`Content-Type: ${req.headers['content-type']}`);
   console.log(`Forwarding to backend: ${apiProxyOptions.target}/login`);
   console.log(`============================================`);
   

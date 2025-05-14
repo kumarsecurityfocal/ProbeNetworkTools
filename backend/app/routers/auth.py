@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -43,13 +43,33 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=schemas.Token)
-def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+async def login_for_access_token(
+    form_data: Optional[OAuth2PasswordRequestForm] = Depends(),
+    user_login: Optional[schemas.UserLogin] = None,
+    db: Session = Depends(get_db)
+):
+    # Use either form data or JSON body
+    username = getattr(form_data, "username", None) if form_data else None
+    password = getattr(form_data, "password", None) if form_data else None
+    
+    # If form data wasn't provided, try to use JSON body
+    if not username and not password and user_login:
+        username = user_login.username
+        password = user_login.password
+    
+    # Validate that we have credentials
+    if not username or not password:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Username and password are required",
+        )
+    
     # Print debug information about login attempt
-    print(f"Login attempt for username: {form_data.username}")
+    print(f"Login attempt for username: {username}")
 
-    user = auth.authenticate_user(db, form_data.username, form_data.password)
+    user = auth.authenticate_user(db, username, password)
     if not user:
-        print(f"Authentication failed for username: {form_data.username}")
+        print(f"Authentication failed for username: {username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
