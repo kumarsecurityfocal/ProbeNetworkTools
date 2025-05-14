@@ -33,62 +33,73 @@ const Pricing = () => {
     setAnnual(!annual);
   };
 
+  // Pricing tiers based on the CSV file with annual discount
   const tiers = [
     {
-      title: 'Free',
+      title: 'Free (Starter)',
       subheader: 'For personal use',
-      price: 0,
+      monthlyPrice: 0,
+      annualPrice: 0,
       features: [
-        { name: 'Basic ping diagnostics', included: true },
-        { name: 'Basic DNS lookups', included: true },
-        { name: 'Traceroute', included: true },
-        { name: 'History retention', detail: '7 days', included: true },
-        { name: 'API access', included: false },
-        { name: 'Scheduled probes', included: false },
-        { name: 'Export capabilities', included: false },
+        { name: 'Max Active Probes', detail: '3', included: true },
+        { name: 'Max API Keys', detail: '1', included: true },
+        { name: 'API Calls/Day', detail: '25', included: true },
+        { name: 'API Calls/Month', detail: '500', included: true },
+        { name: 'Allowed Probe Intervals', detail: '15m, 1h, 1d', included: true },
+        { name: 'History Retention', detail: '7 days', included: true },
+        { name: 'Export Capability', included: false },
+        { name: 'Scheduled Probes', detail: '1', included: true },
         { name: 'Alerting', included: false },
-        { name: 'API rate limits', detail: '10/min, 100/hour', included: true },
-        { name: 'Support', detail: 'Community', included: true },
+        { name: 'Usage Stats', detail: 'Basic', included: true },
+        { name: 'Diagnostic Types', detail: 'Ping, Traceroute', included: true },
+        { name: 'Priority Support', detail: 'Community only', included: true },
       ],
       buttonText: 'Sign up for free',
       buttonVariant: 'outlined',
     },
     {
-      title: 'Standard',
+      title: 'Standard (Pro)',
       subheader: 'For professionals',
-      price: annual ? 39 : 49,
-      discount: annual ? 20 : 0,
+      monthlyPrice: 19.99,
+      annualPrice: 191.90, // $19.99 * 12 = $239.88, with 20% discount = $191.90
+      discount: 20,
       features: [
-        { name: 'Basic ping diagnostics', included: true },
-        { name: 'Basic DNS lookups', included: true },
-        { name: 'Traceroute', included: true },
-        { name: 'History retention', detail: '30 days', included: true },
-        { name: 'API access', included: true },
-        { name: 'Scheduled probes', included: true },
-        { name: 'Export capabilities', included: true },
-        { name: 'Alerting', included: false },
-        { name: 'API rate limits', detail: '60/min, 1000/hour', included: true },
-        { name: 'Support', detail: 'Email', included: true },
+        { name: 'Max Active Probes', detail: '10', included: true },
+        { name: 'Max API Keys', detail: '10', included: true },
+        { name: 'API Calls/Day', detail: '200', included: true },
+        { name: 'API Calls/Month', detail: '5000', included: true },
+        { name: 'Allowed Probe Intervals', detail: '5m, 15m, 1h, 1d', included: true },
+        { name: 'History Retention', detail: '30 days', included: true },
+        { name: 'Export Capability', detail: 'Yes (CSV)', included: true },
+        { name: 'Scheduled Probes', detail: '5', included: true },
+        { name: 'Alerting', detail: 'Email', included: true },
+        { name: 'Usage Stats', detail: 'Detailed per probe', included: true },
+        { name: 'Diagnostic Types', detail: 'Ping, Traceroute, DNS, WHOIS', included: true },
+        { name: 'Priority Support', detail: 'Email', included: true },
       ],
       buttonText: 'Get started',
       buttonVariant: 'contained',
       highlight: true,
     },
     {
-      title: 'Enterprise',
+      title: 'Enterprise (OpsEdge)',
       subheader: 'For organizations',
-      price: 'Custom',
+      monthlyPrice: 49.99,
+      annualPrice: 479.90, // $49.99 * 12 = $599.88, with 20% discount = $479.90
+      discount: 20,
       features: [
-        { name: 'Basic ping diagnostics', included: true },
-        { name: 'Basic DNS lookups', included: true },
-        { name: 'Traceroute', included: true },
-        { name: 'History retention', detail: '1 year', included: true },
-        { name: 'API access', included: true },
-        { name: 'Scheduled probes', included: true },
-        { name: 'Export capabilities', included: true },
-        { name: 'Alerting', included: true },
-        { name: 'API rate limits', detail: 'Custom', included: true },
-        { name: 'Support', detail: 'Priority', included: true },
+        { name: 'Max Active Probes', detail: '50', included: true },
+        { name: 'Max API Keys', detail: '20', included: true },
+        { name: 'API Calls/Day', detail: '1000', included: true },
+        { name: 'API Calls/Month', detail: '15000', included: true },
+        { name: 'Allowed Probe Intervals', detail: '5m, 15m, 1h, 1d', included: true },
+        { name: 'History Retention', detail: '90 days', included: true },
+        { name: 'Export Capability', detail: 'Yes (CSV)', included: true },
+        { name: 'Scheduled Probes', detail: '20', included: true },
+        { name: 'Alerting', detail: 'Email + Webhook (Coming Soon)', included: true },
+        { name: 'Usage Stats', detail: 'Full analytics + export', included: true },
+        { name: 'Diagnostic Types', detail: 'All tools incl. curl, reverse DNS', included: true },
+        { name: 'Priority Support', detail: 'Email + Chat (Coming Soon)', included: true },
       ],
       buttonText: 'Contact us',
       buttonVariant: 'outlined',
@@ -182,21 +193,33 @@ const Pricing = () => {
                       mb: 2,
                     }}
                   >
-                    {typeof tier.price === 'number' ? (
+                    {tier.monthlyPrice === 0 ? (
+                      <Typography component="h2" variant="h3" color="text.primary">
+                        Free
+                      </Typography>
+                    ) : (
                       <>
                         <Typography component="h2" variant="h3" color="text.primary">
-                          ${tier.price}
+                          ${annual ? (tier.annualPrice).toFixed(2) : (tier.monthlyPrice).toFixed(2)}
                         </Typography>
-                        <Typography variant="h6" color="text.secondary">
-                          /mo
+                        <Typography variant="h6" color="text.secondary" sx={{ ml: 1 }}>
+                          {annual ? '/year' : '/mo'}
                         </Typography>
                       </>
-                    ) : (
-                      <Typography component="h2" variant="h3" color="text.primary">
-                        {tier.price}
-                      </Typography>
                     )}
                   </Box>
+                  
+                  {/* Show per month price if on annual plan */}
+                  {annual && tier.monthlyPrice > 0 && (
+                    <Box sx={{ textAlign: 'center', mb: 2 }}>
+                      <Typography variant="caption" sx={{ color: 'success.main' }}>
+                        Save 20% with annual billing
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        (equiv. to ${(tier.annualPrice / 12).toFixed(2)}/mo)
+                      </Typography>
+                    </Box>
+                  )}
                   <Divider sx={{ my: 2 }} />
                   <ul style={{ paddingInlineStart: '20px' }}>
                     {tier.features.map((feature) => (
@@ -240,91 +263,111 @@ const Pricing = () => {
         <TableContainer component={Paper} sx={{ mt: 4, mb: 8, overflow: 'auto' }}>
           <Table sx={{ minWidth: 650 }}>
             <TableHead>
-              <TableRow>
+              <TableRow sx={{ bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' }}>
                 <TableCell sx={{ fontWeight: 'bold' }}>Feature</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 'bold' }}>Free</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 'bold' }}>Standard</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 'bold' }}>Enterprise</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 'bold' }}>Free (Starter)</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 'bold' }}>Standard (Pro)</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 'bold' }}>Enterprise (OpsEdge)</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               <TableRow>
-                <TableCell component="th" scope="row">Ping Diagnostics</TableCell>
-                <TableCell align="center"><CheckIcon color="success" /></TableCell>
-                <TableCell align="center"><CheckIcon color="success" /></TableCell>
-                <TableCell align="center"><CheckIcon color="success" /></TableCell>
+                <TableCell component="th" scope="row">Max Active Probes</TableCell>
+                <TableCell align="center">3</TableCell>
+                <TableCell align="center">10</TableCell>
+                <TableCell align="center">50</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell component="th" scope="row">DNS Lookups</TableCell>
-                <TableCell align="center"><CheckIcon color="success" /></TableCell>
-                <TableCell align="center"><CheckIcon color="success" /></TableCell>
-                <TableCell align="center"><CheckIcon color="success" /></TableCell>
+                <TableCell component="th" scope="row">Max API Keys</TableCell>
+                <TableCell align="center">1</TableCell>
+                <TableCell align="center">10</TableCell>
+                <TableCell align="center">20</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell component="th" scope="row">Traceroute</TableCell>
-                <TableCell align="center"><CheckIcon color="success" /></TableCell>
-                <TableCell align="center"><CheckIcon color="success" /></TableCell>
-                <TableCell align="center"><CheckIcon color="success" /></TableCell>
+                <TableCell component="th" scope="row">API Calls/Day</TableCell>
+                <TableCell align="center">25</TableCell>
+                <TableCell align="center">200</TableCell>
+                <TableCell align="center">1000</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell component="th" scope="row">API Calls/Month</TableCell>
+                <TableCell align="center">500</TableCell>
+                <TableCell align="center">5000</TableCell>
+                <TableCell align="center">15000</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell component="th" scope="row">Allowed Probe Intervals</TableCell>
+                <TableCell align="center">15m, 1h, 1d</TableCell>
+                <TableCell align="center">5m, 15m, 1h, 1d</TableCell>
+                <TableCell align="center">5m, 15m, 1h, 1d</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell component="th" scope="row">History Retention</TableCell>
                 <TableCell align="center">7 days</TableCell>
                 <TableCell align="center">30 days</TableCell>
-                <TableCell align="center">1 year</TableCell>
+                <TableCell align="center">90 days</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell component="th" scope="row">API Access</TableCell>
+                <TableCell component="th" scope="row">Export Capability</TableCell>
                 <TableCell align="center"><CloseIcon color="error" /></TableCell>
-                <TableCell align="center"><CheckIcon color="success" /></TableCell>
-                <TableCell align="center"><CheckIcon color="success" /></TableCell>
+                <TableCell align="center">Yes (CSV)</TableCell>
+                <TableCell align="center">Yes (CSV)</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell component="th" scope="row">Scheduled Probes</TableCell>
-                <TableCell align="center"><CloseIcon color="error" /></TableCell>
-                <TableCell align="center"><CheckIcon color="success" /></TableCell>
-                <TableCell align="center"><CheckIcon color="success" /></TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell component="th" scope="row">Export Capabilities</TableCell>
-                <TableCell align="center"><CloseIcon color="error" /></TableCell>
-                <TableCell align="center"><CheckIcon color="success" /></TableCell>
-                <TableCell align="center"><CheckIcon color="success" /></TableCell>
+                <TableCell align="center">1</TableCell>
+                <TableCell align="center">5</TableCell>
+                <TableCell align="center">20</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell component="th" scope="row">Alerting</TableCell>
                 <TableCell align="center"><CloseIcon color="error" /></TableCell>
-                <TableCell align="center"><CloseIcon color="error" /></TableCell>
-                <TableCell align="center"><CheckIcon color="success" /></TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell component="th" scope="row">API Rate Limits</TableCell>
-                <TableCell align="center">10/min, 100/hour</TableCell>
-                <TableCell align="center">60/min, 1000/hour</TableCell>
-                <TableCell align="center">Custom</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell component="th" scope="row">Support</TableCell>
-                <TableCell align="center">Community</TableCell>
                 <TableCell align="center">Email</TableCell>
-                <TableCell align="center">Priority</TableCell>
+                <TableCell align="center">Email + Webhook (Coming Soon)</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell component="th" scope="row">Custom Interval Probes</TableCell>
-                <TableCell align="center"><CloseIcon color="error" /></TableCell>
-                <TableCell align="center"><CloseIcon color="error" /></TableCell>
-                <TableCell align="center"><CheckIcon color="success" /></TableCell>
+                <TableCell component="th" scope="row">Usage Stats</TableCell>
+                <TableCell align="center">Basic</TableCell>
+                <TableCell align="center">Detailed per probe</TableCell>
+                <TableCell align="center">Full analytics + export</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell component="th" scope="row">Multi-user Access</TableCell>
-                <TableCell align="center"><CloseIcon color="error" /></TableCell>
-                <TableCell align="center"><CloseIcon color="error" /></TableCell>
-                <TableCell align="center"><CheckIcon color="success" /></TableCell>
+                <TableCell component="th" scope="row">Diagnostic Types</TableCell>
+                <TableCell align="center">Ping, Traceroute</TableCell>
+                <TableCell align="center">Ping, Traceroute, DNS, WHOIS</TableCell>
+                <TableCell align="center">All tools incl. curl, reverse DNS</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell component="th" scope="row">SSO Integration</TableCell>
-                <TableCell align="center"><CloseIcon color="error" /></TableCell>
-                <TableCell align="center"><CloseIcon color="error" /></TableCell>
-                <TableCell align="center"><CheckIcon color="success" /></TableCell>
+                <TableCell component="th" scope="row">Priority Support</TableCell>
+                <TableCell align="center">Community only</TableCell>
+                <TableCell align="center">Email</TableCell>
+                <TableCell align="center">Email + Chat (Coming Soon)</TableCell>
+              </TableRow>
+              <TableRow sx={{ bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' }}>
+                <TableCell component="th" scope="row" sx={{ fontWeight: 'bold' }}>Price (Monthly)</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 'bold' }}>$0</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 'bold' }}>$19.99</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 'bold' }}>$49.99</TableCell>
+              </TableRow>
+              <TableRow sx={{ bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' }}>
+                <TableCell component="th" scope="row" sx={{ fontWeight: 'bold' }}>Price (Annual)</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 'bold' }}>$0</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                  <Box>
+                    $191.90
+                    <Typography variant="caption" sx={{ display: 'block', color: 'success.main' }}>
+                      Save 20%
+                    </Typography>
+                  </Box>
+                </TableCell>
+                <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                  <Box>
+                    $479.90
+                    <Typography variant="caption" sx={{ display: 'block', color: 'success.main' }}>
+                      Save 20%
+                    </Typography>
+                  </Box>
+                </TableCell>
               </TableRow>
             </TableBody>
           </Table>

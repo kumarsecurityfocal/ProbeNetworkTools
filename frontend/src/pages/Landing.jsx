@@ -24,7 +24,8 @@ import {
   Tab,
   Chip,
   useMediaQuery,
-  alpha
+  alpha,
+  Switch
 } from '@mui/material';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -62,18 +63,23 @@ const Landing = () => {
     setTimeout(() => setCopied(false), 2000);
   };
   
-  // Pricing table data from CSV
+  // Pricing table data from CSV with annual discount
+  const [billingCycle, setBillingCycle] = useState('monthly');
+  
   const pricingTiers = [
     {
       name: "Free (Starter)",
-      price: "$0",
+      monthlyPrice: "$0",
+      annualPrice: "$0",
       features: [
         { name: "Max Active Probes", value: "3" },
         { name: "Max API Keys", value: "1" },
+        { name: "API Calls/Day", value: "25" },
+        { name: "API Calls/Month", value: "500" },
         { name: "Allowed Probe Intervals", value: "15m, 1h, 1d" },
         { name: "History Retention", value: "7 days" },
         { name: "Export Capability", value: false },
-        { name: "Scheduled Probes", value: false },
+        { name: "Scheduled Probes", value: "1" },
         { name: "Alerting", value: false },
         { name: "Usage Stats", value: "Basic" },
         { name: "Diagnostic Types", value: "Ping, Traceroute" },
@@ -82,15 +88,18 @@ const Landing = () => {
     },
     {
       name: "Standard (Pro)",
-      price: "$19.99",
+      monthlyPrice: "$19.99",
+      annualPrice: "$191.90", // $19.99 * 12 = $239.88, with 20% discount = $191.90
       highlight: true,
       features: [
         { name: "Max Active Probes", value: "10" },
-        { name: "Max API Keys", value: "5" },
+        { name: "Max API Keys", value: "10" },
+        { name: "API Calls/Day", value: "200" },
+        { name: "API Calls/Month", value: "5000" },
         { name: "Allowed Probe Intervals", value: "5m, 15m, 1h, 1d" },
         { name: "History Retention", value: "30 days" },
-        { name: "Export Capability", value: "CSV" },
-        { name: "Scheduled Probes", value: true },
+        { name: "Export Capability", value: "Yes (CSV)" },
+        { name: "Scheduled Probes", value: "5" },
         { name: "Alerting", value: "Email" },
         { name: "Usage Stats", value: "Detailed per probe" },
         { name: "Diagnostic Types", value: "Ping, Traceroute, DNS, WHOIS" },
@@ -99,18 +108,21 @@ const Landing = () => {
     },
     {
       name: "Enterprise (OpsEdge)",
-      price: "$49.99",
+      monthlyPrice: "$49.99",
+      annualPrice: "$479.90", // $49.99 * 12 = $599.88, with 20% discount = $479.90
       features: [
         { name: "Max Active Probes", value: "50" },
-        { name: "Max API Keys", value: "15" },
-        { name: "Allowed Probe Intervals", value: "1m (future), 5m, 15m, 1h, 1d" },
+        { name: "Max API Keys", value: "20" },
+        { name: "API Calls/Day", value: "1000" },
+        { name: "API Calls/Month", value: "15000" },
+        { name: "Allowed Probe Intervals", value: "5m, 15m, 1h, 1d" },
         { name: "History Retention", value: "90 days" },
-        { name: "Export Capability", value: "CSV + JSON" },
-        { name: "Scheduled Probes", value: true },
-        { name: "Alerting", value: "Email + Webhook" },
+        { name: "Export Capability", value: "Yes (CSV)" },
+        { name: "Scheduled Probes", value: "20" },
+        { name: "Alerting", value: "Email + Webhook (Coming Soon)" },
         { name: "Usage Stats", value: "Full analytics + export" },
         { name: "Diagnostic Types", value: "All tools incl. curl, reverse DNS" },
-        { name: "Priority Support", value: "Email + Slack (future)" }
+        { name: "Priority Support", value: "Email + Chat (Coming Soon)" }
       ]
     }
   ];
@@ -626,7 +638,42 @@ const Landing = () => {
           Simple plans for every team size
         </Typography>
         
-        <Grid container spacing={3} sx={{ mt: 4 }} justifyContent="center">
+        {/* Billing Toggle */}
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          mb: 4,
+          mt: 2
+        }}>
+          <Typography variant="body1" color={billingCycle === 'monthly' ? 'primary' : 'text.secondary'}>
+            Monthly
+          </Typography>
+          <Switch
+            checked={billingCycle === 'annual'}
+            onChange={() => setBillingCycle(billingCycle === 'monthly' ? 'annual' : 'monthly')}
+            color="primary"
+            sx={{ mx: 1 }}
+          />
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Typography variant="body1" color={billingCycle === 'annual' ? 'primary' : 'text.secondary'}>
+              Annual
+            </Typography>
+            <Chip 
+              label="Save 20%" 
+              color="success" 
+              size="small" 
+              sx={{ 
+                ml: 1,
+                height: 20,
+                fontSize: '0.7rem',
+                visibility: billingCycle === 'annual' ? 'visible' : 'hidden'
+              }} 
+            />
+          </Box>
+        </Box>
+        
+        <Grid container spacing={3} sx={{ mt: 2 }} justifyContent="center">
           {pricingTiers.map((tier, index) => (
             <Grid item xs={12} md={4} key={index}>
               <Card sx={{ 
@@ -667,6 +714,7 @@ const Landing = () => {
                   }}
                 />
                 <CardContent sx={{ flexGrow: 1, px: 2 }}>
+                  {/* Price with monthly/annual toggle */}
                   <Box sx={{ 
                     display: 'flex', 
                     justifyContent: 'center', 
@@ -674,13 +722,23 @@ const Landing = () => {
                     mb: 3
                   }}>
                     <Typography component="h2" variant="h3" color="text.primary">
-                      {tier.price}
+                      {billingCycle === 'monthly' ? tier.monthlyPrice : tier.annualPrice}
                     </Typography>
                     <Typography variant="subtitle1" color="text.secondary" sx={{ ml: 0.5 }}>
-                      /mo
+                      {billingCycle === 'monthly' ? '/mo' : '/year'}
                     </Typography>
                   </Box>
+                  
+                  {/* Show per month price if on annual plan (except for free tier) */}
+                  {billingCycle === 'annual' && tier.monthlyPrice !== "$0" && (
+                    <Typography variant="caption" color="text.secondary" align="center" sx={{ display: 'block', mb: 2 }}>
+                      (equivalent to {`$${(parseFloat(tier.annualPrice.replace('$', '')) / 12).toFixed(2)}`}/mo)
+                    </Typography>
+                  )}
+                  
                   <Divider sx={{ mb: 2 }} />
+                  
+                  {/* Show the top features from CSV */}
                   {tier.features.slice(0, 5).map((feature, idx) => (
                     <Box 
                       key={idx}
@@ -695,14 +753,17 @@ const Landing = () => {
                           <CheckIcon color="success" sx={{ mr: 1, fontSize: 20 }} /> : 
                           <CloseIcon color="error" sx={{ mr: 1, fontSize: 20 }} />
                       ) : (
-                        <ArrowForwardIosIcon sx={{ mr: 1, fontSize: 14, color: theme.palette.primary.main }} />
+                        feature.value === "No" ? 
+                          <CloseIcon color="error" sx={{ mr: 1, fontSize: 20 }} /> :
+                          <ArrowForwardIosIcon sx={{ mr: 1, fontSize: 14, color: theme.palette.primary.main }} />
                       )}
                       <Typography variant="body2" color="text.secondary">
                         <Box component="span" sx={{ color: 'text.primary', fontWeight: 500 }}>
                           {feature.name}:
                         </Box>
                         {' '}
-                        {typeof feature.value === 'boolean' ? '' : feature.value}
+                        {typeof feature.value === 'boolean' ? '' : 
+                          (feature.value === "No" || feature.value === false) ? '' : feature.value}
                       </Typography>
                     </Box>
                   ))}
