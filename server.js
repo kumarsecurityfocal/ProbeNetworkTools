@@ -59,6 +59,54 @@ app.use('/me', (req, res, next) => {
   return apiProxy(req, res, next);
 });
 
+// Analytics and diagnostics endpoints
+app.use('/history', (req, res, next) => {
+  console.log(`============================================`);
+  console.log(`History endpoint request received: ${req.method} ${req.url}`);
+  console.log(`Original URL: ${req.originalUrl}`);
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}/history`);
+  console.log(`============================================`);
+  
+  // Let the proxy middleware handle the request
+  return apiProxy(req, res, next);
+});
+
+// Metrics endpoints
+app.use('/metrics', (req, res, next) => {
+  console.log(`============================================`);
+  console.log(`Metrics endpoint request received: ${req.method} ${req.url}`);
+  console.log(`Original URL: ${req.originalUrl}`);
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}/metrics${req.url}`);
+  console.log(`============================================`);
+  
+  // Let the proxy middleware handle the request
+  return apiProxy(req, res, next);
+});
+
+// API keys endpoints
+app.use('/keys', (req, res, next) => {
+  console.log(`============================================`);
+  console.log(`API keys endpoint request received: ${req.method} ${req.url}`);
+  console.log(`Original URL: ${req.originalUrl}`);
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}/keys${req.url}`);
+  console.log(`============================================`);
+  
+  // Let the proxy middleware handle the request
+  return apiProxy(req, res, next);
+});
+
+// Probes endpoints
+app.use('/probes', (req, res, next) => {
+  console.log(`============================================`);
+  console.log(`Probes endpoint request received: ${req.method} ${req.url}`);
+  console.log(`Original URL: ${req.originalUrl}`);
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}/probes${req.url}`);
+  console.log(`============================================`);
+  
+  // Let the proxy middleware handle the request
+  return apiProxy(req, res, next);
+});
+
 // Explicitly proxy all /users/* endpoints to the backend
 app.use('/users', (req, res, next) => {
   console.log(`============================================`);
