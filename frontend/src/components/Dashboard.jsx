@@ -446,9 +446,9 @@ const Dashboard = () => {
                 display: 'flex', 
                 flexDirection: 'column', 
                 alignItems: 'center',
-                backgroundColor: 'rgba(249, 250, 251, 0.7)',
+                backgroundColor: darkMode ? 'rgba(30, 30, 30, 0.7)' : 'rgba(249, 250, 251, 0.7)',
                 borderRadius: '8px',
-                border: '1px solid rgba(0, 0, 0, 0.03)',
+                border: darkMode ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.03)',
                 px: 3
               }}
             >
@@ -868,7 +868,7 @@ const Dashboard = () => {
         
         {/* Recent Activity - Third Row */}
         <Grid item xs={12} md={6}>
-          <Paper sx={paperStyle}>
+          <Paper sx={getPaperStyle(darkMode)}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
               <Typography 
                 variant="h6" 
