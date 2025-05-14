@@ -1,0 +1,57 @@
+Hi Replit team, now that core functionality is solid, I’d love your help in transforming **ProbeOps** into a clean, professional product with an interface inspired by Airtable (screenshot references attached).
+
+✅ ✨ Design Style Goal: Similar to [Airtable](https://airtable.com)
+- Soft pastel backgrounds
+- Rounded cards and containers
+- Light gradients with depth
+- Clean, minimal fonts and whitespace
+- Elegant use of color for data visualization
+
+---
+
+### 🎯 Here's What I'd Like to Achieve
+
+#### 1. 🌈 **Logo & Branding**
+- Please design a **simple and colorful logo** like Airtable’s — something that reflects "probe", "network", or "operations".
+- Use a **primary accent color** (e.g., electric blue or teal) for buttons and highlights.
+
+#### 2. 🧩 **Layout & Navigation**
+- Fixed top navbar with logo + route tabs (Dashboard, Diagnostics, Keys, History, Account)
+- Left sidebar or dashboard-style panel (optional)
+- Responsive layout that scales beautifully on desktop & mobile
+
+#### 3. 📊 **Dashboard Components**
+- Use **rounded card UI** with icons and numbers, similar to Airtable’s "workspace" cards
+- Add Lucide or Heroicons for diagnostics (Ping, Traceroute, DNS, etc.)
+- Include CTA buttons like “Run Probe”, “Add API Key” in dashboard tiles
+
+#### 4. 📈 **Data Visuals**
+- Replace raw text output with components like:
+  - Pie charts (diagnostic type usage)
+  - Line/Bar charts (probe history)
+  - Compact tiles for rate limits / API usage
+
+#### 5. 💻 **Login / Auth Pages**
+- Design the login and registration screens with:
+  - Clean layout
+  - Gradient or soft color background
+  - Centered form in rounded card
+
+#### 6. 📁 **File Structure**
+- Keep reusable components like `<CardTile />`, `<StatsPanel />`, `<IconButton />`, etc.
+
+---
+
+### 🧪 Optional Enhancements
+- Add light/dark toggle (Tailwind)
+- Hover animation on cards
+- Toast notifications using Radix UI or similar
+- Logo in favicon and login page
+
+---
+
+🔗 I’ve attached screenshots of Airtable’s homepage, dashboard, and sidebar to guide the design.
+
+Please go ahead and apply a full UI upgrade based on this — feel free to reorganize Tailwind config, branding colors, or add animations if helpful.
+
+Thanks so much 🙏

@@ -107,49 +107,69 @@ const AuthForm = ({ mode }) => {
     }
   };
   
-  // Custom styles for input fields
+  // Custom styles for input fields - Airtable inspired
   const inputStyles = {
     '& .MuiOutlinedInput-root': {
       borderRadius: '8px',
-      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-        borderColor: '#4285F4',
-        borderWidth: '2px',
+      backgroundColor: '#fcfcfc',
+      transition: 'all 0.2s ease',
+      border: '1px solid #eaecef',
+      '&:hover': {
+        backgroundColor: '#ffffff',
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
+      },
+      '&.Mui-focused': {
+        backgroundColor: '#ffffff',
+        boxShadow: '0 0 0 2px rgba(24, 144, 255, 0.2)',
+        '& .MuiOutlinedInput-notchedOutline': {
+          borderColor: '#1890ff',
+          borderWidth: '1px',
+        }
       }
     },
-    '& .MuiInputLabel-root.Mui-focused': {
-      color: '#4285F4',
+    '& .MuiInputLabel-root': {
+      fontSize: '0.95rem',
+      '&.Mui-focused': {
+        color: '#1890ff',
+      },
+    },
+    '& .MuiInputBase-input': {
+      padding: '14px 14px',
     },
     my: 1.5
   };
   
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-50 to-gray-100">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <Container maxWidth="sm" className="py-8">
-        <div className="flex flex-col items-center mb-8">
+        <div className="flex flex-col items-center mb-6">
           <Logo size="xl" />
           <Typography 
             variant="h4" 
             component="h1" 
-            className="font-bold mt-6 text-center text-gray-800"
-            sx={{ fontFamily: '"DM Sans", sans-serif', fontWeight: 700 }}
+            className="font-bold mt-4 text-center text-gray-800"
+            sx={{ fontFamily: '"Inter", sans-serif', fontWeight: 700, letterSpacing: '-0.01em' }}
           >
             ProbeOps
           </Typography>
           <Typography 
             variant="body1" 
-            className="text-gray-600 mt-2"
+            className="text-gray-500 mt-2"
+            sx={{ fontFamily: '"Inter", sans-serif' }}
           >
-            Network Diagnostics Platform
+            Network Monitoring Dashboard
           </Typography>
         </div>
         
         <Paper 
           elevation={0} 
-          className="p-8 w-full rounded-2xl"
+          className="p-8 w-full rounded-xl"
           sx={{ 
-            boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.08)',
-            borderRadius: '24px',
-            border: '1px solid rgba(0, 0, 0, 0.05)'
+            boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.08)',
+            borderRadius: '12px',
+            border: '1px solid rgba(224, 224, 255, 0.4)',
+            background: 'rgba(255, 255, 255, 0.9)',
+            backdropFilter: 'blur(8px)'
           }}
         >
           <Typography 
@@ -157,7 +177,7 @@ const AuthForm = ({ mode }) => {
             variant="h5" 
             align="center" 
             className="font-semibold mb-6"
-            sx={{ fontFamily: '"DM Sans", sans-serif', fontWeight: 600, color: '#202124' }}
+            sx={{ fontFamily: '"Inter", sans-serif', fontWeight: 600, color: '#111827' }}
           >
             {isLogin ? 'Welcome back' : 'Create your account'}
           </Typography>
@@ -165,8 +185,15 @@ const AuthForm = ({ mode }) => {
           {apiError && (
             <Alert 
               severity="error" 
-              className="mb-6 rounded-lg"
-              sx={{ borderRadius: '10px' }}
+              className="mb-6"
+              sx={{ 
+                borderRadius: '8px',
+                backgroundColor: 'rgba(254, 226, 226, 0.6)',
+                border: '1px solid rgba(248, 113, 113, 0.3)',
+                '& .MuiAlert-icon': {
+                  color: '#ef4444'
+                }
+              }}
             >
               {apiError}
             </Alert>
@@ -190,7 +217,7 @@ const AuthForm = ({ mode }) => {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <PersonIcon color="action" />
+                    <PersonIcon sx={{ color: '#9ca3af' }} />
                   </InputAdornment>
                 ),
               }}
@@ -213,7 +240,7 @@ const AuthForm = ({ mode }) => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <EmailIcon color="action" />
+                      <EmailIcon sx={{ color: '#9ca3af' }} />
                     </InputAdornment>
                   ),
                 }}
@@ -237,7 +264,7 @@ const AuthForm = ({ mode }) => {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <LockIcon color="action" />
+                    <LockIcon sx={{ color: '#9ca3af' }} />
                   </InputAdornment>
                 ),
                 endAdornment: (
@@ -247,6 +274,7 @@ const AuthForm = ({ mode }) => {
                       onClick={() => setShowPassword(!showPassword)}
                       edge="end"
                       size="small"
+                      sx={{ color: '#9ca3af' }}
                     >
                       {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
                     </IconButton>
@@ -256,12 +284,18 @@ const AuthForm = ({ mode }) => {
             />
             
             {isLogin && (
-              <Box className="flex justify-end mt-1 mb-4">
+              <Box className="flex justify-end mt-1 mb-2">
                 <Link 
                   component={RouterLink} 
                   to="/forgot-password"
-                  className="text-sm text-primary-600 hover:text-primary-800"
-                  sx={{ fontSize: '0.875rem' }}
+                  sx={{ 
+                    fontSize: '0.875rem', 
+                    color: '#1890ff',
+                    textDecoration: 'none',
+                    '&:hover': {
+                      textDecoration: 'underline',
+                    }
+                  }}
                 >
                   Forgot password?
                 </Link>
@@ -276,23 +310,26 @@ const AuthForm = ({ mode }) => {
               disabled={loading}
               className="mt-4 mb-4"
               sx={{ 
+                mt: 3,
+                mb: 2,
                 borderRadius: "8px",
                 padding: "12px 0",
                 textTransform: "none",
                 fontSize: "1rem",
                 fontWeight: 500,
-                backgroundColor: '#4285F4',
+                backgroundColor: '#1890ff',
                 '&:hover': {
-                  backgroundColor: '#3367d6',
+                  backgroundColor: '#0c6ddd',
                 },
-                boxShadow: '0 2px 4px rgba(66, 133, 244, 0.3)'
+                boxShadow: '0 2px 0 rgba(0, 0, 0, 0.043)',
+                transition: 'all 0.2s'
               }}
             >
               {loading ? 'Processing...' : isLogin ? 'Sign In' : 'Create Account'}
             </Button>
             
-            <Divider sx={{ my: 4 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ px: 1 }}>
+            <Divider sx={{ my: 3 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ px: 1, color: '#9ca3af', fontSize: '0.85rem' }}>
                 OR
               </Typography>
             </Divider>
@@ -302,7 +339,6 @@ const AuthForm = ({ mode }) => {
                 <Button
                   fullWidth
                   variant="outlined"
-                  color="primary"
                   className="mb-3"
                   sx={{ 
                     borderRadius: "8px",
@@ -310,12 +346,14 @@ const AuthForm = ({ mode }) => {
                     textTransform: "none",
                     fontSize: "0.95rem",
                     fontWeight: 500,
-                    borderColor: '#dadce0',
-                    color: '#3c4043',
+                    borderColor: '#e5e7eb',
+                    color: '#4b5563',
+                    backgroundColor: '#ffffff',
                     '&:hover': {
-                      borderColor: '#4285F4',
-                      backgroundColor: 'rgba(66, 133, 244, 0.04)'
-                    }
+                      borderColor: '#d1d5db',
+                      backgroundColor: '#f9fafb'
+                    },
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
                   }}
                   startIcon={
                     <Box component="span" sx={{ display: 'flex', alignItems: 'center' }}>
@@ -334,13 +372,19 @@ const AuthForm = ({ mode }) => {
             </Grid>
             
             <Box sx={{ textAlign: 'center', mt: 4 }}>
-              <Typography variant="body2" className="text-gray-700">
+              <Typography variant="body2" sx={{ color: '#6b7280', fontFamily: '"Inter", sans-serif' }}>
                 {isLogin ? "Don't have an account? " : "Already have an account? "}
                 <Link 
                   component={RouterLink} 
                   to={isLogin ? "/register" : "/login"}
-                  className="text-primary-600 font-medium hover:text-primary-800"
-                  sx={{ fontWeight: 500 }}
+                  sx={{ 
+                    color: '#1890ff', 
+                    fontWeight: 500,
+                    textDecoration: 'none',
+                    '&:hover': {
+                      textDecoration: 'underline',
+                    }
+                  }}
                 >
                   {isLogin ? "Sign up" : "Sign in"}
                 </Link>
@@ -349,8 +393,17 @@ const AuthForm = ({ mode }) => {
           </Box>
         </Paper>
         
-        <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 4 }}>
-          By using ProbeOps, you agree to our <Link color="primary" underline="hover">Terms of Service</Link> and <Link color="primary" underline="hover">Privacy Policy</Link>.
+        <Typography 
+          variant="body2" 
+          align="center" 
+          sx={{ 
+            mt: 3, 
+            color: 'rgba(55, 65, 81, 0.7)',
+            fontSize: '0.85rem',
+            fontFamily: '"Inter", sans-serif'
+          }}
+        >
+          By using ProbeOps, you agree to our <Link sx={{ color: '#1890ff', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>Terms of Service</Link> and <Link sx={{ color: '#1890ff', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>Privacy Policy</Link>.
         </Typography>
       </Container>
     </div>
