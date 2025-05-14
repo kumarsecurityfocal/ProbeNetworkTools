@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Logo = ({ size = 'md', variant = 'color', className = '' }) => {
+const Logo = ({ size = 'md', variant = 'color', className = '', hideText = false }) => {
   // Size mapping for logo
   const sizeMap = {
     xs: '24px',
@@ -38,16 +38,18 @@ const Logo = ({ size = 'md', variant = 'color', className = '' }) => {
           <circle cx="38" cy="42" r="10" fill="#4CAF50" />
           
           {/* ProbeOps as a single text element with two colors */}
-          <g transform="translate(58, 30)">
-            <text 
-              fontSize="20" 
-              fontFamily="Arial, sans-serif" 
-              fontWeight="bold" 
-              dominantBaseline="central"
-            >
-              <tspan fill="#2196F3">Probe</tspan><tspan fill="#4CAF50">Ops</tspan>
-            </text>
-          </g>
+          {!hideText && (
+            <g transform="translate(58, 30)">
+              <text 
+                fontSize="20" 
+                fontFamily="Arial, sans-serif" 
+                fontWeight="bold" 
+                dominantBaseline="central"
+              >
+                <tspan fill="#2196F3">Probe</tspan><tspan fill="#4CAF50">Ops</tspan>
+              </text>
+            </g>
+          )}
         </g>
       </svg>
     </div>

@@ -24,6 +24,7 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Logo from './Logo';
 
 const PublicNavbar = ({ darkMode, toggleDarkMode }) => {
   const theme = useTheme();
@@ -55,22 +56,19 @@ const PublicNavbar = ({ darkMode, toggleDarkMode }) => {
   };
 
   const logo = (
-    <Typography
-      variant="h6"
-      noWrap
+    <Box
       component={RouterLink}
       to="/"
       sx={{
         mr: 2,
-        display: { xs: 'flex' },
-        fontFamily: 'monospace',
-        fontWeight: 700,
+        display: 'flex',
+        alignItems: 'center',
         color: 'inherit',
         textDecoration: 'none',
       }}
     >
-      ProbeOps
-    </Typography>
+      <Logo size="md" />
+    </Box>
   );
 
   const drawerList = (
