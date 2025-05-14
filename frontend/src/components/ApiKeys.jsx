@@ -123,35 +123,15 @@ const ApiKeys = () => {
     
     try {
       setLoading(true);
+      setError('');
       
-      console.log('Creating API key with form data:', formData);
-      
-      // Direct fetch approach
-      const token = localStorage.getItem('token');
-      const url = `${window.location.origin}/keys?expires_days=${formData.expires_days}`;
-      
-      console.log('Making direct fetch request to:', url);
-      
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ name: formData.name })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const newApiKey = await response.json();
+      // Use the api service function
+      console.log('Creating API key with formData:', formData);
+      const newApiKey = await createApiKey(formData);
       
       console.log('Successfully created new API key:', newApiKey);
       setApiKeys([newApiKey, ...apiKeys]);
       handleCreateDialogClose();
-      setError('');
-      
     } catch (err) {
       console.error('Error creating API key:', err);
       

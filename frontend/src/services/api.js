@@ -212,42 +212,38 @@ export const getApiKeys = async () => {
 
 export const createApiKey = async (data) => {
   try {
-    console.log("Creating API key with data:", data);
+    console.log("Creating API key with form data:", data);
     
-    // Use direct explicit URL
-    const fullUrl = `${window.location.origin}/keys`;
-    console.log("Using absolute URL:", fullUrl);
+    // First approach - directly use fetch instead of axios
+    console.log("Making direct fetch request to:", `/keys/?expires_days=${data.expires_days}`);
     
-    const response = await axios({
-      method: 'post',
-      url: fullUrl,
+    // Use fetch directly to avoid any axios transformations
+    const response = await fetch(`/keys/?expires_days=${data.expires_days}`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${getToken()}`
       },
-      data: {
-        name: data.name
-      },
-      params: {
-        expires_days: data.expires_days
-      }
+      body: JSON.stringify({ name: data.name })
     });
     
-    console.log("API key created successfully:", response.data);
-    return response.data;
+    if (!response.ok) {
+      throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+    }
+    
+    const responseData = await response.json();
+    console.log("API key created successfully:", responseData);
+    return responseData;
   } catch (error) {
     console.error("Error creating API key:", error);
     
-    // Log the full error for debugging
-    if (error.response) {
-      console.error("Error response data:", error.response.data);
-      console.error("Error status:", error.response.status);
-    } else if (error.request) {
-      console.error("No response received:", error.request);
-    } else {
-      console.error("Error message:", error.message);
-    }
+    // Create a more detailed error for debugging
+    const errorDetails = {
+      message: error.message,
+      stack: error.stack
+    };
     
+    console.error("Error details:", errorDetails);
     throw error;
   }
 };

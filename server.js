@@ -95,11 +95,39 @@ app.use('/keys', (req, res, next) => {
   console.log(`API keys endpoint request received: ${req.method} ${req.url}`);
   console.log(`Original URL: ${req.originalUrl}`);
   
-  // When creating a new API key we need to ensure we use the proper URL format with trailing slash
   if (req.method === 'POST') {
-    // Ensure we have a trailing slash for POST requests
-    const url = req.url === '' || req.url === '/' ? '/' : `/${req.url}`;
-    req.url = url;
+    // Log request body for debugging if it's a JSON content type
+    if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
+      let bodyData = '';
+      req.on('data', chunk => {
+        bodyData += chunk.toString();
+      });
+      
+      req.on('end', () => {
+        try {
+          console.log(`API Key request body: ${bodyData}`);
+        } catch (e) {
+          console.log(`Unable to parse request body: ${e.message}`);
+        }
+      });
+    }
+    
+    // Log all headers for debugging
+    console.log('Request Headers:', JSON.stringify(req.headers, null, 2));
+    
+    // Modify the url for POST requests to ensure proper routing
+    if (req.originalUrl.includes('?')) {
+      // Extract the query string
+      const queryString = req.originalUrl.split('?')[1];
+      
+      // Set the URL to include the query parameters correctly
+      req.url = `/?${queryString}`;
+      console.log(`Modified URL for POST with query params: ${req.url}`);
+    } else {
+      // Ensure we have a trailing slash for POST requests without query params
+      req.url = '/';
+    }
+    
     console.log(`Forwarding API key creation to backend: ${apiProxyOptions.target}/keys${req.url}`);
   } else {
     // For all other requests, add trailing slash to /keys if it's an empty path

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Key Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            min-height: 100px;
+            white-space: pre-wrap;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <h1>API Key Creation Test</h1>
+    <p>This page tests direct API key creation to bypass the React frontend</p>
+
+    <div class="form-group">
+        <label for="token">JWT Token (from localStorage):</label>
+        <input type="text" id="token" placeholder="Paste your token here" value="" />
+    </div>
+
+    <div class="form-group">
+        <label for="apiKeyName">API Key Name:</label>
+        <input type="text" id="apiKeyName" placeholder="Enter a name for the API key" />
+    </div>
+
+    <div class="form-group">
+        <label for="expiresDays">Expires (days):</label>
+        <select id="expiresDays">
+            <option value="30">30 days</option>
+            <option value="60">60 days</option>
+            <option value="90">90 days</option>
+            <option value="365">365 days</option>
+        </select>
+    </div>
+
+    <button onclick="createApiKey()">Create API Key</button>
+
+    <h2>Result:</h2>
+    <div id="result">Results will appear here...</div>
+
+    <script>
+        // Auto-populate token from localStorage if available
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                document.getElementById('token').value = token;
+            }
+        });
+
+        async function createApiKey() {
+            const resultDiv = document.getElementById('result');
+            const token = document.getElementById('token').value;
+            const name = document.getElementById('apiKeyName').value;
+            const expiresDays = document.getElementById('expiresDays').value;
+
+            if (!token) {
+                resultDiv.innerHTML = '<span class="error">Please enter a valid JWT token</span>';
+                return;
+            }
+
+            if (!name) {
+                resultDiv.innerHTML = '<span class="error">Please enter a name for the API key</span>';
+                return;
+            }
+
+            resultDiv.innerHTML = 'Sending request...';
+
+            try {
+                // Try using fetch directly with absolute URL
+                const absoluteUrl = `${window.location.origin}/keys?expires_days=${expiresDays}`;
+                console.log('Making API request to:', absoluteUrl);
+
+                const response = await fetch(absoluteUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ name: name })
+                });
+
+                console.log('Response status:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = '<span class="success">API Key created successfully!</span>\n\n' + 
+                                         JSON.stringify(data, null, 2);
+                } else {
+                    const errorText = await response.text();
+                    resultDiv.innerHTML = `<span class="error">Error: ${response.status}</span>\n\n${errorText}`;
+                }
+            } catch (error) {
+                console.error('Error creating API key:', error);
+                resultDiv.innerHTML = `<span class="error">Error creating API key: ${error.message}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>
