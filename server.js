@@ -94,7 +94,13 @@ app.use('/keys', (req, res, next) => {
   console.log(`============================================`);
   console.log(`API keys endpoint request received: ${req.method} ${req.url}`);
   console.log(`Original URL: ${req.originalUrl}`);
-  console.log(`Forwarding to backend: ${apiProxyOptions.target}/keys${req.url}`);
+  
+  // When creating a new API key we need to pass through query parameters correctly
+  if (req.method === 'POST') {
+    console.log(`Forwarding API key creation to backend: ${apiProxyOptions.target}/keys${req.url}`);
+  } else {
+    console.log(`Forwarding to backend: ${apiProxyOptions.target}/keys${req.url}`);
+  }
   console.log(`============================================`);
   
   // Let the proxy middleware handle the request
