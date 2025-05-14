@@ -18,15 +18,7 @@ args = "Server"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Build Frontend"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Backend API"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Build Frontend with Dependencies"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
@@ -42,14 +34,6 @@ args = "node server.js"
 waitForPort = 5000
 
 [[workflows.workflow]]
-name = "Build Frontend"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd frontend && npx vite build --outDir=../public"
-
-[[workflows.workflow]]
 name = "Backend API"
 author = "agent"
 
@@ -57,14 +41,6 @@ author = "agent"
 task = "shell.exec"
 args = "cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000"
 waitForPort = 8000
-
-[[workflows.workflow]]
-name = "Build Frontend with Dependencies"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd frontend && npm install dayjs @mui/x-date-pickers && npm run build -- --outDir=../public"
 
 [[workflows.workflow]]
 name = "Build Frontend Fixed"

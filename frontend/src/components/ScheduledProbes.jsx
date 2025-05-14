@@ -512,7 +512,7 @@ function ScheduledProbes() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {probes.map((probe) => (
+              {Array.isArray(probes) && probes.map((probe) => (
                 <TableRow key={probe.id}>
                   {canPerformBulkOperations() && (
                     <TableCell padding="checkbox">
