@@ -34,17 +34,14 @@ class UserResponse(UserBase):
     email_verified: bool
     created_at: datetime
     
-    model_config = {
-        "from_attributes": True
-    }
+    class Config:
+        orm_mode = True
 
 
 class UserDetailResponse(UserResponse):
     user_subscription: Optional["UserSubscriptionResponse"] = None
     
-    model_config = {
-        "from_attributes": True
-    }
+    # No need to redefine Config as it's inherited from UserResponse
 
 
 class ApiKeyBase(BaseModel):
@@ -63,9 +60,8 @@ class ApiKeyResponse(ApiKeyBase):
     created_at: datetime
     expires_at: Optional[datetime] = None
     
-    model_config = {
-        "from_attributes": True
-    }
+    class Config:
+        orm_mode = True
 
 
 class DiagnosticCreate(BaseModel):
@@ -81,9 +77,8 @@ class DiagnosticResponse(DiagnosticCreate):
     created_at: datetime
     execution_time: int
     
-    model_config = {
-        "from_attributes": True
-    }
+    class Config:
+        orm_mode = True
 
 
 class SubscriptionTierBase(BaseModel):
@@ -114,9 +109,8 @@ class SubscriptionTierResponse(SubscriptionTierBase):
     created_at: datetime
     updated_at: datetime
     
-    model_config = {
-        "from_attributes": True
-    }
+    class Config:
+        orm_mode = True
 
 
 class UserSubscriptionBase(BaseModel):
@@ -140,9 +134,8 @@ class UserSubscriptionResponse(UserSubscriptionBase):
     created_at: datetime
     updated_at: datetime  # ✅ Required for full model conversion
     
-    model_config = {
-        "from_attributes": True
-    }
+    class Config:
+        orm_mode = True
 
 
 class ScheduledProbeBase(BaseModel):
@@ -167,9 +160,8 @@ class ScheduledProbeResponse(ScheduledProbeBase):
     created_at: datetime
     updated_at: datetime
     
-    model_config = {
-        "from_attributes": True
-    }
+    class Config:
+        orm_mode = True
 
 
 class ProbeResultBase(BaseModel):
@@ -187,9 +179,8 @@ class ProbeResultResponse(ProbeResultBase):
     scheduled_probe_id: int
     created_at: datetime
     
-    model_config = {
-        "from_attributes": True
-    }
+    class Config:
+        orm_mode = True
 
 
 class ApiUsageLogBase(BaseModel):
