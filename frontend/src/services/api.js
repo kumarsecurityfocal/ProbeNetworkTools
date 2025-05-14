@@ -161,23 +161,70 @@ export const runDiagnostic = async (tool, params = {}, data = null) => {
   try {
     console.log(`Running diagnostic ${tool} with params:`, params);
     
+    // Make sure the token is fresh before the request
+    const token = getToken();
+    if (!token) {
+      console.error('No authentication token available');
+      return { 
+        status: 'failure', 
+        result: 'Error: Not authenticated. Please log in again.',
+        created_at: new Date().toISOString(),
+        tool: tool,
+        target: params.target || ''
+      };
+    }
+    
+    // Log the auth token (first few chars only for security)
+    const tokenPreview = token ? `${token.substring(0, 10)}...` : 'no token';
+    console.log(`Using auth token: ${tokenPreview}`);
+    
     // Use the specific tool endpoint directly
     const endpoint = `/diagnostics/${tool}`;
+    console.log(`Making request to: ${endpoint}`);
     
     // For HTTP requests, we need to use POST with a body
     let response;
     if (tool === 'http') {
-      response = await api.post(endpoint, data, { params });
+      response = await api.post(endpoint, data, { 
+        params,
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
     } else {
-      response = await api.get(endpoint, { params });
+      response = await api.get(endpoint, { 
+        params,
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
     }
     
     console.log(`Diagnostic ${tool} response:`, response.data);
+    
+    // Handle case where we get a generic API response instead of a diagnostic result
+    if (response.data && response.data.message && !response.data.tool && !response.data.result) {
+      console.log(`Converting API response to diagnostic result format`);
+      return {
+        tool: tool,
+        target: params.target || '',
+        created_at: new Date().toISOString(),
+        execution_time: 0,
+        status: 'failure',
+        result: `Error: Unexpected API response format.\nRaw response: ${JSON.stringify(response.data)}\n\nThis usually means there's an issue with the proxy configuration or the backend API endpoint. Please contact support.`
+      };
+    }
+    
     return response.data;
   } catch (error) {
     console.log("Error response data:", error.response?.data);
     console.log("Full error:", error);
-    return handleApiError(error);
+    
+    // Create a properly formatted error response
+    return {
+      tool: tool,
+      target: params.target || '',
+      created_at: new Date().toISOString(),
+      execution_time: 0,
+      status: 'failure',
+      result: `Error: ${error.message || 'An unknown error occurred'}\n\n${error.response?.data ? JSON.stringify(error.response.data) : ''}`
+    };
   }
 };
 

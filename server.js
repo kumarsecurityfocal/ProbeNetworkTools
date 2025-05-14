@@ -199,19 +199,49 @@ app.use('/diagnostics/:tool', (req, res, next) => {
   console.log(`Diagnostics endpoint request received: ${req.method} ${req.path}`);
   console.log(`Tool requested: ${tool}`);
   console.log(`Original URL: ${req.originalUrl}`);
-
+  console.log(`Query params: ${JSON.stringify(req.query)}`);
+  
   // Forward to the correct backend endpoint based on the tool parameter
   const backendPath = `/${tool}`;
   console.log(`Forwarding to backend: ${apiProxyOptions.target}${backendPath}`);
-  console.log(`============================================`);
-
-  // Create a dedicated proxy middleware with proper path rewriting
+  
+  // Super detailed proxy options for debugging
   const diagnosticProxy = createProxyMiddleware({
     ...apiProxyOptions,
-    pathRewrite: {
-      [`^/diagnostics/${tool}`]: `/${tool}`
+    pathRewrite: (path, req) => {
+      const newPath = path.replace(`/diagnostics/${tool}`, `/${tool}`);
+      console.log(`PATH REWRITE: ${path} -> ${newPath}`);
+      return newPath;
+    },
+    onProxyReq: (proxyReq, req, res) => {
+      console.log(`PROXY REQUEST: ${proxyReq.method} ${proxyReq.path}`);
+      console.log(`PROXY HEADERS: ${JSON.stringify(proxyReq.getHeaders())}`);
+    },
+    onProxyRes: (proxyRes, req, res) => {
+      console.log(`PROXY RESPONSE: ${proxyRes.statusCode}`);
+      console.log(`PROXY RESPONSE HEADERS: ${JSON.stringify(proxyRes.headers)}`);
+      
+      // Log the response body for debugging
+      let responseBody = '';
+      const originalWrite = res.write;
+      const originalEnd = res.end;
+      
+      res.write = function(chunk) {
+        responseBody += chunk.toString('utf8');
+        return originalWrite.apply(res, arguments);
+      };
+      
+      res.end = function(chunk) {
+        if (chunk) {
+          responseBody += chunk.toString('utf8');
+        }
+        console.log(`PROXY RESPONSE BODY: ${responseBody}`);
+        return originalEnd.apply(res, arguments);
+      };
     }
   });
+  
+  console.log(`============================================`);
   
   // Use the dedicated proxy middleware
   return diagnosticProxy(req, res, next);

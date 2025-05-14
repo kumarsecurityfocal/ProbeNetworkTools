@@ -824,8 +824,26 @@ const DiagnosticHistory = ({ refreshTrigger, onRepeatDiagnostic }) => {
 const DiagnosticResult = ({ result }) => {
   if (!result) return null;
   
+  console.log("DiagnosticResult rendering with result:", result);
+  
+  // Special handling for API responses that don't match our schema
+  let processedResult = { ...result };
+  
+  if (result.message && !result.tool && !result.target && !result.result) {
+    // This is likely an API endpoint message, not a diagnostic result
+    console.log("Detected API message format, converting to diagnostic result");
+    processedResult = {
+      tool: "unknown",
+      target: "unknown",
+      created_at: new Date().toISOString(),
+      execution_time: 0,
+      status: "failure",
+      result: `Error: Unexpected API response format. Raw response: ${JSON.stringify(result)}`
+    };
+  }
+  
   const handleCopyResult = () => {
-    navigator.clipboard.writeText(result.result)
+    navigator.clipboard.writeText(processedResult.result)
       .then(() => {
         alert('Result copied to clipboard');
       })
@@ -841,8 +859,8 @@ const DiagnosticResult = ({ result }) => {
     
     // Implementation would create a PDF using a library like jsPDF
     // const doc = new jsPDF();
-    // doc.text(result.result, 10, 10);
-    // doc.save(`diagnostic-${result.id}.pdf`);
+    // doc.text(processedResult.result, 10, 10);
+    // doc.save(`diagnostic-${processedResult.id}.pdf`);
   };
   
   const handleScheduleRecurring = () => {
@@ -878,15 +896,15 @@ const DiagnosticResult = ({ result }) => {
       
       <Box sx={{ mb: 2 }}>
         <Typography variant="subtitle1">
-          {result.tool ? result.tool.toUpperCase() : 'UNKNOWN'}: {result.target || 'No target'}
+          {processedResult.tool ? processedResult.tool.toUpperCase() : 'UNKNOWN'}: {processedResult.target || 'No target'}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Typography variant="caption" display="block" color="text.secondary">
-            Run at: {result.created_at ? new Date(result.created_at).toLocaleString() : 'N/A'} | Execution time: {result.execution_time || 0} ms
+            Run at: {processedResult.created_at ? new Date(processedResult.created_at).toLocaleString() : 'N/A'} | Execution time: {processedResult.execution_time || 0} ms
           </Typography>
           <Chip 
-            label={result.status === 'success' ? 'Success' : 'Failed'} 
-            color={result.status === 'success' ? 'success' : 'error'} 
+            label={processedResult.status === 'success' ? 'Success' : 'Failed'} 
+            color={processedResult.status === 'success' ? 'success' : 'error'} 
             size="small"
           />
         </Box>
@@ -901,7 +919,7 @@ const DiagnosticResult = ({ result }) => {
         borderRadius: 1,
         fontFamily: 'monospace'
       }}>
-        <pre style={{ margin: 0, whiteSpace: 'pre-wrap', color: 'inherit' }}>{result.result}</pre>
+        <pre style={{ margin: 0, whiteSpace: 'pre-wrap', color: 'inherit' }}>{processedResult.result}</pre>
       </Box>
     </Paper>
   );
