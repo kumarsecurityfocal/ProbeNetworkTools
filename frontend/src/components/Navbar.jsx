@@ -16,7 +16,8 @@ import {
   ListItemText,
   Drawer,
   Avatar,
-  Tooltip
+  Tooltip,
+  Switch
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -26,16 +27,18 @@ import {
   CardMembership as SubscriptionIcon,
   AdminPanelSettings as AdminIcon,
   Schedule as ScheduleIcon,
-  AccountCircle,
   Logout,
   Person as PersonIcon,
-  Assessment as ReportIcon
+  Assessment as ReportIcon,
+  DarkMode as DarkModeIcon,
+  LightMode as LightModeIcon
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
+import Logo from './Logo';
 
 const drawerWidth = 240;
 
-const Navbar = () => {
+const Navbar = ({ darkMode, toggleDarkMode }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, user, logout } = useAuth();
@@ -62,17 +65,17 @@ const Navbar = () => {
   
   // Base navigation items for all users
   const baseNavItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
-    { name: 'Diagnostics', path: '/diagnostics', icon: <DiagnosticsIcon /> },
-    { name: 'Scheduled Probes', path: '/scheduled-probes', icon: <ScheduleIcon /> },
-    { name: 'Reports', path: '/reports', icon: <ReportIcon /> },
-    { name: 'API Keys', path: '/api-keys', icon: <ApiKeyIcon /> },
-    { name: 'Subscriptions', path: '/subscriptions', icon: <SubscriptionIcon /> },
+    { name: 'Dashboard', path: '/dashboard', icon: <DashboardIcon className="text-primary-500" /> },
+    { name: 'Diagnostics', path: '/diagnostics', icon: <DiagnosticsIcon className="text-primary-500" /> },
+    { name: 'Scheduled Probes', path: '/scheduled-probes', icon: <ScheduleIcon className="text-primary-500" /> },
+    { name: 'Reports', path: '/reports', icon: <ReportIcon className="text-primary-500" /> },
+    { name: 'API Keys', path: '/api-keys', icon: <ApiKeyIcon className="text-primary-500" /> },
+    { name: 'Subscriptions', path: '/subscriptions', icon: <SubscriptionIcon className="text-primary-500" /> },
   ];
   
   // Admin-only navigation items
   const adminNavItems = [
-    { name: 'Admin Panel', path: '/admin', icon: <AdminIcon /> },
+    { name: 'Admin Panel', path: '/admin', icon: <AdminIcon className="text-secondary-500" /> },
   ];
   
   // Combine navigation items based on user role
@@ -87,15 +90,16 @@ const Navbar = () => {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          py: 2
+          py: 3
         }}
       >
-        <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
+        <Logo size="md" />
+        <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', mt: 2 }}>
           ProbeOps
         </Typography>
       </Box>
       <Divider />
-      <List>
+      <List className="py-4">
         {navItems.map((item) => (
           <ListItem
             button
@@ -104,26 +108,46 @@ const Navbar = () => {
             to={item.path}
             selected={location.pathname === item.path}
             onClick={() => setMobileOpen(false)}
-            sx={{
-              '&.Mui-selected': {
-                backgroundColor: 'primary.light',
-                '&:hover': {
-                  backgroundColor: 'primary.light',
-                },
-              },
-            }}
+            className={`sidebar-link ${location.pathname === item.path ? 'active' : ''} my-1 mx-2`}
           >
-            <ListItemIcon>{item.icon}</ListItemIcon>
-            <ListItemText primary={item.name} />
+            <ListItemIcon className="min-w-[40px]">{item.icon}</ListItemIcon>
+            <ListItemText 
+              primary={
+                <span className="font-medium text-sm">{item.name}</span>
+              } 
+            />
           </ListItem>
         ))}
       </List>
+      
+      <Divider />
+      
+      <Box className="flex items-center justify-between px-4 py-3">
+        <Typography variant="body2" className="text-gray-600">
+          {darkMode ? 'Dark Mode' : 'Light Mode'}
+        </Typography>
+        <Switch
+          checked={darkMode}
+          onChange={toggleDarkMode}
+          color="primary"
+          icon={<LightModeIcon fontSize="small" />}
+          checkedIcon={<DarkModeIcon fontSize="small" />}
+        />
+      </Box>
     </Box>
   );
   
   return (
     <>
-      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+      <AppBar 
+        position="fixed" 
+        sx={{ 
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.08)',
+          backgroundColor: darkMode ? '#1a1a1a' : '#ffffff',
+          color: darkMode ? '#ffffff' : '#172b4d'
+        }}
+      >
         <Toolbar>
           {isAuthenticated && (
             <IconButton
@@ -142,23 +166,36 @@ const Navbar = () => {
             sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}
           >
             <RouterLink to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <DiagnosticsIcon sx={{ mr: 1 }} />
-                ProbeOps
+              <Box className="flex items-center gap-2">
+                <Logo size="sm" color={darkMode ? "white" : "primary"} />
+                <span className="font-bold">ProbeOps</span>
               </Box>
             </RouterLink>
           </Typography>
           
           {isAuthenticated ? (
             <>
-              <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
+              <Box className="hidden md:flex space-x-1">
                 {navItems.map((item) => (
                   <Button
                     key={item.name}
                     color="inherit"
                     component={RouterLink}
                     to={item.path}
-                    sx={{ mx: 1 }}
+                    className={
+                      location.pathname === item.path 
+                        ? 'bg-primary-50 text-primary-600 dark:bg-primary-900 dark:text-primary-300' 
+                        : ''
+                    }
+                    sx={{ 
+                      mx: 0.5,
+                      px: 2,
+                      py: 1,
+                      textTransform: 'none',
+                      borderRadius: '8px',
+                      fontSize: '0.875rem',
+                      fontWeight: location.pathname === item.path ? 600 : 500
+                    }}
                   >
                     {item.name}
                   </Button>
@@ -173,8 +210,17 @@ const Navbar = () => {
                   aria-haspopup="true"
                   onClick={handleMenuOpen}
                   color="inherit"
+                  className="ml-2"
                 >
-                  <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}>
+                  <Avatar 
+                    sx={{ 
+                      width: 36, 
+                      height: 36, 
+                      bgcolor: 'primary.main',
+                      color: 'white',
+                      fontWeight: 'bold'
+                    }}
+                  >
                     {user?.username?.[0]?.toUpperCase() || 'U'}
                   </Avatar>
                 </IconButton>
@@ -194,40 +240,59 @@ const Navbar = () => {
                 }}
                 open={Boolean(anchorEl)}
                 onClose={handleMenuClose}
+                PaperProps={{
+                  sx: {
+                    mt: 1.5,
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+                    borderRadius: '12px',
+                    minWidth: '200px'
+                  }
+                }}
               >
-                <MenuItem disabled>
-                  <Typography variant="body2">{user?.username || 'User'}</Typography>
-                </MenuItem>
+                <Box className="px-4 py-3">
+                  <Typography variant="subtitle1" className="font-semibold">{user?.username || 'User'}</Typography>
+                  <Typography variant="body2" className="text-gray-500">{user?.email || ''}</Typography>
+                </Box>
                 <Divider />
-                <MenuItem component={RouterLink} to="/profile" onClick={handleMenuClose}>
+                <MenuItem 
+                  component={RouterLink} 
+                  to="/profile" 
+                  onClick={handleMenuClose}
+                  className="py-2"
+                >
                   <ListItemIcon>
-                    <PersonIcon fontSize="small" />
+                    <PersonIcon fontSize="small" className="text-primary-500" />
                   </ListItemIcon>
-                  <ListItemText>My Profile</ListItemText>
+                  <ListItemText primary="My Profile" />
                 </MenuItem>
-                <MenuItem onClick={handleLogout}>
+                <MenuItem 
+                  onClick={handleLogout}
+                  className="py-2"
+                >
                   <ListItemIcon>
-                    <Logout fontSize="small" />
+                    <Logout fontSize="small" className="text-red-500" />
                   </ListItemIcon>
-                  <ListItemText>Logout</ListItemText>
+                  <ListItemText primary="Logout" />
                 </MenuItem>
               </Menu>
             </>
           ) : (
-            <Box>
+            <Box className="flex items-center space-x-2">
               <Button
-                color="inherit"
+                color="primary"
                 component={RouterLink}
                 to="/login"
+                variant="text"
+                className="font-medium"
               >
                 Login
               </Button>
               <Button
-                color="inherit"
+                color="primary"
                 component={RouterLink}
                 to="/register"
-                variant="outlined"
-                sx={{ ml: 1 }}
+                variant="contained"
+                className="shadow-sm"
               >
                 Register
               </Button>
@@ -263,7 +328,8 @@ const Navbar = () => {
               '& .MuiDrawer-paper': { 
                 boxSizing: 'border-box', 
                 width: drawerWidth,
-                marginTop: '64px'
+                marginTop: '64px',
+                borderRight: '1px solid rgba(0, 0, 0, 0.08)'
               },
             }}
             open
