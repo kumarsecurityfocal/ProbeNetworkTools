@@ -17,7 +17,9 @@ import {
   Drawer,
   Avatar,
   Tooltip,
-  Switch
+  Switch,
+  Badge,
+  Container
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -27,11 +29,15 @@ import {
   CardMembership as SubscriptionIcon,
   AdminPanelSettings as AdminIcon,
   Schedule as ScheduleIcon,
-  Logout,
+  Logout as LogoutIcon,
   Person as PersonIcon,
   Assessment as ReportIcon,
   DarkMode as DarkModeIcon,
-  LightMode as LightModeIcon
+  LightMode as LightModeIcon,
+  NotificationsNone as NotificationsIcon,
+  Search as SearchIcon,
+  HelpOutline as HelpIcon,
+  Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import Logo from './Logo';
@@ -65,17 +71,17 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
   
   // Base navigation items for all users
   const baseNavItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: <DashboardIcon className="text-primary-500" /> },
-    { name: 'Diagnostics', path: '/diagnostics', icon: <DiagnosticsIcon className="text-primary-500" /> },
-    { name: 'Scheduled Probes', path: '/scheduled-probes', icon: <ScheduleIcon className="text-primary-500" /> },
-    { name: 'Reports', path: '/reports', icon: <ReportIcon className="text-primary-500" /> },
-    { name: 'API Keys', path: '/api-keys', icon: <ApiKeyIcon className="text-primary-500" /> },
-    { name: 'Subscriptions', path: '/subscriptions', icon: <SubscriptionIcon className="text-primary-500" /> },
+    { name: 'Dashboard', path: '/dashboard', icon: <DashboardIcon fontSize="small" /> },
+    { name: 'Diagnostics', path: '/diagnostics', icon: <DiagnosticsIcon fontSize="small" /> },
+    { name: 'Scheduled Probes', path: '/scheduled-probes', icon: <ScheduleIcon fontSize="small" /> },
+    { name: 'Reports', path: '/reports', icon: <ReportIcon fontSize="small" /> },
+    { name: 'API Keys', path: '/api-keys', icon: <ApiKeyIcon fontSize="small" /> },
+    { name: 'Subscriptions', path: '/subscriptions', icon: <SubscriptionIcon fontSize="small" /> },
   ];
   
   // Admin-only navigation items
   const adminNavItems = [
-    { name: 'Admin Panel', path: '/admin', icon: <AdminIcon className="text-secondary-500" /> },
+    { name: 'Admin Panel', path: '/admin', icon: <AdminIcon fontSize="small" /> },
   ];
   
   // Combine navigation items based on user role
@@ -83,55 +89,92 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
     ? [...baseNavItems, ...adminNavItems]
     : baseNavItems;
   
+  // Airtable-style sidebar
   const drawer = (
-    <Box>
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
+    <Box sx={{ height: '100%', bgcolor: '#f8f9fa', overflowY: 'auto' }}>
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
           alignItems: 'center',
-          py: 3
+          p: 3
         }}
       >
-        <Logo size="md" />
-        <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', mt: 2 }}>
+        <Logo variant="color" size="md" />
+        <Typography 
+          variant="h6" 
+          sx={{ 
+            mt: 2, 
+            fontFamily: '"DM Sans", sans-serif', 
+            fontWeight: 600,
+            color: '#202124'
+          }}
+        >
           ProbeOps
         </Typography>
       </Box>
-      <Divider />
-      <List className="py-4">
-        {navItems.map((item) => (
-          <ListItem
-            button
-            key={item.name}
-            component={RouterLink}
-            to={item.path}
-            selected={location.pathname === item.path}
-            onClick={() => setMobileOpen(false)}
-            className={`sidebar-link ${location.pathname === item.path ? 'active' : ''} my-1 mx-2`}
-          >
-            <ListItemIcon className="min-w-[40px]">{item.icon}</ListItemIcon>
-            <ListItemText 
-              primary={
-                <span className="font-medium text-sm">{item.name}</span>
-              } 
-            />
-          </ListItem>
-        ))}
+      <Divider sx={{ mx: 2 }} />
+      <List sx={{ px: 1, py: 2 }}>
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <ListItem 
+              button 
+              key={item.name}
+              component={RouterLink}
+              to={item.path}
+              selected={isActive}
+              onClick={() => setMobileOpen(false)}
+              sx={{
+                borderRadius: '8px',
+                mb: 0.5,
+                color: isActive ? 'primary.600' : 'gray.700',
+                bgcolor: isActive ? 'rgba(66, 133, 244, 0.08)' : 'transparent',
+                '&:hover': {
+                  bgcolor: 'rgba(66, 133, 244, 0.04)',
+                },
+                '& .MuiListItemIcon-root': {
+                  color: isActive ? 'primary.500' : 'gray.600',
+                  minWidth: '40px',
+                }
+              }}
+            >
+              <ListItemIcon>
+                {React.cloneElement(item.icon, { 
+                  style: { color: isActive ? '#4285F4' : '#5f6368' } 
+                })}
+              </ListItemIcon>
+              <ListItemText 
+                primary={item.name} 
+                primaryTypographyProps={{
+                  fontWeight: isActive ? 600 : 500,
+                  fontSize: '0.95rem'
+                }}
+              />
+            </ListItem>
+          );
+        })}
       </List>
       
-      <Divider />
+      <Divider sx={{ my: 1, mx: 2 }} />
       
-      <Box className="flex items-center justify-between px-4 py-3">
-        <Typography variant="body2" className="text-gray-600">
+      <Box sx={{ px: 3, py: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Typography variant="body2" sx={{ color: '#5f6368', fontWeight: 500 }}>
           {darkMode ? 'Dark Mode' : 'Light Mode'}
         </Typography>
         <Switch
           checked={darkMode}
           onChange={toggleDarkMode}
           color="primary"
-          icon={<LightModeIcon fontSize="small" />}
-          checkedIcon={<DarkModeIcon fontSize="small" />}
+          size="small"
+          sx={{
+            '& .MuiSwitch-switchBase.Mui-checked': {
+              color: '#4285F4',
+            },
+            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+              backgroundColor: '#4285F4',
+            },
+          }}
         />
       </Box>
     </Box>
@@ -141,160 +184,320 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
     <>
       <AppBar 
         position="fixed" 
+        elevation={0}
         sx={{ 
           zIndex: (theme) => theme.zIndex.drawer + 1,
-          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.08)',
-          backgroundColor: darkMode ? '#1a1a1a' : '#ffffff',
-          color: darkMode ? '#ffffff' : '#172b4d'
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)', 
+          borderBottom: '1px solid #DADCE0',
+          backgroundColor: darkMode ? '#2D3142' : '#ffffff',
+          color: darkMode ? '#ffffff' : '#202124'
         }}
       >
-        <Toolbar>
+        <Toolbar sx={{ px: { xs: 1, md: 2 } }}>
           {isAuthenticated && (
             <IconButton
               color="inherit"
               aria-label="open drawer"
               edge="start"
               onClick={handleDrawerToggle}
-              sx={{ mr: 2, display: { sm: 'none' } }}
+              sx={{ mr: 1, display: { sm: 'none' } }}
             >
               <MenuIcon />
             </IconButton>
           )}
-          <Typography
-            variant="h6"
-            component="div"
-            sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}
+          
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center',
+              mr: 3 
+            }}
           >
-            <RouterLink to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-              <Box className="flex items-center gap-2">
-                <Logo size="sm" color={darkMode ? "white" : "primary"} />
-                <span className="font-bold">ProbeOps</span>
-              </Box>
+            <RouterLink 
+              to={isAuthenticated ? "/dashboard" : "/"} 
+              style={{ 
+                textDecoration: 'none', 
+                display: 'flex', 
+                alignItems: 'center' 
+              }}
+            >
+              <Logo 
+                variant={darkMode ? "light" : "color"} 
+                size="sm" 
+              />
+              <Typography
+                variant="h6"
+                component="div"
+                sx={{ 
+                  display: { xs: 'none', sm: 'block' }, 
+                  ml: 1.5, 
+                  fontWeight: 600,
+                  color: darkMode ? '#FFFFFF' : '#202124',
+                  fontFamily: '"DM Sans", sans-serif',
+                }}
+              >
+                ProbeOps
+              </Typography>
             </RouterLink>
-          </Typography>
+          </Box>
           
           {isAuthenticated ? (
             <>
-              <Box className="hidden md:flex space-x-1">
-                {navItems.map((item) => (
-                  <Button
-                    key={item.name}
-                    color="inherit"
-                    component={RouterLink}
-                    to={item.path}
-                    className={
-                      location.pathname === item.path 
-                        ? 'bg-primary-50 text-primary-600 dark:bg-primary-900 dark:text-primary-300' 
-                        : ''
-                    }
-                    sx={{ 
-                      mx: 0.5,
-                      px: 2,
-                      py: 1,
-                      textTransform: 'none',
-                      borderRadius: '8px',
-                      fontSize: '0.875rem',
-                      fontWeight: location.pathname === item.path ? 600 : 500
-                    }}
-                  >
-                    {item.name}
-                  </Button>
-                ))}
+              <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
+                {navItems.slice(0, 4).map((item) => {
+                  const isActive = location.pathname === item.path;
+                  return (
+                    <Button
+                      key={item.name}
+                      component={RouterLink}
+                      to={item.path}
+                      sx={{ 
+                        mx: 0.5,
+                        px: 2,
+                        py: 1,
+                        color: isActive 
+                          ? (darkMode ? '#8AB4F8' : '#1a73e8') 
+                          : (darkMode ? '#DADCE0' : '#5f6368'),
+                        fontWeight: isActive ? 600 : 500,
+                        textTransform: 'none',
+                        borderRadius: '8px',
+                        fontSize: '0.95rem',
+                        backgroundColor: isActive 
+                          ? (darkMode ? 'rgba(138, 180, 248, 0.08)' : 'rgba(66, 133, 244, 0.04)') 
+                          : 'transparent',
+                        '&:hover': {
+                          backgroundColor: darkMode 
+                            ? 'rgba(138, 180, 248, 0.04)' 
+                            : 'rgba(66, 133, 244, 0.04)'
+                        }
+                      }}
+                      startIcon={React.cloneElement(item.icon, { 
+                        style: { 
+                          color: isActive 
+                            ? (darkMode ? '#8AB4F8' : '#1a73e8') 
+                            : (darkMode ? '#DADCE0' : '#5f6368')
+                        }
+                      })}
+                    >
+                      {item.name}
+                    </Button>
+                  );
+                })}
               </Box>
               
-              <Tooltip title="Account settings">
-                <IconButton
-                  edge="end"
-                  aria-label="account of current user"
-                  aria-controls="menu-appbar"
-                  aria-haspopup="true"
-                  onClick={handleMenuOpen}
-                  color="inherit"
-                  className="ml-2"
-                >
-                  <Avatar 
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                {/* Search */}
+                <Tooltip title="Search">
+                  <IconButton
+                    size="large"
+                    color="inherit"
                     sx={{ 
-                      width: 36, 
-                      height: 36, 
-                      bgcolor: 'primary.main',
-                      color: 'white',
-                      fontWeight: 'bold'
+                      ml: { xs: 0.5, md: 1 },
+                      color: darkMode ? '#DADCE0' : 'gray.700' 
                     }}
                   >
-                    {user?.username?.[0]?.toUpperCase() || 'U'}
-                  </Avatar>
-                </IconButton>
-              </Tooltip>
-              
-              <Menu
-                id="menu-appbar"
-                anchorEl={anchorEl}
-                anchorOrigin={{
-                  vertical: 'bottom',
-                  horizontal: 'right',
-                }}
-                keepMounted
-                transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
-                }}
-                open={Boolean(anchorEl)}
-                onClose={handleMenuClose}
-                PaperProps={{
-                  sx: {
-                    mt: 1.5,
-                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-                    borderRadius: '12px',
-                    minWidth: '200px'
+                    <SearchIcon />
+                  </IconButton>
+                </Tooltip>
+                
+                {/* Help */}
+                <Tooltip title="Help">
+                  <IconButton
+                    size="large"
+                    color="inherit"
+                    sx={{ 
+                      ml: { xs: 0.5, md: 1 },
+                      color: darkMode ? '#DADCE0' : 'gray.700' 
+                    }}
+                  >
+                    <HelpIcon />
+                  </IconButton>
+                </Tooltip>
+                
+                {/* Notifications */}
+                <Tooltip title="Notifications">
+                  <IconButton
+                    size="large"
+                    color="inherit"
+                    sx={{ 
+                      ml: { xs: 0.5, md: 1 },
+                      mr: { xs: 1, md: 2 },
+                      color: darkMode ? '#DADCE0' : 'gray.700' 
+                    }}
+                  >
+                    <Badge badgeContent={0} color="error">
+                      <NotificationsIcon />
+                    </Badge>
+                  </IconButton>
+                </Tooltip>
+                
+                {/* User profile */}
+                <Tooltip title={user?.username || 'User'}>
+                  <IconButton
+                    aria-label="account of current user"
+                    aria-controls="menu-appbar"
+                    aria-haspopup="true"
+                    onClick={handleMenuOpen}
+                    sx={{ p: 0.5 }}
+                  >
+                    <Avatar 
+                      sx={{ 
+                        width: 36, 
+                        height: 36,
+                        bgcolor: user?.is_admin ? '#DB4437' : '#4285F4',
+                        fontFamily: '"Inter", sans-serif',
+                        fontWeight: 500,
+                        boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+                      }}
+                    >
+                      {user?.username?.[0]?.toUpperCase() || 'U'}
+                    </Avatar>
+                  </IconButton>
+                </Tooltip>
+                
+                <Menu
+                  id="menu-appbar"
+                  anchorEl={anchorEl}
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'right',
+                  }}
+                  keepMounted
+                  transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'right',
+                  }}
+                  open={Boolean(anchorEl)}
+                  onClose={handleMenuClose}
+                  PaperProps={{
+                    elevation: 2,
+                    sx: {
+                      mt: 1,
+                      borderRadius: '12px',
+                      border: '1px solid #DADCE0',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                      minWidth: '220px',
+                      overflow: 'visible',
+                      '&:before': {
+                        content: '""',
+                        display: 'block',
+                        position: 'absolute',
+                        top: 0,
+                        right: 18,
+                        width: 10,
+                        height: 10,
+                        bgcolor: 'background.paper',
+                        transform: 'translateY(-50%) rotate(45deg)',
+                        zIndex: 0,
+                        borderTop: '1px solid #DADCE0',
+                        borderLeft: '1px solid #DADCE0',
+                      },
+                    },
+                  }}
+                >
+                  <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid #DADCE0' }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                      {user?.username || 'User'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {user?.email || ''}
+                    </Typography>
+                  </Box>
+                  
+                  <MenuItem 
+                    component={RouterLink} 
+                    to="/profile" 
+                    onClick={handleMenuClose}
+                    sx={{ 
+                      py: 1.5, 
+                      '&:hover': { bgcolor: 'rgba(66, 133, 244, 0.04)' } 
+                    }}
+                  >
+                    <ListItemIcon>
+                      <PersonIcon fontSize="small" sx={{ color: '#4285F4' }} />
+                    </ListItemIcon>
+                    <ListItemText 
+                      primary="Profile" 
+                      primaryTypographyProps={{ fontSize: '0.95rem' }}
+                    />
+                  </MenuItem>
+                  
+                  <MenuItem 
+                    component={RouterLink}
+                    to="/settings"
+                    onClick={handleMenuClose}
+                    sx={{ 
+                      py: 1.5, 
+                      '&:hover': { bgcolor: 'rgba(66, 133, 244, 0.04)' } 
+                    }}
+                  >
+                    <ListItemIcon>
+                      <SettingsIcon fontSize="small" sx={{ color: '#5f6368' }} />
+                    </ListItemIcon>
+                    <ListItemText 
+                      primary="Settings" 
+                      primaryTypographyProps={{ fontSize: '0.95rem' }}
+                    />
+                  </MenuItem>
+                  
+                  <Divider />
+                  
+                  <MenuItem 
+                    onClick={handleLogout}
+                    sx={{ 
+                      py: 1.5, 
+                      '&:hover': { bgcolor: 'rgba(66, 133, 244, 0.04)' } 
+                    }}
+                  >
+                    <ListItemIcon>
+                      <LogoutIcon fontSize="small" sx={{ color: '#5f6368' }} />
+                    </ListItemIcon>
+                    <ListItemText 
+                      primary="Logout" 
+                      primaryTypographyProps={{ fontSize: '0.95rem' }}
+                    />
+                  </MenuItem>
+                </Menu>
+              </Box>
+            </>
+          ) : (
+            <Box sx={{ display: 'flex', alignItems: 'center', ml: 'auto' }}>
+              <Button 
+                color="primary" 
+                component={RouterLink}
+                to="/login"
+                variant="outlined"
+                sx={{ 
+                  borderRadius: '8px',
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  mr: 1,
+                  border: '1px solid #DADCE0',
+                  color: '#4285F4',
+                  '&:hover': {
+                    borderColor: '#4285F4',
+                    backgroundColor: 'rgba(66, 133, 244, 0.04)'
                   }
                 }}
               >
-                <Box className="px-4 py-3">
-                  <Typography variant="subtitle1" className="font-semibold">{user?.username || 'User'}</Typography>
-                  <Typography variant="body2" className="text-gray-500">{user?.email || ''}</Typography>
-                </Box>
-                <Divider />
-                <MenuItem 
-                  component={RouterLink} 
-                  to="/profile" 
-                  onClick={handleMenuClose}
-                  className="py-2"
-                >
-                  <ListItemIcon>
-                    <PersonIcon fontSize="small" className="text-primary-500" />
-                  </ListItemIcon>
-                  <ListItemText primary="My Profile" />
-                </MenuItem>
-                <MenuItem 
-                  onClick={handleLogout}
-                  className="py-2"
-                >
-                  <ListItemIcon>
-                    <Logout fontSize="small" className="text-red-500" />
-                  </ListItemIcon>
-                  <ListItemText primary="Logout" />
-                </MenuItem>
-              </Menu>
-            </>
-          ) : (
-            <Box className="flex items-center space-x-2">
-              <Button
-                color="primary"
-                component={RouterLink}
-                to="/login"
-                variant="text"
-                className="font-medium"
-              >
-                Login
+                Sign in
               </Button>
-              <Button
-                color="primary"
+              <Button 
+                color="primary" 
                 component={RouterLink}
                 to="/register"
                 variant="contained"
-                className="shadow-sm"
+                sx={{ 
+                  borderRadius: '8px',
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  backgroundColor: '#4285F4',
+                  '&:hover': {
+                    backgroundColor: '#3367d6'
+                  }
+                }}
               >
-                Register
+                Sign up
               </Button>
             </Box>
           )}
@@ -302,7 +505,13 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
       </AppBar>
       
       {isAuthenticated && (
-        <Box component="nav">
+        <Box 
+          component="nav" 
+          sx={{ 
+            width: { sm: drawerWidth }, 
+            flexShrink: { sm: 0 } 
+          }}
+        >
           <Drawer
             variant="temporary"
             open={mobileOpen}
@@ -314,7 +523,8 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
               display: { xs: 'block', sm: 'none' },
               '& .MuiDrawer-paper': { 
                 boxSizing: 'border-box', 
-                width: drawerWidth 
+                width: drawerWidth,
+                borderRight: '1px solid #DADCE0'
               },
             }}
           >
@@ -329,7 +539,7 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
                 boxSizing: 'border-box', 
                 width: drawerWidth,
                 marginTop: '64px',
-                borderRight: '1px solid rgba(0, 0, 0, 0.08)'
+                borderRight: '1px solid #DADCE0'
               },
             }}
             open
@@ -338,8 +548,26 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
           </Drawer>
         </Box>
       )}
+      
+      {/* Main content wrapper with proper spacing */}
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          mt: '64px', // To account for fixed AppBar height
+          ml: isAuthenticated ? { sm: `${drawerWidth}px` } : 0,
+          width: isAuthenticated 
+            ? { sm: `calc(100% - ${drawerWidth}px)` } 
+            : '100%',
+        }}
+      >
+        {/* Content will go here */}
+      </Box>
     </>
   );
 };
+
+export default Navbar;
 
 export default Navbar;
