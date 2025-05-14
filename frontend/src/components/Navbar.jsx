@@ -113,8 +113,12 @@ const Navbar = ({ darkMode, toggleDarkMode, sidebarCollapsed, toggleSidebar }) =
       >
         {/* Logo and ProbeOps text removed as requested */}
       </Box>
-      <Divider sx={{ mx: sidebarCollapsed ? 1 : 2 }} />
-      <List sx={{ px: sidebarCollapsed ? 0.5 : 1, py: 2 }}>
+      {/* Divider removed as requested */}
+      <List sx={{ 
+        px: sidebarCollapsed ? 0.5 : 1, 
+        py: 2,
+        mt: 1 // Add margin top to create spacing after removing the divider
+      }}>
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
@@ -133,13 +137,21 @@ const Navbar = ({ darkMode, toggleDarkMode, sidebarCollapsed, toggleSidebar }) =
                   borderRadius: '8px',
                   mb: 0.5,
                   px: sidebarCollapsed ? 1 : 2,
-                  color: isActive ? '#2563EB' : '#4B5563',
-                  bgcolor: isActive ? 'rgba(37, 99, 235, 0.08)' : 'transparent',
+                  color: isActive 
+                    ? darkMode ? '#90caf9' : '#2563EB' 
+                    : darkMode ? '#e0e0e0' : '#4B5563',
+                  bgcolor: isActive 
+                    ? darkMode ? 'rgba(144, 202, 249, 0.08)' : 'rgba(37, 99, 235, 0.08)' 
+                    : 'transparent',
                   '&:hover': {
-                    bgcolor: 'rgba(37, 99, 235, 0.04)',
+                    bgcolor: darkMode 
+                      ? 'rgba(144, 202, 249, 0.04)' 
+                      : 'rgba(37, 99, 235, 0.04)',
                   },
                   '& .MuiListItemIcon-root': {
-                    color: isActive ? '#2563EB' : '#6B7280',
+                    color: isActive 
+                      ? darkMode ? '#90caf9' : '#2563EB' 
+                      : darkMode ? '#b0bec5' : '#6B7280',
                     minWidth: sidebarCollapsed ? '30px' : '40px',
                     justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
                   }
@@ -147,7 +159,11 @@ const Navbar = ({ darkMode, toggleDarkMode, sidebarCollapsed, toggleSidebar }) =
               >
                 <ListItemIcon>
                   {React.cloneElement(item.icon, { 
-                    style: { color: isActive ? '#2563EB' : '#6B7280' } 
+                    style: { 
+                      color: isActive 
+                        ? darkMode ? '#90caf9' : '#2563EB' 
+                        : darkMode ? '#b0bec5' : '#6B7280' 
+                    } 
                   })}
                 </ListItemIcon>
                 {!sidebarCollapsed && (
@@ -212,8 +228,8 @@ const Navbar = ({ darkMode, toggleDarkMode, sidebarCollapsed, toggleSidebar }) =
         elevation={0}
         sx={{ 
           zIndex: (theme) => theme.zIndex.drawer + 1,
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)', 
-          borderBottom: '1px solid #DADCE0',
+          boxShadow: darkMode ? '0 1px 3px rgba(0, 0, 0, 0.2)' : '0 1px 3px rgba(0, 0, 0, 0.05)', 
+          borderBottom: darkMode ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid #DADCE0',
           backgroundColor: darkMode ? '#242424' : '#ffffff',
           color: darkMode ? '#ffffff' : '#202124'
         }}

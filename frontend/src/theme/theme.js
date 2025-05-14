@@ -145,8 +145,8 @@ export const darkTheme = createTheme({
       contrastText: '#ffffff',
     },
     background: {
-      default: '#1a1a1a', // Slightly lighter than pure black
-      paper: '#242424',   // Lighter paper background
+      default: '#121212', // Standard Material dark theme background
+      paper: '#1e1e1e',   // Slightly lighter for paper elements
     },
     text: {
       primary: '#ffffff',  // Pure white for primary text
@@ -180,10 +180,12 @@ export const darkTheme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          backgroundColor: '#2c2c2c',
+          backgroundColor: '#212121', // Airtable-like dark card color
           borderColor: 'rgba(255, 255, 255, 0.08)',
+          boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.2), 0px 4px 6px rgba(0, 0, 0, 0.2)',
           '&:hover': {
-            boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.3), 0px 8px 16px rgba(0, 0, 0, 0.3)',
+            boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.25), 0px 8px 16px rgba(0, 0, 0, 0.25)',
+            backgroundColor: '#252525', // Slightly lighter on hover for feedback
           },
         }
       }
