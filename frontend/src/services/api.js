@@ -231,7 +231,7 @@ export const runDiagnostic = async (tool, params = {}, data = null) => {
 export const getDiagnosticHistory = async (params = {}) => {
   try {
     console.log("Fetching diagnostic history with params:", params);
-    const response = await api.get('/diagnostics/history', { params });
+    const response = await api.get('/history', { params });
     console.log("History response:", response);
     return response.data;
   } catch (error) {

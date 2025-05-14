@@ -128,7 +128,7 @@ app.use('/me', (req, res, next) => {
 });
 
 // Analytics and diagnostics endpoints
-app.use('/diagnostics/history', (req, res, next) => {
+app.use('/history', (req, res, next) => {
   console.log(`============================================`);
   console.log(`Diagnostics history endpoint request received: ${req.method} ${req.url}`);
   console.log(`Original URL: ${req.originalUrl}`);
@@ -137,7 +137,7 @@ app.use('/diagnostics/history', (req, res, next) => {
   const historyProxy = createProxyMiddleware({
     ...apiProxyOptions,
     pathRewrite: {
-      '^/diagnostics/history': '/history' // Rewrite to match the correct backend endpoint
+      '^/history': '/history' // Keep path as is for the correct backend endpoint
     },
     onProxyReq: (proxyReq, req, res) => {
       // Pass through authorization header
