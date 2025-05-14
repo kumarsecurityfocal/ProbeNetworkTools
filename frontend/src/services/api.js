@@ -1,10 +1,10 @@
 import axios from 'axios';
 import { getToken, clearToken } from './auth';
 
-// Create axios instance
+// Create axios instance with absolute URL
 const api = axios.create({
-  // Make sure we have a proper absolute URL, or use the current origin if none provided
-  baseURL: import.meta.env.VITE_API_URL || window.location.origin,
+  // Use a hardcoded absolute URL to ensure consistency
+  baseURL: window.location.origin,
   timeout: 60000 // 60 second timeout for slower network conditions
 });
 
@@ -214,10 +214,20 @@ export const createApiKey = async (data) => {
   try {
     console.log("Creating API key with data:", data);
     
-    // Use the format expected by the backend
-    const response = await api.post('/keys', {
-      name: data.name
-    }, {
+    // Use direct explicit URL
+    const fullUrl = `${window.location.origin}/keys`;
+    console.log("Using absolute URL:", fullUrl);
+    
+    const response = await axios({
+      method: 'post',
+      url: fullUrl,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getToken()}`
+      },
+      data: {
+        name: data.name
+      },
       params: {
         expires_days: data.expires_days
       }
@@ -232,6 +242,10 @@ export const createApiKey = async (data) => {
     if (error.response) {
       console.error("Error response data:", error.response.data);
       console.error("Error status:", error.response.status);
+    } else if (error.request) {
+      console.error("No response received:", error.request);
+    } else {
+      console.error("Error message:", error.message);
     }
     
     throw error;
