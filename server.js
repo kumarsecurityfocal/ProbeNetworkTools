@@ -74,11 +74,26 @@ app.use('/history', (req, res, next) => {
   console.log(`============================================`);
   console.log(`History endpoint request received: ${req.method} ${req.url}`);
   console.log(`Original URL: ${req.originalUrl}`);
-  console.log(`Forwarding to backend: ${apiProxyOptions.target}/history`);
+  
+  // Create a dedicated proxy for history requests with proper auth forwarding
+  const historyProxy = createProxyMiddleware({
+    ...apiProxyOptions,
+    pathRewrite: {
+      '^/history': '/diagnostics/history' // Rewrite path to match backend endpoint
+    },
+    onProxyReq: (proxyReq, req, res) => {
+      // Pass through authorization header
+      if (req.headers.authorization) {
+        proxyReq.setHeader('Authorization', req.headers.authorization);
+        console.log('Authorization header forwarded to backend');
+      }
+    }
+  });
+  
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}/diagnostics/history${req.url}`);
   console.log(`============================================`);
   
-  // Let the proxy middleware handle the request
-  return apiProxy(req, res, next);
+  return historyProxy(req, res, next);
 });
 
 // Diagnostic tools direct endpoints
@@ -313,26 +328,7 @@ app.use('/diagnostics/:tool', (req, res, next) => {
   return diagnosticProxy(req, res, next);
 });
 
-// Diagnostics history endpoint
-app.use('/history', (req, res, next) => {
-  console.log(`============================================`);
-  console.log(`Diagnostics history request received: ${req.method} ${req.url}`);
-  console.log(`Original URL: ${req.originalUrl}`);
-  
-  // Create a dedicated proxy for history requests
-  const historyProxy = createProxyMiddleware({
-    ...apiProxyOptions,
-    pathRewrite: {
-      '^/history': '/history' // Rewrite path to ensure proper forwarding
-    }
-  });
-  
-  console.log(`Forwarding to backend: ${apiProxyOptions.target}/history${req.url}`);
-  console.log(`============================================`);
-  
-  // Use the dedicated proxy
-  return historyProxy(req, res, next);
-});
+// Diagnostics history endpoint is already defined above (line 73)
 
 // Metrics endpoints
 app.use('/metrics', (req, res, next) => {

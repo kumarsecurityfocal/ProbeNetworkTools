@@ -314,26 +314,23 @@ export const deactivateApiKey = async (keyId) => {
   try {
     console.log(`Deactivating API token with ID ${keyId}`);
     
-    // Get a fresh token from localStorage to ensure it's valid
-    const token = localStorage.getItem('token');
+    // Use our getToken function instead of directly accessing localStorage
+    const token = getToken();
     
-    // Use fetch directly to avoid any axios transformations
-    const response = await fetch(`/keys/${keyId}/deactivate`, {
-      method: 'PUT',
+    if (!token) {
+      throw new Error('No authentication token available');
+    }
+    
+    // Use axios instead of fetch for consistency
+    const response = await api.put(`/keys/${keyId}/deactivate`, {}, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       }
     });
     
-    if (!response.ok) {
-      console.error("Error deactivating API key:", response.status, response.statusText);
-      throw new Error(`Failed to deactivate API token (${response.status})`);
-    }
-    
-    const responseData = await response.json();
-    console.log("API token deactivated successfully:", responseData);
-    return responseData;
+    console.log("API token deactivated successfully:", response.data);
+    return response.data;
   } catch (error) {
     console.error("Error deactivating API token:", error);
     throw error;
@@ -344,26 +341,23 @@ export const activateApiKey = async (keyId) => {
   try {
     console.log(`Activating API token with ID ${keyId}`);
     
-    // Get a fresh token from localStorage to ensure it's valid
-    const token = localStorage.getItem('token');
+    // Use our getToken function instead of directly accessing localStorage
+    const token = getToken();
     
-    // Use fetch directly to avoid any axios transformations
-    const response = await fetch(`/keys/${keyId}/activate`, {
-      method: 'PUT',
+    if (!token) {
+      throw new Error('No authentication token available');
+    }
+    
+    // Use axios instead of fetch for consistency
+    const response = await api.put(`/keys/${keyId}/activate`, {}, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       }
     });
     
-    if (!response.ok) {
-      console.error("Error activating API key:", response.status, response.statusText);
-      throw new Error(`Failed to activate API token (${response.status})`);
-    }
-    
-    const responseData = await response.json();
-    console.log("API token activated successfully:", responseData);
-    return responseData;
+    console.log("API token activated successfully:", response.data);
+    return response.data;
   } catch (error) {
     console.error("Error activating API token:", error);
     throw error;
