@@ -34,7 +34,7 @@ import {
   Logout as LogoutIcon,
   Person as PersonIcon,
   Assessment as ReportIcon,
-  DarkMode as DarkModeIcon,
+  Brightness4 as DarkModeIcon, // Changed to a more neutral icon
   LightMode as LightModeIcon,
   NotificationsNone as NotificationsIcon,
   Search as SearchIcon,
@@ -86,7 +86,7 @@ const Navbar = ({ darkMode, toggleDarkMode, sidebarCollapsed, toggleSidebar }) =
     { name: 'Diagnostics', path: '/diagnostics', icon: <DiagnosticsIcon fontSize="small" /> },
     { name: 'Scheduled Probes', path: '/scheduled-probes', icon: <ScheduleIcon fontSize="small" /> },
     { name: 'Reports', path: '/reports', icon: <ReportIcon fontSize="small" /> },
-    { name: 'API Keys', path: '/api-keys', icon: <ApiKeyIcon fontSize="small" /> },
+    { name: 'API Tokens', path: '/api-keys', icon: <ApiKeyIcon fontSize="small" /> },
     { name: 'Subscriptions', path: '/subscriptions', icon: <SubscriptionIcon fontSize="small" /> },
   ];
   

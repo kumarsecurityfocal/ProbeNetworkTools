@@ -93,7 +93,7 @@ function App() {
             <Routes>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/diagnostics" element={<Diagnostics />} />
-              <Route path="/api-keys" element={<ApiKeys />} />
+              <Route path="/api-keys" element={<ApiTokens />} />
               <Route path="/subscriptions" element={<SubscriptionTiers />} />
               <Route path="/admin" element={<AdminPanel />} />
               <Route path="/scheduled-probes" element={<ScheduledProbes />} />
