@@ -61,6 +61,15 @@ const iconContainerStyle = {
   borderRadius: '6px'
 };
 
+// Paper style for Airtable-inspired UI
+const paperStyle = {
+  p: 4, 
+  borderRadius: '8px',
+  boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+  border: '1px solid rgba(0,0,0,0.05)',
+  backgroundColor: '#ffffff'
+};
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -249,26 +258,12 @@ const Dashboard = () => {
         </Grid>
         
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
-            borderRadius: '12px', 
-            border: '1px solid rgba(0,0,0,0.07)', 
-            boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
-            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              boxShadow: '0 6px 12px rgba(0,0,0,0.08)'
-            }
-          }}>
+          <Card sx={cardStyle}>
             <CardContent sx={{ p: 3 }}>
-              <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                mb: 2.5,
-                backgroundColor: 'rgba(76, 175, 80, 0.1)', 
-                color: '#4caf50',
-                width: 'fit-content',
-                p: 1.5,
-                borderRadius: '8px'
+              <Box sx={{
+                ...iconContainerStyle,
+                backgroundColor: 'rgba(76, 175, 80, 0.08)', 
+                color: '#4caf50'
               }}>
                 <ScheduleIcon fontSize="medium" />
               </Box>
@@ -298,30 +293,16 @@ const Dashboard = () => {
         </Grid>
         
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
-            borderRadius: '12px', 
-            border: '1px solid rgba(0,0,0,0.07)', 
-            boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
-            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              boxShadow: '0 6px 12px rgba(0,0,0,0.08)'
-            }
-          }}>
+          <Card sx={cardStyle}>
             <CardContent sx={{ p: 3 }}>
-              <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                mb: 2.5,
-                backgroundColor: stats.successRate > 80 ? 'rgba(76, 175, 80, 0.1)' : 
-                              stats.successRate > 50 ? 'rgba(255, 193, 7, 0.1)' : 
-                              'rgba(244, 67, 54, 0.1)', 
+              <Box sx={{
+                ...iconContainerStyle,
+                backgroundColor: stats.successRate > 80 ? 'rgba(76, 175, 80, 0.08)' : 
+                                stats.successRate > 50 ? 'rgba(255, 193, 7, 0.08)' : 
+                                'rgba(244, 67, 54, 0.08)', 
                 color: stats.successRate > 80 ? '#4caf50' : 
-                     stats.successRate > 50 ? '#ff9800' : 
-                     '#f44336',
-                width: 'fit-content',
-                p: 1.5,
-                borderRadius: '8px'
+                      stats.successRate > 50 ? '#ff9800' : 
+                      '#f44336'
               }}>
                 <SuccessIcon fontSize="medium" />
               </Box>
@@ -363,26 +344,12 @@ const Dashboard = () => {
         </Grid>
         
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
-            borderRadius: '12px', 
-            border: '1px solid rgba(0,0,0,0.07)', 
-            boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
-            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              boxShadow: '0 6px 12px rgba(0,0,0,0.08)'
-            }
-          }}>
+          <Card sx={cardStyle}>
             <CardContent sx={{ p: 3 }}>
-              <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                mb: 2.5,
-                backgroundColor: 'rgba(156, 39, 176, 0.1)', 
-                color: '#9c27b0',
-                width: 'fit-content',
-                p: 1.5,
-                borderRadius: '8px'
+              <Box sx={{
+                ...iconContainerStyle,
+                backgroundColor: 'rgba(156, 39, 176, 0.08)', 
+                color: '#9c27b0'
               }}>
                 <TimeIcon fontSize="medium" />
               </Box>
