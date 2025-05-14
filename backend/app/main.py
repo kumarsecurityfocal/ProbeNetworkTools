@@ -1,6 +1,9 @@
 import logging
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from app.routers import auth, diagnostics, api_keys, subscriptions, scheduled_probes, metrics
 from app.database import engine, Base, get_db
 from app.config import settings
@@ -27,6 +30,14 @@ app = FastAPI(
     description="API for network diagnostics and operations",
     version="0.1.0",
 )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    print("🔍 Validation error:", exc.errors())
+    return JSONResponse(
+        status_code=422,
+        content=jsonable_encoder({"detail": exc.errors(), "body": exc.body}),
+    )
 
 # Configure CORS with values from settings
 app.add_middleware(
