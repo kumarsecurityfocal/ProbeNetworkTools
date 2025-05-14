@@ -75,13 +75,18 @@ export const loginUser = async (username, password) => {
     formData.append('username', username);
     formData.append('password', password);
     
-    const response = await api.post('/api/login', formData, {
+    console.log("Logging in with", username);
+    
+    // FastAPI expects the login endpoint at /login (without the /api prefix)
+    const response = await api.post('/login', formData, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
       }
     });
     return response.data;
   } catch (error) {
+    console.log("Login error:", error);
+    console.log("Auth error:", error);
     return handleApiError(error);
   }
 };
