@@ -242,7 +242,7 @@ export const deleteApiKey = async (keyId) => {
 
 export const deactivateApiKey = async (keyId) => {
   try {
-    const response = await api.put(`/api/keys/${keyId}/deactivate`);
+    const response = await api.put(`/keys/${keyId}/deactivate`);
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -252,7 +252,7 @@ export const deactivateApiKey = async (keyId) => {
 // Scheduled Probes APIs
 export const getScheduledProbes = async (params = {}) => {
   try {
-    const response = await api.get('/api/probes', { params });
+    const response = await api.get('/probes', { params });
     return response.data;
   } catch (error) {
     // If we get a 404, the endpoint might not exist yet, return empty array
@@ -265,7 +265,7 @@ export const getScheduledProbes = async (params = {}) => {
 
 export const getScheduledProbeById = async (probeId) => {
   try {
-    const response = await api.get(`/api/probes/${probeId}`);
+    const response = await api.get(`/probes/${probeId}`);
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -274,7 +274,7 @@ export const getScheduledProbeById = async (probeId) => {
 
 export const createScheduledProbe = async (probeData) => {
   try {
-    const response = await api.post('/api/probes', probeData);
+    const response = await api.post('/probes', probeData);
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -283,7 +283,7 @@ export const createScheduledProbe = async (probeData) => {
 
 export const updateScheduledProbe = async (probeId, probeData) => {
   try {
-    const response = await api.put(`/api/probes/${probeId}`, probeData);
+    const response = await api.put(`/probes/${probeId}`, probeData);
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -292,7 +292,7 @@ export const updateScheduledProbe = async (probeId, probeData) => {
 
 export const deleteScheduledProbe = async (probeId) => {
   try {
-    const response = await api.delete(`/api/probes/${probeId}`);
+    const response = await api.delete(`/probes/${probeId}`);
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -301,7 +301,7 @@ export const deleteScheduledProbe = async (probeId) => {
 
 export const pauseScheduledProbe = async (probeId) => {
   try {
-    const response = await api.put(`/api/probes/${probeId}/pause`);
+    const response = await api.put(`/probes/${probeId}/pause`);
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -310,7 +310,7 @@ export const pauseScheduledProbe = async (probeId) => {
 
 export const resumeScheduledProbe = async (probeId) => {
   try {
-    const response = await api.put(`/api/probes/${probeId}/resume`);
+    const response = await api.put(`/probes/${probeId}/resume`);
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -319,7 +319,7 @@ export const resumeScheduledProbe = async (probeId) => {
 
 export const getProbeResults = async (probeId, params = {}) => {
   try {
-    const response = await api.get(`/api/probes/${probeId}/results`, { params });
+    const response = await api.get(`/probes/${probeId}/results`, { params });
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -328,7 +328,7 @@ export const getProbeResults = async (probeId, params = {}) => {
 
 export const bulkPauseProbes = async (probeIds) => {
   try {
-    const response = await api.post('/api/probes/bulk-pause', probeIds);
+    const response = await api.post('/probes/bulk-pause', probeIds);
     return response.data;
   } catch (error) {
     return handleApiError(error);
