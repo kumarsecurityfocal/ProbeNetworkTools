@@ -70,19 +70,17 @@ const handleApiError = (error) => {
 // Auth APIs
 export const loginUser = async (username, password) => {
   try {
-    // Use URLSearchParams for form-urlencoded format required by FastAPI OAuth2
-    const formData = new URLSearchParams();
-    formData.append('username', username);
-    formData.append('password', password);
-    
     console.log("Logging in with", username);
     
-    // FastAPI expects the login endpoint at /login (without the /api prefix)
-    const response = await api.post('/login', formData, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
+    // Use JSON format for login which works better with NGINX reverse proxy
+    const response = await api.post('/login', 
+      { username, password }, 
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
     return response.data;
   } catch (error) {
     console.log("Login error:", error);
