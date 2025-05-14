@@ -160,6 +160,19 @@ app.post('/login', (req, res, next) => {
   return apiProxy(req, res, next);
 });
 
+// Explicitly proxy the /login/json endpoint to the backend
+app.post('/login/json', (req, res, next) => {
+  console.log(`============================================`);
+  console.log(`JSON Login request received: ${req.method} ${req.url}`);
+  console.log(`Original URL: ${req.originalUrl}`);
+  console.log(`Content-Type: ${req.headers['content-type']}`);
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}/login/json`);
+  console.log(`============================================`);
+  
+  // Let the proxy middleware handle the request
+  return apiProxy(req, res, next);
+});
+
 // Explicitly proxy the /register endpoint to the backend
 app.use('/register', (req, res, next) => {
   console.log(`============================================`);
