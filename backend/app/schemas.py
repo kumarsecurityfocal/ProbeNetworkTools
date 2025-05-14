@@ -228,6 +228,10 @@ class TokenData(BaseModel):
     username: Optional[str] = None
 
 
+class TokenPayload(BaseModel):
+    sub: str
+
+
 class PasswordReset(BaseModel):
     password: str
 

@@ -10,7 +10,7 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 from app.models import User, ApiKey, UserSubscription
-from app.schemas import TokenData, UserCreate
+from app.schemas import TokenData, TokenPayload, UserCreate
 from app.config import settings
 from app.database import get_db
 
