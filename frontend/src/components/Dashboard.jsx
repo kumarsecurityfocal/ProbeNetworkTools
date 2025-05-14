@@ -36,18 +36,19 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getDiagnosticHistory, getApiKeys, getScheduledProbes, getDashboardMetrics } from '../services/api';
 
-// Card styles for Airtable-inspired UI
-const cardStyle = {
+// Card styles for Airtable-inspired UI - will be modified based on dark mode
+const getCardStyle = (darkMode) => ({
   borderRadius: '8px', 
-  border: '1px solid rgba(0,0,0,0.05)', 
-  boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+  border: darkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.05)', 
+  boxShadow: darkMode ? '0 1px 3px rgba(0,0,0,0.2)' : '0 1px 3px rgba(0,0,0,0.02)',
   transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-  backgroundColor: '#ffffff',
+  backgroundColor: darkMode ? '#212121' : '#ffffff',
   '&:hover': {
     transform: 'translateY(-2px)',
-    boxShadow: '0 4px 8px rgba(0,0,0,0.05)'
+    boxShadow: darkMode ? '0 4px 8px rgba(0,0,0,0.3)' : '0 4px 8px rgba(0,0,0,0.05)',
+    backgroundColor: darkMode ? '#252525' : '#ffffff'
   }
-};
+});
 
 // Icon container style for Airtable-inspired UI
 const iconContainerStyle = { 
@@ -61,19 +62,37 @@ const iconContainerStyle = {
   borderRadius: '6px'
 };
 
-// Paper style for Airtable-inspired UI
-const paperStyle = {
+// Paper style for Airtable-inspired UI - with dark mode support
+const getPaperStyle = (darkMode) => ({
   p: 4, 
   borderRadius: '8px',
-  boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-  border: '1px solid rgba(0,0,0,0.05)',
-  backgroundColor: '#ffffff'
-};
+  boxShadow: darkMode ? '0 1px 3px rgba(0,0,0,0.2)' : '0 1px 3px rgba(0,0,0,0.02)',
+  border: darkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.05)',
+  backgroundColor: darkMode ? '#1e1e1e' : '#ffffff'
+});
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
+  
+  // Check if dark mode is enabled by looking at body background
+  useEffect(() => {
+    const checkDarkMode = () => {
+      const bodyStyle = window.getComputedStyle(document.body);
+      const bgColor = bodyStyle.backgroundColor;
+      // If background is dark, enable dark mode styles
+      setDarkMode(bgColor.includes('rgb(18, 18, 18)') || bgColor.includes('rgb(26, 26, 26)'));
+    };
+    
+    checkDarkMode();
+    // Listen for theme changes
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['style', 'class'] });
+    
+    return () => observer.disconnect();
+  }, []);
   const [stats, setStats] = useState({
     diagnosticCount: 0,
     apiKeyCount: 0,
@@ -185,7 +204,7 @@ const Dashboard = () => {
           variant="h4" 
           sx={{ 
             fontWeight: 600, 
-            color: '#111827',
+            color: darkMode ? '#ffffff' : '#111827',
             fontFamily: '"Inter", sans-serif', 
             letterSpacing: '-0.01em'
           }}
@@ -227,7 +246,7 @@ const Dashboard = () => {
       <Grid container spacing={3}>
         {/* Stats Cards - First Row with Airtable-inspired styling */}
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={cardStyle}>
+          <Card sx={getCardStyle(darkMode)}>
             <CardContent sx={{ p: 3 }}>
               <Box sx={iconContainerStyle}>
                 <NetworkIcon fontSize="medium" />
@@ -237,7 +256,7 @@ const Dashboard = () => {
                 sx={{ 
                   fontWeight: 600, 
                   mb: 1, 
-                  color: '#111827',
+                  color: darkMode ? '#ffffff' : '#111827',
                   fontFamily: '"Inter", sans-serif'
                 }}
               >
@@ -246,7 +265,7 @@ const Dashboard = () => {
               <Typography 
                 variant="body2" 
                 sx={{ 
-                  color: '#6b7280', 
+                  color: darkMode ? '#b0bec5' : '#6b7280', 
                   fontFamily: '"Inter", sans-serif',
                   fontSize: '0.875rem'
                 }}
