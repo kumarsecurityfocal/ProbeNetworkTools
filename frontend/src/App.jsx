@@ -136,7 +136,7 @@ function App() {
               <Route path="/blog" element={<Blog />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
-              <Route path="/dashboard" element={<DashboardLink />} />
+              <Route path="/dashboard" element={!isAuthenticated ? <Navigate to="/app" replace /> : <Navigate to="/dashboard" replace />} />
               
               {/* Catch-all redirect to home */}
               <Route path="*" element={<Navigate to="/" replace />} />

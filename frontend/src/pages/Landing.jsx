@@ -184,7 +184,7 @@ const Landing = () => {
               <Box sx={{ mt: 4, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 <Button 
                   component={Link} 
-                  to="/dashboard" 
+                  to="/app" 
                   variant="contained" 
                   size="large" 
                   color="primary"

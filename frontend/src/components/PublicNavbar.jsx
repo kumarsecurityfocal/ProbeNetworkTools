@@ -103,7 +103,7 @@ const PublicNavbar = ({ darkMode, toggleDarkMode }) => {
         <ListItem>
           <ListItemButton
             component={RouterLink}
-            to="/dashboard"
+            to="/app"
             sx={{
               color: 'white',
               bgcolor: 'primary.main',
@@ -205,7 +205,7 @@ const PublicNavbar = ({ darkMode, toggleDarkMode }) => {
                 </IconButton>
                 <Button
                   component={RouterLink}
-                  to="/dashboard"
+                  to="/app"
                   variant="contained"
                   color="primary"
                 >
