@@ -54,6 +54,64 @@ const apiProxy = createProxyMiddleware(apiProxyOptions);
 
 // No need for separate routes to add /api prefix since we're using it consistently now
 
+// Subscription endpoints
+app.use('/subscription', (req, res, next) => {
+  console.log(`============================================`);
+  console.log(`Subscription endpoint request received: ${req.method} ${req.url}`);
+  console.log(`Original URL: ${req.originalUrl}`);
+  
+  // Create a dedicated proxy for subscription requests
+  const subscriptionProxy = createProxyMiddleware({
+    ...apiProxyOptions,
+    pathRewrite: {
+      '^/subscription': '/subscription' // Rewrite path to match backend endpoint
+    }
+  });
+  
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}/subscription${req.url}`);
+  console.log(`============================================`);
+  
+  return subscriptionProxy(req, res, next);
+});
+
+app.use('/subscription-tiers', (req, res, next) => {
+  console.log(`============================================`);
+  console.log(`Subscription tiers endpoint request received: ${req.method} ${req.url}`);
+  console.log(`Original URL: ${req.originalUrl}`);
+  
+  // Create a dedicated proxy for subscription tiers requests
+  const tiersProxy = createProxyMiddleware({
+    ...apiProxyOptions,
+    pathRewrite: {
+      '^/subscription-tiers': '/subscription-tiers' // Rewrite path to match backend endpoint
+    }
+  });
+  
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}/subscription-tiers${req.url}`);
+  console.log(`============================================`);
+  
+  return tiersProxy(req, res, next);
+});
+
+app.use('/subscriptions', (req, res, next) => {
+  console.log(`============================================`);
+  console.log(`Subscriptions admin endpoint request received: ${req.method} ${req.url}`);
+  console.log(`Original URL: ${req.originalUrl}`);
+  
+  // Create a dedicated proxy for subscriptions admin requests
+  const subscriptionsProxy = createProxyMiddleware({
+    ...apiProxyOptions,
+    pathRewrite: {
+      '^/subscriptions': '/subscriptions' // Rewrite path to match backend endpoint
+    }
+  });
+  
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}/subscriptions${req.url}`);
+  console.log(`============================================`);
+  
+  return subscriptionsProxy(req, res, next);
+});
+
 // Legacy route for /me (redirects to /users/me for backward compatibility)
 app.use('/me', (req, res, next) => {
   console.log(`============================================`);
