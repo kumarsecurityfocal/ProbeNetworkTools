@@ -36,6 +36,19 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getDiagnosticHistory, getApiKeys, getScheduledProbes, getDashboardMetrics } from '../services/api';
 
+// Airtable-inspired card style
+const cardStyle = {
+  borderRadius: '12px', 
+  border: '1px solid rgba(0,0,0,0.04)', 
+  boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+  backgroundColor: '#fcfcff',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: '0 4px 8px rgba(0,0,0,0.05)'
+  }
+};
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -138,12 +151,14 @@ const Dashboard = () => {
   }
   
   return (
-    <Container maxWidth="lg" sx={{ mt: 5, mb: 6 }}>
+    <Container maxWidth="lg" sx={{ mt: 3, mb: 6 }}>
       <Box sx={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center', 
-        mb: 4 
+        mb: 4,
+        pb: 2,
+        borderBottom: '1px solid #f0f0f5',
       }}>
         <Typography 
           variant="h4" 
