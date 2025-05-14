@@ -223,15 +223,15 @@ const Dashboard = () => {
         
         <FormControl 
           sx={{ 
-            minWidth: 170,
+            minWidth: 150,
             '& .MuiOutlinedInput-root': {
               borderRadius: '8px',
-              backgroundColor: darkMode ? '#333333' : '#fcfcfc',
-              border: darkMode ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid #eaecef',
+              backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : '#fcfcfc',
+              border: darkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #eaecef',
               color: darkMode ? '#ffffff' : 'inherit',
               '&:hover': {
-                backgroundColor: darkMode ? '#3d3d3d' : '#ffffff',
-                boxShadow: darkMode ? '0 2px 4px rgba(0, 0, 0, 0.25)' : '0 2px 4px rgba(0, 0, 0, 0.05)',
+                backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.08)' : '#ffffff',
+                boxShadow: darkMode ? '0 2px 4px rgba(0, 0, 0, 0.2)' : '0 2px 4px rgba(0, 0, 0, 0.05)',
               },
             },
             '& .MuiInputLabel-root': {
@@ -239,6 +239,9 @@ const Dashboard = () => {
             },
             '& .MuiSelect-icon': {
               color: darkMode ? 'rgba(255, 255, 255, 0.5)' : 'inherit',
+            },
+            '& .MuiPaper-root': {
+              backgroundColor: darkMode ? '#1e1e1e' : '#ffffff',
             },
           }}
         >
@@ -632,10 +635,10 @@ const Dashboard = () => {
                 Subscription Status
               </Typography>
             </Box>
-            <Divider sx={{ mb: 3 }} />
+            <Divider sx={{ mb: 2 }} />
             
             <Box sx={{ flexGrow: 1 }}>
-              <Box sx={{ mb: 3 }}>
+              <Box sx={{ mb: 2 }}>
                 <Typography 
                   variant="body2" 
                   sx={{ 
