@@ -180,7 +180,21 @@ const Navbar = ({ darkMode, toggleDarkMode, sidebarCollapsed, toggleSidebar }) =
       
       <Divider sx={{ my: 1, mx: sidebarCollapsed ? 1 : 2 }} />
       
-      {!sidebarCollapsed && (
+      {sidebarCollapsed ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+          <Tooltip title={darkMode ? "Light Mode" : "Dark Mode"} placement="right">
+            <IconButton 
+              onClick={toggleDarkMode}
+              size="small"
+              sx={{ 
+                color: darkMode ? '#DADCE0' : '#6B7280',
+              }}
+            >
+              {darkMode ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
+            </IconButton>
+          </Tooltip>
+        </Box>
+      ) : (
         <Box sx={{ px: 3, py: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Typography variant="body2" sx={{ color: '#6B7280', fontWeight: 500 }}>
             {darkMode ? 'Dark Mode' : 'Light Mode'}
@@ -309,13 +323,28 @@ const Navbar = ({ darkMode, toggleDarkMode, sidebarCollapsed, toggleSidebar }) =
                     color="inherit"
                     sx={{ 
                       ml: { xs: 0.5, md: 1 },
-                      mr: { xs: 1, md: 2 },
                       color: darkMode ? '#DADCE0' : 'gray.700' 
                     }}
                   >
                     <Badge badgeContent={0} color="error">
                       <NotificationsIcon />
                     </Badge>
+                  </IconButton>
+                </Tooltip>
+                
+                {/* Dark/Light Mode Toggle */}
+                <Tooltip title={darkMode ? "Light Mode" : "Dark Mode"}>
+                  <IconButton
+                    onClick={toggleDarkMode}
+                    size="large"
+                    color="inherit"
+                    sx={{ 
+                      ml: { xs: 0.5, md: 1 },
+                      mr: { xs: 1, md: 2 },
+                      color: darkMode ? '#DADCE0' : 'gray.700' 
+                    }}
+                  >
+                    {darkMode ? <LightModeIcon /> : <DarkModeIcon />}
                   </IconButton>
                 </Tooltip>
                 
