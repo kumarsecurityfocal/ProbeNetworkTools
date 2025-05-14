@@ -3,23 +3,15 @@ import api from './api';
 // Get all users (admin only)
 export const getAllUsers = async () => {
   try {
-    console.log('Fetching all users from /users');
     const response = await api.get('/users');
-    console.log('Users data received:', response.data);
     return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
-    console.error('Error fetching users:', error);
-    if (error.response) {
-      console.error('Error response data:', error.response.data);
-      console.error('Error response status:', error.response.status);
-    } else if (error.request) {
-      console.error('No response received from server');
-    }
+    console.error('Error fetching all users:', error);
     throw error;
   }
 };
 
-// Create a new user (admin only)
+// Create new user (admin only)
 export const createUser = async (userData) => {
   try {
     const response = await api.post('/users', userData);
@@ -30,7 +22,7 @@ export const createUser = async (userData) => {
   }
 };
 
-// Update a user (admin only)
+// Update user (admin only)
 export const updateUser = async (userId, userData) => {
   try {
     const response = await api.put(`/users/${userId}`, userData);
@@ -41,7 +33,7 @@ export const updateUser = async (userId, userData) => {
   }
 };
 
-// Delete a user (admin only)
+// Delete user (admin only)
 export const deleteUser = async (userId) => {
   try {
     const response = await api.delete(`/users/${userId}`);
@@ -52,24 +44,13 @@ export const deleteUser = async (userId) => {
   }
 };
 
-// Reset user password (admin only)
-export const resetUserPassword = async (userId, newPassword) => {
+// Change user status (activate/deactivate) (admin only)
+export const changeUserStatus = async (userId, isActive) => {
   try {
-    const response = await api.post(`/users/${userId}/reset-password`, { password: newPassword });
+    const response = await api.put(`/users/${userId}/status`, { is_active: isActive });
     return response.data;
   } catch (error) {
-    console.error('Error resetting user password:', error);
-    throw error;
-  }
-};
-
-// Get user details (admin only)
-export const getUserDetails = async (userId) => {
-  try {
-    const response = await api.get(`/users/${userId}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching user details:', error);
+    console.error('Error changing user status:', error);
     throw error;
   }
 };
@@ -77,7 +58,7 @@ export const getUserDetails = async (userId) => {
 // Verify user email (admin only)
 export const verifyUserEmail = async (userId) => {
   try {
-    const response = await api.post(`/users/${userId}/verify-email`);
+    const response = await api.put(`/users/${userId}/verify-email`);
     return response.data;
   } catch (error) {
     console.error('Error verifying user email:', error);
@@ -85,13 +66,23 @@ export const verifyUserEmail = async (userId) => {
   }
 };
 
-// Change user status (activate/deactivate) (admin only)
-export const changeUserStatus = async (userId, isActive) => {
+// Reset user password (admin only)
+export const resetUserPassword = async (userId, newPassword) => {
   try {
-    const response = await api.post(`/users/${userId}/status`, { is_active: isActive });
+    const response = await api.put(`/users/${userId}/reset-password`, { password: newPassword });
     return response.data;
   } catch (error) {
-    console.error('Error changing user status:', error);
+    console.error('Error resetting user password:', error);
     throw error;
   }
+};
+
+export default {
+  getAllUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+  changeUserStatus,
+  verifyUserEmail,
+  resetUserPassword
 };
