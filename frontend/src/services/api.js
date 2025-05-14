@@ -73,7 +73,7 @@ export const loginUser = async (username, password) => {
     console.log("Logging in with", username);
     
     // Use JSON format for login which works better with NGINX reverse proxy
-    const response = await api.post('/login', 
+    const response = await api.post('/login/json', 
       { username, password }, 
       {
         headers: {
