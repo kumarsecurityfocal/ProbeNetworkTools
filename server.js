@@ -1,4 +1,4 @@
-// Basic express server without http-proxy-middleware
+// Enhanced express server with direct HTTP backend proxying
 const express = require('express');
 const path = require('path');
 const http = require('http');
@@ -11,12 +11,18 @@ const port = process.env.PORT || 5000;
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
-// Custom middleware to parse URL and method
+// Parse and handle API routes
 app.use((req, res, next) => {
   const url = req.url;
   
   // Handle specific routes directly
-  if (url.startsWith('/history')) {
+  if (url.startsWith('/login') || url.startsWith('/token')) {
+    return handleLogin(req, res);
+  } 
+  else if (url.startsWith('/users/me')) {
+    return handleUserProfile(req, res);
+  }
+  else if (url.startsWith('/history')) {
     return handleHistory(req, res);
   } 
   else if (url.startsWith('/keys')) {
@@ -25,28 +31,57 @@ app.use((req, res, next) => {
   else if (url.startsWith('/subscription')) {
     return handleSubscription(req, res);
   }
+  else if (url.startsWith('/api/')) {
+    // Generic API handler for other endpoints
+    return handleGenericApi(req, res);
+  }
   else {
     // For all other routes, serve the static React app
     return res.sendFile(path.join(__dirname, 'public', 'index.html'));
   }
 });
 
-// Handler for history endpoint
-function handleHistory(req, res) {
-  console.log(`History request: ${req.method} ${req.url}`);
+// Handler for login endpoint
+function handleLogin(req, res) {
+  console.log(`Login request: ${req.method} ${req.url}`);
   
-  const authHeader = req.headers.authorization || '';
-  const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
+  // Determine if this is JSON or form login
+  const isJsonLogin = req.url.includes('/login/json');
+  const loginPath = isJsonLogin ? '/token' : '/token';
+  
+  // Extract username and password
+  let username, password;
+  
+  if (isJsonLogin) {
+    // Handle JSON login
+    username = req.body.username;
+    password = req.body.password;
+  } else {
+    // Handle form login
+    username = req.body.username;
+    password = req.body.password;
+  }
+  
+  // If missing credentials, return error
+  if (!username || !password) {
+    return res.status(400).json({ detail: 'Username and password are required' });
+  }
+  
+  // Format request for backend token endpoint
+  const requestBody = new URLSearchParams();
+  requestBody.append('username', username);
+  requestBody.append('password', password);
+  const requestBodyString = requestBody.toString();
   
   // Forward request to backend
   const options = {
     hostname: 'localhost',
     port: 8000,
-    path: '/history/',
-    method: req.method,
+    path: loginPath,
+    method: 'POST',
     headers: {
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Length': requestBodyString.length
     }
   };
   
@@ -62,27 +97,35 @@ function handleHistory(req, res) {
       res.setHeader('Content-Type', 'application/json');
       res.status(backendRes.statusCode);
       
+      if (backendRes.statusCode >= 400) {
+        console.log(`Login failed with status ${backendRes.statusCode}`);
+        return res.send(responseData);
+      }
+      
       try {
         const jsonData = JSON.parse(responseData);
-        res.json(jsonData);
+        console.log('Login successful, returning token');
+        return res.json(jsonData);
       } catch (e) {
-        console.error('Error parsing response:', e);
-        res.json([]);
+        console.error('Error parsing login response:', e);
+        return res.status(500).json({ detail: 'Invalid response from authentication server' });
       }
     });
   });
   
   backendReq.on('error', error => {
-    console.error('Error with backend request:', error);
-    res.status(500).json({ error: 'Failed to retrieve data' });
+    console.error('Error with login request:', error);
+    return res.status(500).json({ detail: 'Authentication server unavailable' });
   });
   
+  // Write body and end request
+  backendReq.write(requestBodyString);
   backendReq.end();
 }
 
-// Handler for keys endpoint
-function handleKeys(req, res) {
-  console.log(`Keys request: ${req.method} ${req.url}`);
+// Handler for user profile endpoint
+function handleUserProfile(req, res) {
+  console.log(`User profile request: ${req.method} ${req.url}`);
   
   const authHeader = req.headers.authorization || '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
@@ -95,7 +138,7 @@ function handleKeys(req, res) {
   const options = {
     hostname: 'localhost',
     port: 8000,
-    path: '/keys/',
+    path: req.url,
     method: req.method,
     headers: {
       'Accept': 'application/json',
@@ -120,28 +163,166 @@ function handleKeys(req, res) {
         const jsonData = JSON.parse(responseData);
         res.json(jsonData);
       } catch (e) {
-        console.error('Error parsing response:', e);
+        console.error('Error parsing user profile response:', e);
+        res.send(responseData);
+      }
+    });
+  });
+  
+  // Handle request body if present
+  if (req.method === 'POST' || req.method === 'PUT') {
+    if (req.body && Object.keys(req.body).length > 0) {
+      backendReq.write(JSON.stringify(req.body));
+    }
+  }
+  
+  backendReq.on('error', error => {
+    console.error('Error with user profile request:', error);
+    res.status(500).json({ detail: 'User profile server unavailable' });
+  });
+  
+  backendReq.end();
+}
+
+// Handler for history endpoint
+function handleHistory(req, res) {
+  console.log(`History request: ${req.method} ${req.url}`);
+  
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
+  
+  // Extract query parameters if any
+  const url = new URL(`http://localhost${req.url}`);
+  const searchParams = url.searchParams.toString();
+  const pathWithParams = `/history/${searchParams ? '?' + searchParams : ''}`;
+  
+  // Forward request to backend
+  const options = {
+    hostname: 'localhost',
+    port: 8000,
+    path: pathWithParams,
+    method: req.method,
+    headers: {
+      'Accept': 'application/json',
+      'Authorization': token ? `Bearer ${token}` : ''
+    }
+  };
+  
+  // Create backend request
+  const backendReq = http.request(options, (backendRes) => {
+    // Collect response data
+    let responseData = '';
+    backendRes.on('data', chunk => {
+      responseData += chunk;
+    });
+    
+    backendRes.on('end', () => {
+      res.setHeader('Content-Type', 'application/json');
+      res.status(backendRes.statusCode);
+      
+      if (responseData) {
+        try {
+          const jsonData = JSON.parse(responseData);
+          res.json(jsonData);
+        } catch (e) {
+          console.error('Error parsing response:', e);
+          res.json([]);
+        }
+      } else {
         res.json([]);
       }
     });
   });
   
-  // Pass on request body if present
-  if (req.method === 'POST' || req.method === 'PUT') {
-    let requestBody = '';
-    req.on('data', chunk => {
-      requestBody += chunk;
+  backendReq.on('error', error => {
+    console.error('Error with backend request:', error);
+    res.status(500).json({ error: 'Failed to retrieve data' });
+  });
+  
+  backendReq.end();
+}
+
+// Handler for keys endpoint
+function handleKeys(req, res) {
+  console.log(`Keys request: ${req.method} ${req.url}`);
+  
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
+  
+  if (!token) {
+    return res.status(401).json({ detail: 'Not authenticated' });
+  }
+  
+  // Extract path and query parameters
+  const url = new URL(`http://localhost${req.url}`);
+  const pathPart = url.pathname;
+  const searchParams = url.searchParams.toString();
+  
+  // Determine backend path
+  let backendPath = pathPart;
+  if (backendPath === '/keys') {
+    backendPath = '/keys/';
+  }
+  
+  // Add query parameters if any
+  if (searchParams) {
+    backendPath += `?${searchParams}`;
+  }
+  
+  // Forward request to backend
+  const options = {
+    hostname: 'localhost',
+    port: 8000,
+    path: backendPath,
+    method: req.method,
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  };
+  
+  console.log(`Forwarding to backend: ${options.method} ${options.path}`);
+  
+  // Create backend request
+  const backendReq = http.request(options, (backendRes) => {
+    // Collect response data
+    let responseData = '';
+    backendRes.on('data', chunk => {
+      responseData += chunk;
     });
     
-    req.on('end', () => {
-      if (requestBody) {
-        backendReq.write(requestBody);
+    backendRes.on('end', () => {
+      res.setHeader('Content-Type', 'application/json');
+      res.status(backendRes.statusCode);
+      
+      if (responseData) {
+        try {
+          const jsonData = JSON.parse(responseData);
+          res.json(jsonData);
+        } catch (e) {
+          console.error('Error parsing response:', e);
+          res.json([]);
+        }
+      } else {
+        res.json([]);
       }
-      backendReq.end();
     });
-  } else {
-    backendReq.end();
+  });
+  
+  // Handle request body if present
+  if ((req.method === 'POST' || req.method === 'PUT') && req.body) {
+    const bodyData = JSON.stringify(req.body);
+    backendReq.write(bodyData);
+    console.log(`Request body: ${bodyData}`);
   }
+  
+  backendReq.on('error', error => {
+    console.error('Error with backend request:', error);
+    res.status(500).json({ error: 'Failed to process API key request' });
+  });
+  
+  backendReq.end();
 }
 
 // Handler for subscription endpoint
@@ -179,11 +360,15 @@ function handleSubscription(req, res) {
       res.setHeader('Content-Type', 'application/json');
       res.status(backendRes.statusCode);
       
-      try {
-        const jsonData = JSON.parse(responseData);
-        res.json(jsonData);
-      } catch (e) {
-        console.error('Error parsing response:', e);
+      if (responseData) {
+        try {
+          const jsonData = JSON.parse(responseData);
+          res.json(jsonData);
+        } catch (e) {
+          console.error('Error parsing response:', e);
+          res.json({});
+        }
+      } else {
         res.json({});
       }
     });
@@ -192,6 +377,80 @@ function handleSubscription(req, res) {
   backendReq.on('error', error => {
     console.error('Error with backend request:', error);
     res.status(500).json({ error: 'Failed to retrieve subscription data' });
+  });
+  
+  backendReq.end();
+}
+
+// Generic API handler for other backend endpoints
+function handleGenericApi(req, res) {
+  console.log(`Generic API request: ${req.method} ${req.url}`);
+  
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
+  
+  // Strip /api prefix from path
+  const backendPath = req.url.replace(/^\/api/, '');
+  
+  // Forward request to backend
+  const options = {
+    hostname: 'localhost',
+    port: 8000,
+    path: backendPath,
+    method: req.method,
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
+  };
+  
+  // Add auth header if token is present
+  if (token) {
+    options.headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  // Create backend request
+  const backendReq = http.request(options, (backendRes) => {
+    // Collect response data
+    let responseData = '';
+    backendRes.on('data', chunk => {
+      responseData += chunk;
+    });
+    
+    backendRes.on('end', () => {
+      // Copy status and headers
+      res.status(backendRes.statusCode);
+      
+      // Set content type if present in response
+      const contentType = backendRes.headers['content-type'];
+      if (contentType) {
+        res.setHeader('Content-Type', contentType);
+      }
+      
+      // Try to parse JSON, otherwise send raw response
+      if (contentType && contentType.includes('application/json') && responseData) {
+        try {
+          const jsonData = JSON.parse(responseData);
+          res.json(jsonData);
+        } catch (e) {
+          console.error('Error parsing response:', e);
+          res.send(responseData);
+        }
+      } else {
+        res.send(responseData);
+      }
+    });
+  });
+  
+  // Handle request body if present
+  if ((req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') && req.body) {
+    const bodyData = JSON.stringify(req.body);
+    backendReq.write(bodyData);
+  }
+  
+  backendReq.on('error', error => {
+    console.error('Error with backend request:', error);
+    res.status(500).json({ error: 'Failed to process API request' });
   });
   
   backendReq.end();
