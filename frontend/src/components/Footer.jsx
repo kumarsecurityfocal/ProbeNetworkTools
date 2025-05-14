@@ -1,13 +1,17 @@
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Box, Container, Typography, Link, useTheme } from '@mui/material';
+import { Box, Container, Typography, Link, useTheme, Button } from '@mui/material';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 const Footer = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const currentYear = new Date().getFullYear();
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
+  
+  // Debug output to see if user is authenticated
+  console.log("Footer - isAuthenticated:", isAuthenticated);
   
   return (
     <Box 
@@ -31,7 +35,7 @@ const Footer = () => {
           © {currentYear} ProbeOps
         </Typography>
         
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           {isAuthenticated ? (
             <>
               <Link component={RouterLink} to="/dashboard" underline="none" 
@@ -64,6 +68,24 @@ const Footer = () => {
                 }}>
                 Account
               </Link>
+              <Button
+                variant="text"
+                color="error"
+                size="small"
+                onClick={logout}
+                startIcon={<LogoutIcon fontSize="small" />}
+                sx={{ 
+                  ml: 2,
+                  fontSize: '0.7rem',
+                  textTransform: 'none',
+                  color: isDarkMode ? 'rgba(255, 82, 82, 0.8)' : 'rgba(211, 47, 47, 0.8)',
+                  '&:hover': {
+                    bgcolor: isDarkMode ? 'rgba(211, 47, 47, 0.08)' : 'rgba(211, 47, 47, 0.04)',
+                  }
+                }}
+              >
+                Logout
+              </Button>
             </>
           ) : (
             <>
