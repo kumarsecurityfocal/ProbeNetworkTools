@@ -498,6 +498,36 @@ fetch("https://probeops.com/api/users")
 
 The frontend build process differs between environments:
 
+#### 5.3.2.1 Critical Frontend Dependencies
+
+The following dependencies **must** be present in the frontend `package.json` under "dependencies" (not "devDependencies") for production builds to succeed:
+
+- **dayjs**: Required for date handling in the ScheduledProbes component
+- **@mui/x-date-pickers**: Required for date picker components
+
+Example of the proper dependencies section in `frontend/package.json`:
+
+```json
+"dependencies": {
+  "@emotion/react": "^11.11.0",
+  "@emotion/styled": "^11.11.0",
+  "@mui/icons-material": "^5.11.16",
+  "@mui/material": "^5.13.0",
+  "@mui/x-date-pickers": "^6.3.0",
+  "axios": "^1.4.0",
+  "dayjs": "^1.11.7",
+  "react": "^18.2.0",
+  "react-dom": "^18.2.0",
+  "react-router-dom": "^6.11.1"
+}
+```
+
+Without these dependencies properly specified, the production build will fail with errors like:
+
+```
+[vite]: Rollup failed to resolve import "dayjs" from ScheduledProbes.jsx
+```
+
 #### Development (Replit)
 - In development, frontend assets are built and stored in the `public/` directory
 - The Express server serves these static assets
@@ -575,6 +605,14 @@ Before deploying to production, review this checklist to ensure compatibility:
 - [x] Check for environment-specific API base URLs in configuration files
 - [ ] Verify all Axios/fetch requests will work in both environments
 - [ ] Test API calls after deployment to confirm routing works correctly
+
+### 7.7 Frontend Build Dependencies
+
+- [x] Add dayjs to package.json dependencies
+- [x] Add @mui/x-date-pickers to package.json dependencies
+- [ ] Ensure all imported libraries in code are listed in package.json
+- [ ] Check for any dynamic imports that might require additional dependencies
+- [ ] Run a test build before deployment to catch any missing dependencies
 
 **Current Status**: The current implementation in `frontend/src/services/api.js` correctly uses relative paths for all API endpoints and is configured for environment compatibility via:
 
