@@ -16,6 +16,7 @@ import ScheduledProbes from './components/ScheduledProbes';
 import UserProfile from './components/UserProfile';
 import Reports from './components/Reports';
 import Footer from './components/Footer';
+import LandingPage from './components/LandingPage';
 
 // Protected route component
 const ProtectedRoute = ({ children }) => {
@@ -49,77 +50,54 @@ function App() {
     setDarkMode(!darkMode);
   };
   
+  // Determine if we should show the navbar and sidebar layout
+  const isAppRoute = isAuthenticated && !['/login', '/register', '/'].includes(window.location.pathname);
+  
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <div className="min-h-screen flex flex-col">
-        <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-        <Box
-          component="main"
-          sx={{
-            flexGrow: 1,
-            p: 3,
-            width: { sm: `calc(100% - 240px)` },
-            ml: { sm: '240px' },
-            mt: '64px',
-          }}
-        >
-          <Routes>
-            <Route path="/login" element={!isAuthenticated ? <AuthForm mode="login" /> : <Navigate to="/dashboard" replace />} />
-            <Route path="/register" element={!isAuthenticated ? <AuthForm mode="register" /> : <Navigate to="/dashboard" replace />} />
-            
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/diagnostics" element={
-              <ProtectedRoute>
-                <Diagnostics />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/api-keys" element={
-              <ProtectedRoute>
-                <ApiKeys />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/subscriptions" element={
-              <ProtectedRoute>
-                <SubscriptionTiers />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/admin" element={
-              <ProtectedRoute>
-                <AdminPanel />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/scheduled-probes" element={
-              <ProtectedRoute>
-                <ScheduledProbes />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <UserProfile />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/reports" element={
-              <ProtectedRoute>
-                <Reports />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
-          </Routes>
-        </Box>
-        <Footer />
+        {isAppRoute && <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />}
+        
+        {isAppRoute ? (
+          // App layout for authenticated routes
+          <Box
+            component="main"
+            sx={{
+              flexGrow: 1,
+              p: 3,
+              width: { sm: `calc(100% - 240px)` },
+              ml: { sm: '240px' },
+              mt: '64px',
+            }}
+          >
+            <Routes>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/diagnostics" element={<Diagnostics />} />
+              <Route path="/api-keys" element={<ApiKeys />} />
+              <Route path="/subscriptions" element={<SubscriptionTiers />} />
+              <Route path="/admin" element={<AdminPanel />} />
+              <Route path="/scheduled-probes" element={<ScheduledProbes />} />
+              <Route path="/profile" element={<UserProfile />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </Box>
+        ) : (
+          // Public routes without app layout
+          <Box component="main" sx={{ flexGrow: 1 }}>
+            <Routes>
+              <Route path="/login" element={!isAuthenticated ? <AuthForm mode="login" /> : <Navigate to="/dashboard" replace />} />
+              <Route path="/register" element={!isAuthenticated ? <AuthForm mode="register" /> : <Navigate to="/dashboard" replace />} />
+              <Route path="/" element={!isAuthenticated ? <LandingPage /> : <Navigate to="/dashboard" replace />} />
+              
+              {/* Catch-all for authenticated users */}
+              <Route path="*" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/" replace />} />
+            </Routes>
+          </Box>
+        )}
+        
+        {isAppRoute && <Footer />}
       </div>
     </ThemeProvider>
   );

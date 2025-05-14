@@ -1,18 +1,18 @@
 import React from 'react';
 
 const Logo = ({ size = 'md', variant = 'color', className = '' }) => {
-  // Size mapping
+  // Size mapping - reduced sizes for more subtle appearance
   const sizeMap = {
-    xs: 'w-6 h-6',
-    sm: 'w-8 h-8',
-    md: 'w-10 h-10',
-    lg: 'w-14 h-14',
-    xl: 'w-20 h-20',
+    xs: 'w-5 h-5',
+    sm: 'w-7 h-7',
+    md: 'w-9 h-9',
+    lg: 'w-12 h-12',
+    xl: 'w-16 h-16',
   };
 
   const sizeClass = sizeMap[size] || sizeMap.md;
 
-  // Modern, colorful logo similar to Airtable's style
+  // Refined, professional logo with Airtable-inspired styling
   return (
     <div className={`${sizeClass} ${className}`}>
       <svg
@@ -21,83 +21,87 @@ const Logo = ({ size = 'md', variant = 'color', className = '' }) => {
         xmlns="http://www.w3.org/2000/svg"
         className="w-full h-full"
       >
-        {/* Background circle */}
+        {/* Background - only for specific variants */}
         {variant === 'dark' ? (
-          <circle cx="50" cy="50" r="48" fill="#2D3142" />
+          <rect x="5" y="5" width="90" height="90" rx="20" fill="#2D3142" />
         ) : variant === 'light' ? (
-          <circle cx="50" cy="50" r="48" fill="#FFFFFF" />
+          <rect x="5" y="5" width="90" height="90" rx="20" fill="#FFFFFF" />
+        ) : variant === 'bg' ? (
+          <rect x="5" y="5" width="90" height="90" rx="20" fill="#F8F9FA" stroke="#E1E3E6" strokeWidth="1.5" />
         ) : null}
         
-        {/* Center network hub with gradient */}
-        <circle 
-          cx="50" 
-          cy="50" 
-          r="20" 
-          fill="url(#centerGradient)" 
-        />
-        
-        {/* Connection lines with gradient strokes */}
-        <g strokeLinecap="round" strokeWidth="3">
-          {/* Top connection */}
-          <line x1="50" y1="30" x2="50" y2="10" stroke="#4285F4" strokeWidth="4" />
-          <circle cx="50" cy="10" r="6" fill="#4285F4" />
+        {/* Main logo elements - more subtle, Airtable-inspired design */}
+        <g>
+          {/* Central hub - smaller and more refined */}
+          <circle 
+            cx="50" 
+            cy="50" 
+            r="16" 
+            fill="#FFFFFF"
+            stroke="#4285F4"
+            strokeWidth="1.5"
+          />
           
-          {/* Right connection */}
-          <line x1="70" y1="50" x2="90" y2="50" stroke="#0F9D58" strokeWidth="4" />
-          <circle cx="90" cy="50" r="6" fill="#0F9D58" />
+          <circle 
+            cx="50" 
+            cy="50" 
+            r="12" 
+            fill="url(#subtleGradient)" 
+          />
           
-          {/* Bottom connection */}
-          <line x1="50" y1="70" x2="50" y2="90" stroke="#F4B400" strokeWidth="4" />
-          <circle cx="50" cy="90" r="6" fill="#F4B400" />
+          {/* Connection nodes */}
+          {/* Top Node */}
+          <circle cx="50" cy="20" r="8" fill="#4285F4" opacity="0.9" />
+          <circle cx="50" cy="20" r="4" fill="#FFFFFF" />
           
-          {/* Left connection */}
-          <line x1="30" y1="50" x2="10" y2="50" stroke="#DB4437" strokeWidth="4" />
-          <circle cx="10" cy="50" r="6" fill="#DB4437" />
+          {/* Right Node */}
+          <circle cx="80" cy="50" r="8" fill="#0F9D58" opacity="0.9" />
+          <circle cx="80" cy="50" r="4" fill="#FFFFFF" />
           
-          {/* Diagonal top-right */}
-          <line x1="64.1" y1="35.9" x2="78.3" y2="21.7" stroke="#4285F4" strokeWidth="3" strokeOpacity="0.8" />
-          <circle cx="78.3" cy="21.7" r="5" fill="#4285F4" />
+          {/* Bottom Node */}
+          <circle cx="50" cy="80" r="8" fill="#F4B400" opacity="0.9" />
+          <circle cx="50" cy="80" r="4" fill="#FFFFFF" />
           
-          {/* Diagonal bottom-right */}
-          <line x1="64.1" y1="64.1" x2="78.3" y2="78.3" stroke="#0F9D58" strokeWidth="3" strokeOpacity="0.8" />
-          <circle cx="78.3" cy="78.3" r="5" fill="#0F9D58" />
-          
-          {/* Diagonal bottom-left */}
-          <line x1="35.9" y1="64.1" x2="21.7" y2="78.3" stroke="#F4B400" strokeWidth="3" strokeOpacity="0.8" />
-          <circle cx="21.7" cy="78.3" r="5" fill="#F4B400" />
-          
-          {/* Diagonal top-left */}
-          <line x1="35.9" y1="35.9" x2="21.7" y2="21.7" stroke="#DB4437" strokeWidth="3" strokeOpacity="0.8" />
-          <circle cx="21.7" cy="21.7" r="5" fill="#DB4437" />
+          {/* Left Node */}
+          <circle cx="20" cy="50" r="8" fill="#DB4437" opacity="0.9" />
+          <circle cx="20" cy="50" r="4" fill="#FFFFFF" />
         </g>
         
-        {/* Pulse waves */}
+        {/* Connecting Lines - more elegant, pastel Airtable style */}
+        <g strokeLinecap="round">
+          {/* Vertical and horizontal lines */}
+          <line x1="50" y1="28" x2="50" y2="42" stroke="#4285F4" strokeWidth="2" opacity="0.7" />
+          <line x1="58" y1="50" x2="72" y2="50" stroke="#0F9D58" strokeWidth="2" opacity="0.7" />
+          <line x1="50" y1="58" x2="50" y2="72" stroke="#F4B400" strokeWidth="2" opacity="0.7" />
+          <line x1="42" y1="50" x2="28" y2="50" stroke="#DB4437" strokeWidth="2" opacity="0.7" />
+        </g>
+        
+        {/* Subtle pulse effect */}
         <circle 
           cx="50" 
           cy="50" 
-          r="35" 
-          stroke="url(#pulseGradient)" 
-          strokeWidth="1.5" 
-          strokeDasharray="4 4" 
-          opacity="0.8"
+          r="30" 
+          stroke="url(#subtlePulseGradient)" 
+          strokeWidth="1" 
+          strokeDasharray="2 3" 
+          opacity="0.4"
+          fill="none"
         />
         
         <defs>
-          {/* Center gradient */}
-          <radialGradient id="centerGradient" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(50 50) rotate(90) scale(20)">
-            <stop offset="0%" stopColor="#4285F4" />
-            <stop offset="33%" stopColor="#DB4437" />
-            <stop offset="66%" stopColor="#0F9D58" />
-            <stop offset="100%" stopColor="#F4B400" />
+          {/* More subtle, pastel gradient for the center */}
+          <radialGradient id="subtleGradient" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(50 50) rotate(90) scale(12)">
+            <stop offset="0%" stopColor="#E8F0FE" /> {/* Light blue */}
+            <stop offset="100%" stopColor="#4285F4" stopOpacity="0.7" />
           </radialGradient>
           
-          {/* Pulse gradient */}
-          <linearGradient id="pulseGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#4285F4" />
-            <stop offset="25%" stopColor="#DB4437" />
-            <stop offset="50%" stopColor="#0F9D58" />
-            <stop offset="75%" stopColor="#F4B400" />
-            <stop offset="100%" stopColor="#4285F4" />
+          {/* More subtle pulse gradient */}
+          <linearGradient id="subtlePulseGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#4285F4" stopOpacity="0.6" />
+            <stop offset="25%" stopColor="#DB4437" stopOpacity="0.6" />
+            <stop offset="50%" stopColor="#0F9D58" stopOpacity="0.6" />
+            <stop offset="75%" stopColor="#F4B400" stopOpacity="0.6" />
+            <stop offset="100%" stopColor="#4285F4" stopOpacity="0.6" />
           </linearGradient>
         </defs>
       </svg>
