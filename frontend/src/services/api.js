@@ -337,7 +337,7 @@ export const bulkPauseProbes = async (probeIds) => {
 
 export const bulkResumeProbes = async (probeIds) => {
   try {
-    const response = await api.post('/api/probes/bulk-resume', probeIds);
+    const response = await api.post('/probes/bulk-resume', probeIds);
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -346,7 +346,7 @@ export const bulkResumeProbes = async (probeIds) => {
 
 export const bulkDeleteProbes = async (probeIds) => {
   try {
-    const response = await api.post('/api/probes/bulk-delete', probeIds);
+    const response = await api.post('/probes/bulk-delete', probeIds);
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -356,7 +356,7 @@ export const bulkDeleteProbes = async (probeIds) => {
 // Reports APIs
 export const generateReport = async (params = {}) => {
   try {
-    const response = await api.post('/api/reports/generate', params);
+    const response = await api.post('/reports/generate', params);
     return response.data;
   } catch (error) {
     // If we get a 404, the endpoint might not exist yet, return empty object
@@ -369,7 +369,7 @@ export const generateReport = async (params = {}) => {
 
 export const exportReport = async (format = 'pdf', reportId) => {
   try {
-    const response = await api.get(`/api/reports/${reportId}/export`, { 
+    const response = await api.get(`/reports/${reportId}/export`, { 
       params: { format },
       responseType: 'blob'
     });
@@ -381,7 +381,7 @@ export const exportReport = async (format = 'pdf', reportId) => {
 
 export const getReportHistory = async (params = {}) => {
   try {
-    const response = await api.get('/api/reports', { params });
+    const response = await api.get('/reports', { params });
     return response.data;
   } catch (error) {
     // If we get a 404, the endpoint might not exist yet, return empty array
