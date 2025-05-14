@@ -517,10 +517,75 @@ app.use('/probes', (req, res, next) => {
   console.log(`Probes endpoint request received: ${req.method} ${req.url}`);
   console.log(`Original URL: ${req.originalUrl}`);
   console.log(`Forwarding to backend: ${apiProxyOptions.target}/probes${req.url}`);
-  console.log(`============================================`);
   
-  // Let the proxy middleware handle the request
-  return apiProxy(req, res, next);
+  // Check for authentication header
+  if (!req.headers.authorization) {
+    console.log(`No authorization header found. Authentication required.`);
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  
+  // Handle POST, PUT, DELETE with special care
+  if (['POST', 'PUT', 'DELETE'].includes(req.method)) {
+    console.log(`Special handling for ${req.method} request`);
+    
+    // Get query parameters
+    const queryString = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+    const targetPath = `/probes${queryString}`;
+    
+    // Create options for the backend request
+    const options = {
+      hostname: 'localhost',
+      port: 8000, // Backend port
+      path: targetPath,
+      method: req.method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': req.headers.authorization
+      }
+    };
+    
+    console.log(`Forwarding ${req.method} request to: http://${options.hostname}:${options.port}${options.path}`);
+    
+    // Create the request to the backend
+    const http = require('http');
+    const backendReq = http.request(options, (backendRes) => {
+      console.log(`Backend response status: ${backendRes.statusCode}`);
+      
+      // Set status code and headers
+      res.status(backendRes.statusCode);
+      Object.keys(backendRes.headers).forEach(key => {
+        res.setHeader(key, backendRes.headers[key]);
+      });
+      
+      // Pipe the backend response to our response
+      backendRes.pipe(res);
+    });
+    
+    // Handle errors
+    backendReq.on('error', (error) => {
+      console.error(`Error forwarding ${req.method} request:`, error);
+      res.status(500).json({ error: 'Internal Server Error', message: error.message });
+    });
+    
+    // Get the request body
+    let body = '';
+    req.on('data', (chunk) => {
+      body += chunk.toString();
+    });
+    
+    req.on('end', () => {
+      if (body) {
+        console.log(`Request body: ${body.length > 200 ? body.substring(0, 200) + '...' : body}`);
+        backendReq.write(body);
+      }
+      backendReq.end();
+    });
+  } else {
+    // For GET requests, use the standard proxy
+    console.log(`Using standard proxy for ${req.method} request`);
+    console.log(`============================================`);
+    return apiProxy(req, res, next);
+  }
 });
 
 // Explicitly proxy all /users/* endpoints to the backend
