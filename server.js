@@ -31,6 +31,12 @@ app.use((req, res, next) => {
   else if (url.startsWith('/subscription')) {
     return handleSubscription(req, res);
   }
+  else if (url.startsWith('/diagnostics')) {
+    return handleDiagnostics(req, res);
+  }
+  else if (url.startsWith('/probes')) {
+    return handleProbes(req, res);
+  }
   else if (url.startsWith('/api/')) {
     // Generic API handler for other endpoints
     return handleGenericApi(req, res);
@@ -205,10 +211,18 @@ function handleHistory(req, res) {
   const authHeader = req.headers.authorization || '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
   
+  if (!token) {
+    return res.status(401).json({ detail: 'Not authenticated' });
+  }
+  
   // Extract query parameters if any
   const url = new URL(`http://localhost${req.url}`);
   const searchParams = url.searchParams.toString();
+  
+  // Backend expects endpoint at /history/ with a trailing slash
   const pathWithParams = `/history/${searchParams ? '?' + searchParams : ''}`;
+  
+  console.log(`Forwarding to backend: ${pathWithParams}`);
   
   // Forward request to backend
   const options = {
@@ -218,7 +232,7 @@ function handleHistory(req, res) {
     method: req.method,
     headers: {
       'Accept': 'application/json',
-      'Authorization': token ? `Bearer ${token}` : ''
+      'Authorization': `Bearer ${token}`
     }
   };
   
@@ -234,9 +248,16 @@ function handleHistory(req, res) {
       res.setHeader('Content-Type', 'application/json');
       res.status(backendRes.statusCode);
       
+      // If we received a 307 redirect, log it but return an empty array instead
+      if (backendRes.statusCode === 307) {
+        console.log('Received 307 redirect from backend, returning empty array');
+        return res.json([]);
+      }
+      
       if (responseData) {
         try {
           const jsonData = JSON.parse(responseData);
+          console.log(`Received history data with ${jsonData.length} items`);
           res.json(jsonData);
         } catch (e) {
           console.error('Error parsing response:', e);
@@ -391,6 +412,208 @@ function handleSubscription(req, res) {
   backendReq.on('error', error => {
     console.error('Error with backend request:', error);
     res.status(500).json({ error: 'Failed to retrieve subscription data' });
+  });
+  
+  backendReq.end();
+}
+
+// Handler for diagnostics endpoints
+function handleDiagnostics(req, res) {
+  console.log(`Diagnostics request: ${req.method} ${req.url}`);
+  
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
+  
+  if (!token) {
+    return res.status(401).json({ detail: 'Not authenticated' });
+  }
+  
+  // Extract the tool from the URL
+  const url = new URL(`http://localhost${req.url}`);
+  const pathParts = url.pathname.split('/');
+  const toolName = pathParts.length > 2 ? pathParts[2] : '';
+  
+  // Get the query parameters
+  const searchParams = url.searchParams.toString();
+  
+  // Construct the backend path
+  let backendPath = `/diagnostics/${toolName}`;
+  if (searchParams) {
+    backendPath += `?${searchParams}`;
+  }
+  
+  console.log(`Forwarding diagnostic request to: ${backendPath}`);
+  
+  // Forward request to backend
+  const options = {
+    hostname: 'localhost',
+    port: 8000,
+    path: backendPath,
+    method: req.method,
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  };
+  
+  // Create backend request
+  const backendReq = http.request(options, (backendRes) => {
+    // Collect response data
+    let responseData = '';
+    backendRes.on('data', chunk => {
+      responseData += chunk;
+    });
+    
+    backendRes.on('end', () => {
+      res.setHeader('Content-Type', 'application/json');
+      res.status(backendRes.statusCode);
+      
+      if (responseData) {
+        try {
+          const jsonData = JSON.parse(responseData);
+          console.log(`Diagnostic ${toolName} response successful`);
+          res.json(jsonData);
+        } catch (e) {
+          console.error('Error parsing diagnostic response:', e);
+          // Return a properly formatted error object
+          res.json({
+            tool: toolName,
+            target: url.searchParams.get('target') || '',
+            created_at: new Date().toISOString(),
+            execution_time: 0,
+            status: 'failure',
+            result: 'Error: Unable to parse backend response'
+          });
+        }
+      } else {
+        // Return a properly formatted error object
+        res.json({
+          tool: toolName,
+          target: url.searchParams.get('target') || '',
+          created_at: new Date().toISOString(),
+          execution_time: 0,
+          status: 'failure',
+          result: 'Error: No data returned from backend'
+        });
+      }
+    });
+  });
+  
+  // Handle request body if present
+  if ((req.method === 'POST') && req.body) {
+    const bodyData = JSON.stringify(req.body);
+    backendReq.write(bodyData);
+  }
+  
+  backendReq.on('error', error => {
+    console.error('Error with diagnostic request:', error);
+    res.status(500).json({
+      tool: toolName,
+      target: url.searchParams.get('target') || '',
+      created_at: new Date().toISOString(),
+      execution_time: 0,
+      status: 'failure',
+      result: `Error: Backend service unavailable (${error.message})`
+    });
+  });
+  
+  backendReq.end();
+}
+
+// Handler for scheduled probes endpoints
+function handleProbes(req, res) {
+  console.log(`Probes request: ${req.method} ${req.url}`);
+  
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
+  
+  if (!token) {
+    return res.status(401).json({ detail: 'Not authenticated' });
+  }
+  
+  // Extract path and parameters
+  const url = new URL(`http://localhost${req.url}`);
+  const pathPart = url.pathname;
+  const searchParams = url.searchParams.toString();
+  
+  // Determine backend path - ensure trailing slash for collections
+  let backendPath = pathPart;
+  if (backendPath === '/probes') {
+    backendPath = '/probes/';
+  }
+  
+  // Add query parameters if any
+  if (searchParams) {
+    backendPath += `?${searchParams}`;
+  }
+  
+  console.log(`Forwarding probe request to: ${backendPath}`);
+  
+  // Forward request to backend
+  const options = {
+    hostname: 'localhost',
+    port: 8000,
+    path: backendPath,
+    method: req.method,
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  };
+  
+  // Create backend request
+  const backendReq = http.request(options, (backendRes) => {
+    // Collect response data
+    let responseData = '';
+    backendRes.on('data', chunk => {
+      responseData += chunk;
+    });
+    
+    backendRes.on('end', () => {
+      res.setHeader('Content-Type', 'application/json');
+      res.status(backendRes.statusCode);
+      
+      if (responseData) {
+        try {
+          const jsonData = JSON.parse(responseData);
+          console.log(`Probe response successful with status ${backendRes.statusCode}`);
+          res.json(jsonData);
+        } catch (e) {
+          console.error('Error parsing probe response:', e);
+          res.json({
+            detail: 'Error processing response',
+            status: backendRes.statusCode
+          });
+        }
+      } else {
+        // Empty response but success status
+        if (backendRes.statusCode >= 200 && backendRes.statusCode < 300) {
+          res.json({ status: 'success' });
+        } else {
+          res.json({
+            detail: 'No data returned from backend',
+            status: backendRes.statusCode
+          });
+        }
+      }
+    });
+  });
+  
+  // Handle request body if present
+  if ((req.method === 'POST' || req.method === 'PUT') && req.body) {
+    const bodyData = JSON.stringify(req.body);
+    console.log(`Sending request body: ${bodyData}`);
+    backendReq.write(bodyData);
+  }
+  
+  backendReq.on('error', error => {
+    console.error('Error with probe request:', error);
+    res.status(500).json({
+      detail: `Backend service unavailable: ${error.message}`,
+      status: 'error'
+    });
   });
   
   backendReq.end();
