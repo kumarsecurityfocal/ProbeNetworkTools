@@ -24,12 +24,15 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
+import LogoutIcon from '@mui/icons-material/Logout';
 import Logo from './Logo';
+import { useAuth } from '../context/AuthContext';
 
 const PublicNavbar = ({ darkMode, toggleDarkMode }) => {
   const theme = useTheme();
   const location = useLocation();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { isAuthenticated, logout } = useAuth();
   
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -99,19 +102,34 @@ const PublicNavbar = ({ darkMode, toggleDarkMode }) => {
         ))}
         <Divider sx={{ my: 2 }} />
         <ListItem>
-          <ListItemButton
-            component={RouterLink}
-            to="/app"
-            sx={{
-              color: 'white',
-              bgcolor: 'primary.main',
-              '&:hover': {
-                bgcolor: 'primary.dark',
-              },
-            }}
-          >
-            <ListItemText primary="Login/Sign Up" />
-          </ListItemButton>
+          {isAuthenticated ? (
+            <ListItemButton
+              onClick={logout}
+              sx={{
+                color: 'white',
+                bgcolor: 'primary.main',
+                '&:hover': {
+                  bgcolor: 'primary.dark',
+                },
+              }}
+            >
+              <ListItemText primary="Logout" />
+            </ListItemButton>
+          ) : (
+            <ListItemButton
+              component={RouterLink}
+              to="/app"
+              sx={{
+                color: 'white',
+                bgcolor: 'primary.main',
+                '&:hover': {
+                  bgcolor: 'primary.dark',
+                },
+              }}
+            >
+              <ListItemText primary="Login/Sign Up" />
+            </ListItemButton>
+          )}
         </ListItem>
       </List>
       
@@ -201,14 +219,25 @@ const PublicNavbar = ({ darkMode, toggleDarkMode }) => {
                 >
                   <Brightness4Icon />
                 </IconButton>
-                <Button
-                  component={RouterLink}
-                  to="/app"
-                  variant="contained"
-                  color="primary"
-                >
-                  Login/Sign Up
-                </Button>
+                {isAuthenticated ? (
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={logout}
+                    startIcon={<LogoutIcon />}
+                  >
+                    Logout
+                  </Button>
+                ) : (
+                  <Button
+                    component={RouterLink}
+                    to="/app"
+                    variant="contained"
+                    color="primary"
+                  >
+                    Login/Sign Up
+                  </Button>
+                )}
               </Box>
             </>
           )}
