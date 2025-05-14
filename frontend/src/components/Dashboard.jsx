@@ -221,58 +221,80 @@ const Dashboard = () => {
           Dashboard
         </Typography>
         
-        <FormControl 
+        <Box 
           sx={{ 
-            minWidth: 150,
-            '& .MuiOutlinedInput-root': {
-              borderRadius: '8px',
-              backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : '#fcfcfc',
-              border: darkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #eaecef',
-              color: darkMode ? '#ffffff' : 'inherit',
-              '&:hover': {
-                backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.08)' : '#ffffff',
-                boxShadow: darkMode ? '0 2px 4px rgba(0, 0, 0, 0.2)' : '0 2px 4px rgba(0, 0, 0, 0.05)',
-              },
-            },
-            '& .MuiInputLabel-root': {
-              color: darkMode ? 'rgba(255, 255, 255, 0.9)' : 'inherit',
-              fontWeight: darkMode ? 500 : 400,
-            },
-            '& .MuiSelect-icon': {
-              color: darkMode ? 'rgba(255, 255, 255, 0.5)' : 'inherit',
-            },
-            '& .MuiPaper-root': {
-              backgroundColor: darkMode ? '#1e1e1e' : '#ffffff',
-            },
+            display: 'flex', 
+            alignItems: 'center',
+            backgroundColor: darkMode ? '#333' : '#f0f4f8',
+            border: '1px solid',
+            borderColor: darkMode ? '#555' : '#d0d5dd',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            maxHeight: '40px',
           }}
         >
-          <InputLabel 
-            id="time-range-label" 
+          <Typography 
+            variant="subtitle2" 
             sx={{ 
-              fontSize: '0.9rem',
-              color: darkMode ? 'rgba(255, 255, 255, 0.95)' : undefined,
-              fontWeight: darkMode ? 500 : 400,
-              backgroundColor: darkMode ? 'rgba(0, 0, 0, 0.2)' : undefined,
-              padding: darkMode ? '0 4px' : undefined,
-              borderRadius: darkMode ? '4px' : undefined,
+              fontWeight: 'bold', 
+              px: 2, 
+              py: 1,
+              backgroundColor: darkMode ? '#1976d2' : '#1976d2',
+              color: 'white', 
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
             }}
           >
             Time Range
-          </InputLabel>
+          </Typography>
           <Select
-            labelId="time-range-label"
             id="time-range-select"
             value={timeRange}
-            label="Time Range"
             onChange={(e) => setTimeRange(e.target.value)}
             size="small"
+            variant="standard"
+            disableUnderline
+            sx={{
+              px: 1.5,
+              height: '100%',
+              '& .MuiSelect-select': {
+                py: 1,
+                px: 1,
+                color: darkMode ? 'white' : '#333',
+                fontWeight: 500,
+              },
+              '& .MuiSvgIcon-root': {
+                color: darkMode ? 'white' : '#555',
+              },
+              minWidth: 120,
+            }}
+            MenuProps={{
+              PaperProps: {
+                sx: {
+                  bgcolor: darkMode ? '#333' : 'white',
+                  color: darkMode ? 'white' : '#333',
+                  '& .MuiMenuItem-root': {
+                    '&:hover': {
+                      bgcolor: darkMode ? 'rgba(25, 118, 210, 0.2)' : 'rgba(25, 118, 210, 0.08)',
+                    },
+                    '&.Mui-selected': {
+                      bgcolor: darkMode ? 'rgba(25, 118, 210, 0.3)' : 'rgba(25, 118, 210, 0.12)',
+                      '&:hover': {
+                        bgcolor: darkMode ? 'rgba(25, 118, 210, 0.4)' : 'rgba(25, 118, 210, 0.16)',
+                      },
+                    },
+                  },
+                },
+              },
+            }}
           >
             <MenuItem value="hour">Last Hour</MenuItem>
             <MenuItem value="day">Last Day</MenuItem>
             <MenuItem value="week">Last Week</MenuItem>
             <MenuItem value="month">Last Month</MenuItem>
           </Select>
-        </FormControl>
+        </Box>
       </Box>
 
       <Grid container spacing={2}>
