@@ -165,19 +165,6 @@ const LandingPage = () => {
             <Toolbar disableGutters sx={{ minHeight: '64px' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => setShowAuthForm(false)}>
                 <Logo size="sm" variant="color" />
-                <Typography 
-                  variant="h6" 
-                  sx={{ 
-                    ml: 1.5, 
-                    fontWeight: 600, 
-                    fontSize: '1.1rem',
-                    color: 'text.primary',
-                    fontFamily: '"Inter", sans-serif',
-                    display: { xs: 'none', sm: 'block' }
-                  }}
-                >
-                  ProbeOps
-                </Typography>
               </Box>
 
               <Box sx={{ flexGrow: 1 }} />
@@ -230,19 +217,6 @@ const LandingPage = () => {
           <Toolbar disableGutters sx={{ minHeight: '64px' }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <Logo size="sm" variant="color" />
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  ml: 1.5, 
-                  fontWeight: 600, 
-                  fontSize: '1.1rem',
-                  color: 'text.primary',
-                  fontFamily: '"Inter", sans-serif',
-                  display: { xs: 'none', sm: 'block' }
-                }}
-              >
-                ProbeOps
-              </Typography>
             </Box>
 
             <Box sx={{ flexGrow: 1 }} />
@@ -364,17 +338,6 @@ const LandingPage = () => {
         <Box sx={{ width: '100%', py: 2, px: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, px: 1 }}>
             <Logo size="sm" variant="color" />
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                ml: 1.5, 
-                fontWeight: 600, 
-                fontSize: '1.1rem',
-                color: 'text.primary' 
-              }}
-            >
-              ProbeOps
-            </Typography>
           </Box>
           
           <Divider sx={{ mb: 2 }} />
