@@ -213,35 +213,29 @@ export const createApiKey = async (data) => {
   try {
     console.log("Creating API key with data:", data);
     
-    // Create a FormData object to ensure proper submission
-    const formData = new FormData();
-    formData.append('name', data.name);
-    
-    // Try a more direct approach using fetch instead of axios
-    const token = getToken();
-    const url = `${api.defaults.baseURL}/keys/?expires_days=${data.expires_days}`;
-    
-    console.log("Making direct fetch request to:", url);
-    
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ name: data.name })
+    // Go back to using axios which handles base URL properly
+    const response = await api.post('/keys/', {
+      name: data.name
+    }, {
+      params: {
+        expires_days: data.expires_days
+      }
     });
     
-    if (!response.ok) {
-      throw new Error(`API key creation failed with status: ${response.status}`);
-    }
-    
-    const responseData = await response.json();
-    console.log("API key created successfully:", responseData);
-    return responseData;
+    console.log("API key created successfully:", response.data);
+    return response.data;
   } catch (error) {
     console.error("Error creating API key:", error);
-    throw new Error(`Failed to create API key: ${error.message}`);
+    console.error("Full error object:", JSON.stringify(error, null, 2));
+    
+    // Throw a more descriptive error message
+    if (error.response) {
+      throw new Error(`Server error: ${error.response.status} - ${JSON.stringify(error.response.data)}`);
+    } else if (error.request) {
+      throw new Error(`No response from server. Network issue or CORS problem.`);
+    } else {
+      throw new Error(`Error creating API key: ${error.message}`);
+    }
   }
 };
 

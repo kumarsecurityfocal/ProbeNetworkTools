@@ -95,10 +95,17 @@ app.use('/keys', (req, res, next) => {
   console.log(`API keys endpoint request received: ${req.method} ${req.url}`);
   console.log(`Original URL: ${req.originalUrl}`);
   
-  // When creating a new API key we need to pass through query parameters correctly
+  // When creating a new API key we need to ensure we use the proper URL format with trailing slash
   if (req.method === 'POST') {
+    // Ensure we have a trailing slash for POST requests
+    const url = req.url === '' || req.url === '/' ? '/' : `/${req.url}`;
+    req.url = url;
     console.log(`Forwarding API key creation to backend: ${apiProxyOptions.target}/keys${req.url}`);
   } else {
+    // For all other requests, add trailing slash to /keys if it's an empty path
+    if (req.url === '' || req.url === '/') {
+      req.url = '/';
+    }
     console.log(`Forwarding to backend: ${apiProxyOptions.target}/keys${req.url}`);
   }
   console.log(`============================================`);
