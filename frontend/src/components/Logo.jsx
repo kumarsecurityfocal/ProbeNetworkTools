@@ -13,7 +13,7 @@ const Logo = ({ size = 'md', variant = 'color', className = '' }) => {
 
   const logoHeight = sizeMap[size] || sizeMap.md;
   
-  // Recreating the exact logo from the image with proper spacing
+  // Recreating the exact logo from the image as a single word
   return (
     <div className={`inline-flex items-center ${className}`} style={{ lineHeight: 0 }}>
       <svg 
@@ -26,40 +26,26 @@ const Logo = ({ size = 'md', variant = 'color', className = '' }) => {
         {/* Added padding and adjusted sizing to prevent clipping */}
         <g>
           {/* Red Circle (top left) */}
-          <circle cx="14" cy="14" r="10" fill="#FF5252" />
+          <circle cx="16" cy="20" r="10" fill="#FF5252" />
           
           {/* Blue Circle (top right) */}
-          <circle cx="36" cy="14" r="10" fill="#2196F3" />
+          <circle cx="38" cy="20" r="10" fill="#2196F3" />
           
           {/* Yellow Circle (bottom left) */}
-          <circle cx="14" cy="36" r="10" fill="#FFC107" />
+          <circle cx="16" cy="42" r="10" fill="#FFC107" />
           
           {/* Green Circle (bottom right) */}
-          <circle cx="36" cy="36" r="10" fill="#4CAF50" />
+          <circle cx="38" cy="42" r="10" fill="#4CAF50" />
           
-          {/* ProbeOps text - separated with proper spacing */}
-          <g transform="translate(56, 25)">
-            {/* Probe text in blue */}
+          {/* ProbeOps as a single text element with two colors */}
+          <g transform="translate(58, 30)">
             <text 
               fontSize="20" 
               fontFamily="Arial, sans-serif" 
               fontWeight="bold" 
-              fill="#2196F3"
-              dominantBaseline="middle"
+              dominantBaseline="central"
             >
-              Probe
-            </text>
-            
-            {/* Ops text in green - increased spacing */}
-            <text 
-              fontSize="20" 
-              fontFamily="Arial, sans-serif" 
-              fontWeight="bold" 
-              fill="#4CAF50"
-              x="68"
-              dominantBaseline="middle"
-            >
-              Ops
+              <tspan fill="#2196F3">Probe</tspan><tspan fill="#4CAF50">Ops</tspan>
             </text>
           </g>
         </g>
