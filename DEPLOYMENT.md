@@ -470,6 +470,30 @@ The application uses different API routing approaches in development and product
   }
   ```
 
+### 5.3.1.1 Frontend API Path Consistency
+
+⚠️ **IMPORTANT**: All frontend API requests must use relative paths for cross-environment compatibility.
+
+#### ✅ Correct - Use Relative Paths
+```javascript
+// This works in both development and production
+axios.get("/api/diagnostics")
+fetch("/api/users")
+```
+
+#### ❌ Incorrect - Avoid Absolute URLs
+```javascript
+// These break when moving between environments
+axios.get("http://localhost:8000/api/diagnostics")
+fetch("https://probeops.com/api/users")
+```
+
+**Why This Matters:**
+- In Replit/development, `/api` is proxied via Express
+- In production, `/api` is handled by NGINX
+- Using relative paths ensures the same code works in all environments without modification
+- Environment-specific base URLs should be handled through configuration, not hardcoded
+
 ### 5.3.2 Frontend Build Handling
 
 The frontend build process differs between environments:
@@ -543,6 +567,34 @@ Before deploying to production, review this checklist to ensure compatibility:
 - [ ] Verify that production setup does not depend on the Express server
 - [ ] Ensure API requests work properly through NGINX without Express
 - [ ] Remove any Express-specific code from production deployment
+
+### 7.6 Frontend API Path Verification
+
+- [x] Review all API calls in the frontend code for absolute URL usage
+- [x] Convert any hardcoded URLs to relative paths (`/api/endpoint` format)
+- [x] Check for environment-specific API base URLs in configuration files
+- [ ] Verify all Axios/fetch requests will work in both environments
+- [ ] Test API calls after deployment to confirm routing works correctly
+
+**Current Status**: The current implementation in `frontend/src/services/api.js` correctly uses relative paths for all API endpoints and is configured for environment compatibility via:
+
+```javascript
+// Create axios instance with proper baseURL configuration
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || '/',
+  timeout: 60000 // 60 second timeout
+});
+
+// Example API call with correct relative path
+export const getUserProfile = async () => {
+  try {
+    const response = await api.get('/api/me');
+    return response.data;
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+```
 
 ## Troubleshooting
 
