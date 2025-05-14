@@ -138,16 +138,16 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         # Decode the JWT token
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
         
+        # Print decoded token payload for debugging
+        print("JWT PAYLOAD:", payload)
+        
         # Get the subject from payload and validate it's not None
-        email_from_token = payload.get("sub")
-        if email_from_token is None:
+        email = payload.get("sub")
+        if not email:
             raise credentials_exception
             
-        # Validate the payload using TokenPayload model
-        token_payload = TokenPayload(sub=email_from_token)
-        
-        # For backward compatibility, also populate TokenData
-        email = token_payload.sub
+        # Safely create TokenPayload with the email
+        token_payload = TokenPayload(sub=email)
     except JWTError as e:
         logger.error(f"JWT decoding error: {str(e)}")
         raise credentials_exception
@@ -156,9 +156,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         raise credentials_exception
     
     # Lookup user by email from token
-    user = get_user_by_email(db, email=email)
+    user = get_user_by_email(db, email=token_payload.sub)
     if user is None:
-        logger.error(f"User not found for email: {email}")
+        logger.error(f"User not found for email: {token_payload.sub}")
         raise credentials_exception
     
     return user

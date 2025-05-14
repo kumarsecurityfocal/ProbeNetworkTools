@@ -106,9 +106,12 @@ export const registerUser = async (username, email, password) => {
 
 export const getUserProfile = async () => {
   try {
+    console.log("Fetching user profile...");
     const response = await api.get('/api/me');
+    console.log("User profile response:", response.data);
     return response.data;
   } catch (error) {
+    console.log("Error fetching user profile:", error);
     return handleApiError(error);
   }
 };
