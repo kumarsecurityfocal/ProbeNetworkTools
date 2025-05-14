@@ -1,7 +1,7 @@
 import logging
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import auth, diagnostics, api_keys, subscriptions, scheduled_probes
+from app.routers import auth, diagnostics, api_keys, subscriptions, scheduled_probes, metrics
 from app.database import engine, Base, get_db
 from app.config import settings
 from app.initialize_db import initialize_database
@@ -38,6 +38,7 @@ app.include_router(diagnostics.router, prefix="/api", tags=["Diagnostics"])
 app.include_router(api_keys.router, prefix="/api", tags=["API Keys"])
 app.include_router(subscriptions.router, prefix="/api", tags=["Subscriptions"])
 app.include_router(scheduled_probes.router, prefix="/api", tags=["Scheduled Probes"])
+app.include_router(metrics.router, prefix="/api/metrics", tags=["Metrics"])
 
 @app.get("/", tags=["Root"])
 async def root():
