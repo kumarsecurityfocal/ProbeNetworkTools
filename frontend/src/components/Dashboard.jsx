@@ -277,11 +277,11 @@ const Dashboard = () => {
         </Grid>
         
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={cardStyle}>
+          <Card sx={getCardStyle(darkMode)}>
             <CardContent sx={{ p: 3 }}>
               <Box sx={{
                 ...iconContainerStyle,
-                backgroundColor: 'rgba(76, 175, 80, 0.08)', 
+                backgroundColor: darkMode ? 'rgba(76, 175, 80, 0.15)' : 'rgba(76, 175, 80, 0.08)', 
                 color: '#4caf50'
               }}>
                 <ScheduleIcon fontSize="medium" />
@@ -291,7 +291,7 @@ const Dashboard = () => {
                 sx={{ 
                   fontWeight: 600, 
                   mb: 1, 
-                  color: '#111827',
+                  color: darkMode ? '#ffffff' : '#111827',
                   fontFamily: '"Inter", sans-serif'
                 }}
               >
@@ -300,7 +300,7 @@ const Dashboard = () => {
               <Typography 
                 variant="body2" 
                 sx={{ 
-                  color: '#6b7280', 
+                  color: darkMode ? '#b0bec5' : '#6b7280', 
                   fontFamily: '"Inter", sans-serif',
                   fontSize: '0.875rem'
                 }}
@@ -312,13 +312,15 @@ const Dashboard = () => {
         </Grid>
         
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={cardStyle}>
+          <Card sx={getCardStyle(darkMode)}>
             <CardContent sx={{ p: 3 }}>
               <Box sx={{
                 ...iconContainerStyle,
-                backgroundColor: stats.successRate > 80 ? 'rgba(76, 175, 80, 0.08)' : 
-                                stats.successRate > 50 ? 'rgba(255, 193, 7, 0.08)' : 
-                                'rgba(244, 67, 54, 0.08)', 
+                backgroundColor: stats.successRate > 80 
+                  ? darkMode ? 'rgba(76, 175, 80, 0.15)' : 'rgba(76, 175, 80, 0.08)'
+                  : stats.successRate > 50 
+                  ? darkMode ? 'rgba(255, 193, 7, 0.15)' : 'rgba(255, 193, 7, 0.08)'
+                  : darkMode ? 'rgba(244, 67, 54, 0.15)' : 'rgba(244, 67, 54, 0.08)', 
                 color: stats.successRate > 80 ? '#4caf50' : 
                       stats.successRate > 50 ? '#ff9800' : 
                       '#f44336'
@@ -330,7 +332,7 @@ const Dashboard = () => {
                 sx={{ 
                   fontWeight: 600, 
                   mb: 1, 
-                  color: '#111827',
+                  color: darkMode ? '#ffffff' : '#111827',
                   fontFamily: '"Inter", sans-serif'
                 }}
               >
@@ -339,7 +341,7 @@ const Dashboard = () => {
               <Typography 
                 variant="body2" 
                 sx={{ 
-                  color: '#6b7280', 
+                  color: darkMode ? '#b0bec5' : '#6b7280', 
                   fontFamily: '"Inter", sans-serif',
                   fontSize: '0.875rem',
                   mb: 1
@@ -355,7 +357,7 @@ const Dashboard = () => {
                   mt: 1, 
                   height: 6, 
                   borderRadius: 3,
-                  backgroundColor: 'rgba(0,0,0,0.05)'
+                  backgroundColor: darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'
                 }}
               />
             </CardContent>
@@ -363,11 +365,11 @@ const Dashboard = () => {
         </Grid>
         
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={cardStyle}>
+          <Card sx={getCardStyle(darkMode)}>
             <CardContent sx={{ p: 3 }}>
               <Box sx={{
                 ...iconContainerStyle,
-                backgroundColor: 'rgba(156, 39, 176, 0.08)', 
+                backgroundColor: darkMode ? 'rgba(156, 39, 176, 0.15)' : 'rgba(156, 39, 176, 0.08)', 
                 color: '#9c27b0'
               }}>
                 <TimeIcon fontSize="medium" />
@@ -377,7 +379,7 @@ const Dashboard = () => {
                 sx={{ 
                   fontWeight: 600, 
                   mb: 1, 
-                  color: '#111827',
+                  color: darkMode ? '#ffffff' : '#111827',
                   fontFamily: '"Inter", sans-serif'
                 }}
               >
@@ -386,7 +388,7 @@ const Dashboard = () => {
               <Typography 
                 variant="body2" 
                 sx={{ 
-                  color: '#6b7280', 
+                  color: darkMode ? '#b0bec5' : '#6b7280', 
                   fontFamily: '"Inter", sans-serif',
                   fontSize: '0.875rem'
                 }}
@@ -399,7 +401,7 @@ const Dashboard = () => {
         
         {/* Visualizations - Second Row */}
         <Grid item xs={12} md={8}>
-          <Paper sx={paperStyle}>
+          <Paper sx={getPaperStyle(darkMode)}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
               <Typography 
                 variant="h6" 
