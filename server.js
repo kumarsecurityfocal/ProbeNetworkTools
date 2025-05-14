@@ -76,8 +76,14 @@ app.use('/metrics', (req, res, next) => {
   console.log(`============================================`);
   console.log(`Metrics endpoint request received: ${req.method} ${req.url}`);
   console.log(`Original URL: ${req.originalUrl}`);
-  console.log(`Forwarding to backend: ${apiProxyOptions.target}/metrics${req.url}`);
+  
+  // The backend expects /metrics/dashboard, so we need to keep the original URL structure
+  // Express server strips the /metrics prefix and adds it to req.url
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}${req.originalUrl}`);
   console.log(`============================================`);
+  
+  // Override the URL with the original URL to preserve the full path
+  req.url = req.originalUrl;
   
   // Let the proxy middleware handle the request
   return apiProxy(req, res, next);

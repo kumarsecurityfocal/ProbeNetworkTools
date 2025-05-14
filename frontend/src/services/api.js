@@ -187,8 +187,10 @@ export const getDiagnosticHistory = async (params = {}) => {
 export const getDashboardMetrics = async () => {
   try {
     // Route is defined as /metrics/dashboard in the backend
-    // Express server.js routes /metrics/* to backend/metrics/*
+    // When Express server receives this, it will forward to backend/metrics/dashboard
+    // Using just the endpoint, not the full /api prefix
     const response = await api.get('/metrics/dashboard');
+    console.log("Dashboard metrics response:", response.data);
     return response.data;
   } catch (error) {
     console.log("Error fetching dashboard data:", error);
