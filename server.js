@@ -140,7 +140,7 @@ app.use('/api', (req, res, next) => {
 });
 
 // Explicitly proxy the /login endpoint to the backend
-app.use('/login', (req, res, next) => {
+app.post('/login', (req, res, next) => {
   console.log(`============================================`);
   console.log(`Login request received: ${req.method} ${req.url}`);
   console.log(`Original URL: ${req.originalUrl}`);
