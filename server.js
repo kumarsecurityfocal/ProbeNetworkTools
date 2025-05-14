@@ -149,7 +149,7 @@ app.use('/keys', (req, res, next) => {
   console.log(`Final proxy target: ${proxyReq}`);
   
   // Create a new request directly to the backend to bypass any middleware issues
-  if (req.method === 'POST') {
+  if (['POST', 'PUT', 'DELETE'].includes(req.method)) {
     // Extract the token from the Authorization header
     const authHeader = req.headers.authorization || '';
     const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
