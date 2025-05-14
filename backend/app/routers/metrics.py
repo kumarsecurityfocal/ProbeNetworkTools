@@ -10,7 +10,7 @@ from app import auth
 router = APIRouter()
 
 
-@router.get("/dashboard")
+@router.get("/metrics/dashboard")
 async def get_dashboard_metrics(
     current_user: User = Depends(auth.get_current_active_user),
     db: Session = Depends(get_db)
@@ -74,7 +74,7 @@ async def get_dashboard_metrics(
     }
 
 
-@router.get("/system")
+@router.get("/metrics/system")
 async def get_system_metrics(
     current_user: User = Depends(auth.get_admin_user),
     db: Session = Depends(get_db)
