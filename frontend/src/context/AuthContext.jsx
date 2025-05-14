@@ -26,6 +26,7 @@ export const AuthProvider = ({ children }) => {
         // Try to get user from local storage first
         const storedUser = getUser();
         if (storedUser) {
+          console.log("User from local storage:", storedUser);
           setUser(storedUser);
         }
         
@@ -33,6 +34,7 @@ export const AuthProvider = ({ children }) => {
         try {
           const freshUser = await refreshUserProfile();
           if (freshUser) {
+            console.log("Fresh user profile from API:", freshUser);
             setUser(freshUser);
           }
         } catch (error) {
@@ -50,6 +52,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (username, password) => {
     try {
       const user = await loginApi(username, password);
+      console.log("User after login:", user);
       setIsAuthenticated(true);
       setUser(user);
       return user;
