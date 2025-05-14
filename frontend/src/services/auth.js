@@ -70,7 +70,8 @@ export const register = async (username, email, password) => {
 
 export const logout = () => {
   clearToken();
-  window.location.href = '/login';
+  // Use the app login path consistently
+  window.location.href = '/app';
 };
 
 export const refreshUserProfile = async () => {

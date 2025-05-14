@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Box, CssBaseline, ThemeProvider } from '@mui/material';
 import { useAuth } from './context/AuthContext';
 import { lightTheme, darkTheme } from './theme/theme';
@@ -45,16 +45,42 @@ const ProtectedRoute = ({ children }) => {
 };
 
 function App() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const [darkMode, setDarkMode] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const theme = darkMode ? darkTheme : lightTheme;
+  const navigate = useNavigate();
+  const location = useLocation();
   
   // Check for user's preferred color scheme
   useEffect(() => {
     const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
     setDarkMode(prefersDarkMode);
   }, []);
+  
+  // Handle redirection based on authentication state
+  useEffect(() => {
+    // Don't redirect while still loading
+    if (loading) return;
+    
+    const path = location.pathname;
+    const publicRoutes = ['/', '/pricing', '/docs', '/blog', '/about', '/contact', '/login', '/register', '/app', '/app/login', '/app/register'];
+    
+    // If authenticated and on a public route (except landing and informational pages), redirect to dashboard
+    if (isAuthenticated && (path === '/login' || path === '/register' || path === '/app' || path === '/app/login' || path === '/app/register')) {
+      navigate('/dashboard', { replace: true });
+    }
+    
+    // If on root path and authenticated, go to dashboard
+    if (isAuthenticated && path === '/') {
+      navigate('/dashboard', { replace: true });
+    }
+    
+    // If not authenticated and on a protected route that's not in public routes
+    if (!isAuthenticated && !publicRoutes.includes(path)) {
+      navigate('/app', { replace: true });
+    }
+  }, [isAuthenticated, loading, location.pathname, navigate]);
   
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -65,7 +91,9 @@ function App() {
   };
   
   // Determine if we should show the navbar and sidebar layout
-  const isAppRoute = isAuthenticated && window.location.pathname.startsWith('/dashboard');
+  // If authenticated, treat all routes except explicitly public ones as app routes
+  const publicRoutes = ['/', '/pricing', '/docs', '/blog', '/about', '/contact', '/login', '/register', '/app', '/app/login', '/app/register'];
+  const isAppRoute = isAuthenticated && !publicRoutes.includes(window.location.pathname);
   
   return (
     <ThemeProvider theme={theme}>
@@ -158,7 +186,9 @@ function App() {
 
             {/* Public Website */}
             <Route element={<PublicLayout darkMode={darkMode} toggleDarkMode={toggleDarkMode} />}>
-              <Route path="/" element={<Landing />} />
+              {/* Landing page with auth check - go to dashboard if authenticated */}
+              <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Landing />} />
+              
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/docs" element={<Docs />} />
               <Route path="/blog" element={<Blog />} />
@@ -166,8 +196,10 @@ function App() {
               <Route path="/contact" element={<Contact />} />
               <Route path="/dashboard" element={!isAuthenticated ? <Navigate to="/app" replace /> : <Navigate to="/dashboard" replace />} />
               
-              {/* Catch-all redirect to home */}
-              <Route path="*" element={<Navigate to="/" replace />} />
+              {/* Catch-all redirect to dashboard if authenticated, otherwise to home */}
+              <Route path="*" element={
+                isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/" replace />
+              } />
             </Route>
           </Routes>
         )}
