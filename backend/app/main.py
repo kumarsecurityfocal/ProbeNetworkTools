@@ -9,10 +9,15 @@ from sqlalchemy.orm import Session
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+# Ensure all loggers have sufficient level
+logging.getLogger("app").setLevel(logging.DEBUG)
+logging.getLogger("app.auth").setLevel(logging.DEBUG)
+logging.getLogger("uvicorn").setLevel(logging.INFO)
 
 # Create database tables
 Base.metadata.create_all(bind=engine)

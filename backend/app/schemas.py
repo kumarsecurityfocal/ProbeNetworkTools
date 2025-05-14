@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, validator
 from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 
@@ -229,7 +229,17 @@ class TokenData(BaseModel):
 
 
 class TokenPayload(BaseModel):
-    sub: str
+    """
+    JWT Token payload schema.
+    The 'sub' field is required by FastAPI OAuth2 for token validation.
+    """
+    sub: str = Field(..., description="Subject identifier, must be the user's email")
+    
+    @validator('sub')
+    def validate_sub_not_empty(cls, v):
+        if not v or not isinstance(v, str) or len(v.strip()) == 0:
+            raise ValueError('Subject (sub) must be a non-empty string with the user email')
+        return v
 
 
 class PasswordReset(BaseModel):

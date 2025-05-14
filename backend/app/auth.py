@@ -7,6 +7,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from app.models import User, ApiKey, UserSubscription
@@ -139,28 +140,44 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
         
         # Print decoded token payload for debugging
-        print("JWT PAYLOAD:", payload)
+        print("🔍 Decoded JWT payload:", payload)
+        logger.debug(f"Decoded JWT payload: {payload}")
         
         # Get the subject from payload and validate it's not None
         email = payload.get("sub")
-        if not email:
+        if email is None:
+            print("❌ Missing 'sub' in JWT payload")
+            logger.error("Missing 'sub' field in JWT payload")
             raise credentials_exception
-            
+        
+        print(f"📧 Found email in token: {email}")
+        
         # Safely create TokenPayload with the email
         token_payload = TokenPayload(sub=email)
+        print("✅ TokenPayload validated:", token_payload.dict())
+        logger.debug(f"TokenPayload validated: {token_payload.dict()}")
+        
     except JWTError as e:
+        print(f"❌ JWTError: {e}")
         logger.error(f"JWT decoding error: {str(e)}")
-        raise credentials_exception
+        raise HTTPException(status_code=401, detail="Invalid token")
+    except ValidationError as ve:
+        print(f"❌ TokenPayload validation error: {ve}")
+        logger.error(f"TokenPayload validation error: {str(ve)}")
+        raise HTTPException(status_code=422, detail="Invalid token schema")
     except Exception as e:
-        logger.error(f"Token validation error: {str(e)}")
+        print(f"❌ Unexpected error: {e}")
+        logger.error(f"Unexpected token validation error: {str(e)}")
         raise credentials_exception
     
     # Lookup user by email from token
     user = get_user_by_email(db, email=token_payload.sub)
     if user is None:
+        print(f"❌ User not found for email: {token_payload.sub}")
         logger.error(f"User not found for email: {token_payload.sub}")
         raise credentials_exception
     
+    print(f"✅ User found: {user.username} (email: {user.email})")
     return user
 
 
