@@ -416,8 +416,8 @@ const LandingPage = () => {
       {/* Hero Section */}
       <Box 
         sx={{ 
-          pt: { xs: 12, md: 16 },
-          pb: { xs: 8, md: 12 },
+          pt: { xs: 6, md: 8 },
+          pb: { xs: 4, md: 6 },
           bgcolor: '#fcfeff',
           backgroundImage: 'radial-gradient(circle at 25% 100%, rgba(66, 133, 244, 0.05) 0%, rgba(255, 255, 255, 0) 50%), radial-gradient(circle at 80% 20%, rgba(15, 157, 88, 0.05) 0%, rgba(255, 255, 255, 0) 50%)',
         }}
@@ -433,7 +433,7 @@ const LandingPage = () => {
                 variant="h1" 
                 sx={{ 
                   fontWeight: 800, 
-                  fontSize: { xs: '2.5rem', md: '3.5rem' },
+                  fontSize: { xs: '1.75rem', md: '2.5rem' },
                   lineHeight: 1.2,
                   mb: 2,
                   color: '#202124',
@@ -441,16 +441,16 @@ const LandingPage = () => {
                   letterSpacing: '-0.02em'
                 }}
               >
-                Comprehensive <Box component="span" sx={{ color: '#4285F4' }}>Network</Box> Diagnostics Platform
+                Comprehensive <Box component="span" sx={{ color: '#2196F3' }}>Network</Box> Diagnostics Platform
               </Typography>
               <Typography 
                 variant="h2" 
                 sx={{ 
-                  fontSize: { xs: '1.25rem', md: '1.5rem' },
+                  fontSize: { xs: '1rem', md: '1.25rem' },
                   fontWeight: 400,
                   color: '#5f6368',
                   lineHeight: 1.5,
-                  mb: 4
+                  mb: 3
                 }}
               >
                 Monitor, diagnose, and troubleshoot your network infrastructure with powerful tools and real-time insights
@@ -459,17 +459,17 @@ const LandingPage = () => {
                 <Button 
                   variant="contained" 
                   color="primary"
-                  size="large"
+                  size="medium"
                   onClick={handleSignupClick}
                   endIcon={<ArrowForwardIcon />}
                   sx={{ 
-                    borderRadius: '8px',
+                    borderRadius: '6px',
                     textTransform: 'none',
                     fontWeight: 600,
-                    py: 1.5,
-                    px: 4,
-                    fontSize: '1rem',
-                    boxShadow: '0 4px 14px rgba(66, 133, 244, 0.25)'
+                    py: 1,
+                    px: 3,
+                    fontSize: '0.9rem',
+                    boxShadow: '0 2px 8px rgba(33, 150, 243, 0.25)'
                   }}
                 >
                   Get Started Free
@@ -477,18 +477,18 @@ const LandingPage = () => {
                 <Button 
                   variant="outlined" 
                   color="primary"
-                  size="large"
+                  size="medium"
                   sx={{ 
-                    borderRadius: '8px',
+                    borderRadius: '6px',
                     textTransform: 'none',
                     fontWeight: 500,
-                    py: 1.5,
-                    px: 4,
-                    fontSize: '1rem',
-                    borderColor: 'rgba(66, 133, 244, 0.5)',
+                    py: 1,
+                    px: 3,
+                    fontSize: '0.9rem',
+                    borderColor: 'rgba(33, 150, 243, 0.5)',
                     '&:hover': {
-                      borderColor: '#4285F4',
-                      bgcolor: 'rgba(66, 133, 244, 0.04)'
+                      borderColor: '#2196F3',
+                      bgcolor: 'rgba(33, 150, 243, 0.04)'
                     }
                   }}
                 >
@@ -511,13 +511,13 @@ const LandingPage = () => {
               <Box 
                 sx={{ 
                   width: '100%', 
-                  maxWidth: '500px', 
-                  height: '350px',
-                  borderRadius: '16px',
+                  maxWidth: '400px', 
+                  height: '280px',
+                  borderRadius: '12px',
                   overflow: 'hidden',
                   position: 'relative',
-                  boxShadow: '0 16px 40px rgba(0, 0, 0, 0.12)',
-                  border: '1px solid rgba(0, 0, 0, 0.1)',
+                  boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+                  border: '1px solid rgba(0, 0, 0, 0.07)',
                 }}
               >
                 <Box 
