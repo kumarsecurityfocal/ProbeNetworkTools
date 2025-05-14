@@ -54,11 +54,11 @@ app.use('/api', (req, res, next) => {
   console.log(`API request received: ${req.method} ${req.url}`);
   console.log(`Original URL: ${req.originalUrl}`);
   console.log(`Path without duplicate prefix: ${backendPath}`);
-  console.log(`Forwarding to backend: ${apiProxyOptions.target}/api${backendPath}`);
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}${backendPath}`);
   console.log(`============================================`);
   
   // Manually modify the URL to avoid proxy middleware's automatic handling
-  req.url = `/api${backendPath}`;
+  req.url = backendPath;
   
   // Let the proxy middleware handle the request
   return apiProxy(req, res, next);
