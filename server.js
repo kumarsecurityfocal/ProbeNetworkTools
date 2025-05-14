@@ -71,19 +71,80 @@ app.use('/history', (req, res, next) => {
   return apiProxy(req, res, next);
 });
 
-// Diagnostics endpoints
-app.use('/diagnostics', (req, res, next) => {
+// Diagnostic tools direct endpoints
+app.use('/ping', (req, res, next) => {
   console.log(`============================================`);
-  console.log(`Diagnostics endpoint request received: ${req.method} ${req.url}`);
+  console.log(`Ping diagnostic request received: ${req.method} ${req.url}`);
   console.log(`Original URL: ${req.originalUrl}`);
-  
-  // The backend expects /diagnostics/run, so we need to keep the original URL structure
-  // Express server strips the /diagnostics prefix and adds it to req.url
-  console.log(`Forwarding to backend: ${apiProxyOptions.target}${req.originalUrl}`);
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}/ping${req.url}`);
   console.log(`============================================`);
   
-  // Override the URL with the original URL to preserve the full path
-  req.url = req.originalUrl;
+  // Let the proxy middleware handle the request
+  return apiProxy(req, res, next);
+});
+
+app.use('/traceroute', (req, res, next) => {
+  console.log(`============================================`);
+  console.log(`Traceroute diagnostic request received: ${req.method} ${req.url}`);
+  console.log(`Original URL: ${req.originalUrl}`);
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}/traceroute${req.url}`);
+  console.log(`============================================`);
+  
+  // Let the proxy middleware handle the request
+  return apiProxy(req, res, next);
+});
+
+app.use('/dns', (req, res, next) => {
+  console.log(`============================================`);
+  console.log(`DNS diagnostic request received: ${req.method} ${req.url}`);
+  console.log(`Original URL: ${req.originalUrl}`);
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}/dns${req.url}`);
+  console.log(`============================================`);
+  
+  // Let the proxy middleware handle the request
+  return apiProxy(req, res, next);
+});
+
+app.use('/whois', (req, res, next) => {
+  console.log(`============================================`);
+  console.log(`WHOIS diagnostic request received: ${req.method} ${req.url}`);
+  console.log(`Original URL: ${req.originalUrl}`);
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}/whois${req.url}`);
+  console.log(`============================================`);
+  
+  // Let the proxy middleware handle the request
+  return apiProxy(req, res, next);
+});
+
+app.use('/port', (req, res, next) => {
+  console.log(`============================================`);
+  console.log(`Port check diagnostic request received: ${req.method} ${req.url}`);
+  console.log(`Original URL: ${req.originalUrl}`);
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}/port${req.url}`);
+  console.log(`============================================`);
+  
+  // Let the proxy middleware handle the request
+  return apiProxy(req, res, next);
+});
+
+app.use('/http', (req, res, next) => {
+  console.log(`============================================`);
+  console.log(`HTTP diagnostic request received: ${req.method} ${req.url}`);
+  console.log(`Original URL: ${req.originalUrl}`);
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}/http${req.url}`);
+  console.log(`============================================`);
+  
+  // Let the proxy middleware handle the request
+  return apiProxy(req, res, next);
+});
+
+// Diagnostics history endpoint
+app.use('/history', (req, res, next) => {
+  console.log(`============================================`);
+  console.log(`Diagnostics history request received: ${req.method} ${req.url}`);
+  console.log(`Original URL: ${req.originalUrl}`);
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}/history${req.url}`);
+  console.log(`============================================`);
   
   // Let the proxy middleware handle the request
   return apiProxy(req, res, next);

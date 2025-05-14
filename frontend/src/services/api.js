@@ -159,21 +159,19 @@ export const logoutAllDevices = async () => {
 // Diagnostic APIs
 export const runDiagnostic = async (tool, params = {}, data = null) => {
   try {
-    // Use the proper diagnostics/run endpoint
-    const endpoint = '/diagnostics/run';
-    
-    // Add tool to params
-    params = { ...params, tool };
+    // Use the specific tool endpoint directly
+    const endpoint = `/${tool}`;
     
     // For HTTP requests, we need to use POST with a body
     if (tool === 'http') {
       const response = await api.post(endpoint, data, { params });
       return response.data;
     } else {
-      const response = await api.post(endpoint, null, { params });
+      const response = await api.get(endpoint, { params });
       return response.data;
     }
   } catch (error) {
+    console.log("Error response data:", error.response?.data);
     return handleApiError(error);
   }
 };
