@@ -202,49 +202,82 @@ app.use('/http', (req, res, next) => {
   return httpProxy(req, res, next);
 });
 
-// Add a new consolidated diagnostics endpoint
+// Handle diagnostics endpoint
 app.use('/diagnostics/:tool', (req, res, next) => {
   const tool = req.params.tool;
+  const target = req.query.target;
+  const count = req.query.count || 4;
+  const timeout = req.query.timeout || 5;
+  
   console.log(`============================================`);
-  console.log(`Diagnostics endpoint request received: ${req.method} ${req.path}`);
-  console.log(`Tool requested: ${tool}`);
-  console.log(`Original URL: ${req.originalUrl}`);
-  console.log(`Query params: ${JSON.stringify(req.query)}`);
+  console.log(`Diagnostics endpoint request received: ${req.method} ${req.originalUrl}`);
+  console.log(`Tool: ${tool}, Target: ${target}, Count: ${count}, Timeout: ${timeout}`);
   
-  // Forward to the correct backend endpoint based on the tool parameter
-  const backendPath = `/${tool}`;
-  console.log(`Forwarding to backend: ${apiProxyOptions.target}${backendPath}`);
-  
-  // Auth header debugging
-  if (req.headers.authorization) {
-    console.log(`Authorization header found in original request`);
-  } else {
-    console.log(`No Authorization header in original request!`);
+  // Validate basic parameters
+  if (!tool) {
+    return res.status(400).json({ error: 'Missing tool parameter' });
   }
   
-  // Super detailed proxy options for debugging and special auth handling
+  if (!target && ['ping', 'traceroute', 'dns', 'http'].includes(tool)) {
+    return res.status(400).json({ error: 'Missing target parameter' });
+  }
+  
+  // Create the correct target URL with query parameters
+  let backendUrl = `http://localhost:8000/${tool}`;
+  let queryParams = [];
+  
+  // Add all query parameters
+  Object.keys(req.query).forEach(key => {
+    queryParams.push(`${key}=${encodeURIComponent(req.query[key])}`);
+  });
+  
+  if (queryParams.length > 0) {
+    backendUrl += `?${queryParams.join('&')}`;
+  }
+  
+  console.log(`Forwarding to backend: ${backendUrl}`);
+  
+  // Get authentication token
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    console.log(`No authorization header found in request!`);
+    return res.status(401).json({ 
+      error: 'Unauthorized',
+      message: 'No authorization token provided'
+    });
+  }
+  
+  console.log(`Authorization header found: ${authHeader.substring(0, 15)}...`);
+  
+  // Create completely custom proxy for this specific request
   const diagnosticProxy = createProxyMiddleware({
-    ...apiProxyOptions,
-    pathRewrite: (path, req) => {
-      const newPath = path.replace(`/diagnostics/${tool}`, `/${tool}`);
-      console.log(`PATH REWRITE: ${path} -> ${newPath}`);
+    target: 'http://localhost:8000',
+    changeOrigin: true,
+    secure: false,
+    ws: true,
+    xfwd: true,
+    logLevel: 'debug',
+    timeout: 60000,
+    proxyTimeout: 60000,
+    preserveHeaderKeyCase: true,
+    pathRewrite: (path) => {
+      // Return the exact backend path we want
+      const newPath = `/${tool}${req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : ''}`;
+      console.log(`Rewriting path: ${path} -> ${newPath}`);
       return newPath;
     },
     onProxyReq: (proxyReq, req, res) => {
-      // Ensure the authorization header is correctly forwarded
-      if (req.headers.authorization) {
-        console.log(`Setting Authorization header on proxy request`);
-        proxyReq.setHeader('Authorization', req.headers.authorization);
-      }
+      // Manually set all important headers
+      proxyReq.setHeader('Authorization', authHeader);
       
-      console.log(`PROXY REQUEST: ${proxyReq.method} ${proxyReq.path}`);
-      console.log(`PROXY HEADERS: ${JSON.stringify(proxyReq.getHeaders())}`);
+      // Log the final proxy request details
+      console.log(`Final proxy request: ${proxyReq.method} ${proxyReq.path}`);
+      console.log(`Headers: Authorization=${authHeader.substring(0, 15)}...`);
     },
     onProxyRes: (proxyRes, req, res) => {
-      console.log(`PROXY RESPONSE: ${proxyRes.statusCode}`);
-      console.log(`PROXY RESPONSE HEADERS: ${JSON.stringify(proxyRes.headers)}`);
+      console.log(`Proxy response status: ${proxyRes.statusCode}`);
       
-      // Log the response body for debugging
+      // Log response body for debugging
       let responseBody = '';
       const originalWrite = res.write;
       const originalEnd = res.end;
@@ -258,15 +291,25 @@ app.use('/diagnostics/:tool', (req, res, next) => {
         if (chunk) {
           responseBody += chunk.toString('utf8');
         }
-        console.log(`PROXY RESPONSE BODY: ${responseBody}`);
+        console.log(`Response body (first 100 chars): ${responseBody.substring(0, 100)}...`);
         return originalEnd.apply(res, arguments);
       };
+    },
+    onError: (err, req, res) => {
+      console.error(`Diagnostic proxy error: ${err.message}`);
+      if (!res.headersSent) {
+        res.status(500).json({
+          error: 'Proxy Error',
+          message: err.message,
+          tool: tool,
+          target: target
+        });
+      }
     }
   });
   
   console.log(`============================================`);
   
-  // Use the dedicated proxy middleware
   return diagnosticProxy(req, res, next);
 });
 
