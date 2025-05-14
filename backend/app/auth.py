@@ -136,10 +136,10 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     )
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
-        username_from_token = payload.get("sub")
-        if username_from_token is None:
+        email_from_token = payload.get("sub")
+        if email_from_token is None:
             raise credentials_exception
-        token_data = TokenData(username=username_from_token)
+        token_data = TokenData(username=email_from_token)  # Keep using username field for backwards compatibility
     except JWTError:
         raise credentials_exception
     
@@ -147,13 +147,10 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     if token_data.username is None:
         raise credentials_exception
         
-    user = get_user(db, username=token_data.username)
+    user = get_user_by_email(db, email=token_data.username)
     if user is None:
-        # Try with email
-        user = get_user_by_email(db, token_data.username)
-        if user is None:
-            raise credentials_exception
-            
+        raise credentials_exception
+    
     return user
 
 
