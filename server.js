@@ -64,6 +64,30 @@ app.use('/api', (req, res, next) => {
   return apiProxy(req, res, next);
 });
 
+// Explicitly proxy the /login endpoint to the backend
+app.use('/login', (req, res, next) => {
+  console.log(`============================================`);
+  console.log(`Login request received: ${req.method} ${req.url}`);
+  console.log(`Original URL: ${req.originalUrl}`);
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}/login${req.url}`);
+  console.log(`============================================`);
+  
+  // Let the proxy middleware handle the request
+  return apiProxy(req, res, next);
+});
+
+// Explicitly proxy the /register endpoint to the backend
+app.use('/register', (req, res, next) => {
+  console.log(`============================================`);
+  console.log(`Register request received: ${req.method} ${req.url}`);
+  console.log(`Original URL: ${req.originalUrl}`);
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}/register${req.url}`);
+  console.log(`============================================`);
+  
+  // Let the proxy middleware handle the request
+  return apiProxy(req, res, next);
+});
+
 // Serve static files from the public directory (built frontend)
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -103,10 +127,14 @@ app.get('/profile', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// For GET requests to /login, serve the React app
+// POST requests are already handled by the proxy middleware above
 app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// For GET requests to /register, serve the React app
+// POST requests are already handled by the proxy middleware above
 app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
