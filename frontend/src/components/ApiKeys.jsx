@@ -123,14 +123,27 @@ const ApiKeys = () => {
     
     try {
       setLoading(true);
+      console.log('Creating API key with form data:', formData);
       const newApiKey = await createApiKey(formData);
-      setApiKeys([newApiKey, ...apiKeys]);
-      handleCreateDialogClose();
+      
+      if (newApiKey) {
+        console.log('Successfully created new API key:', newApiKey);
+        setApiKeys([newApiKey, ...apiKeys]);
+        handleCreateDialogClose();
+        // Show success message
+        setError('');
+      } else {
+        console.error('API key creation returned no data');
+        setFormErrors({
+          ...formErrors,
+          submit: 'Failed to create API key - no data returned. Please try again.'
+        });
+      }
     } catch (err) {
       console.error('Error creating API key:', err);
       setFormErrors({
         ...formErrors,
-        submit: 'Failed to create API key. Please try again.'
+        submit: `Failed to create API key: ${err.message || 'Unknown error'}`
       });
     } finally {
       setLoading(false);

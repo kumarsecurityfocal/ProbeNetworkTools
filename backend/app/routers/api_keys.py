@@ -11,6 +11,7 @@ router = APIRouter()
 
 
 @router.post("/keys", response_model=schemas.ApiKeyResponse)
+@router.post("/keys/", response_model=schemas.ApiKeyResponse)
 async def create_api_key(
     key_data: schemas.ApiKeyCreate,
     expires_days: Optional[int] = Query(None, description="Number of days until the key expires"),
@@ -41,6 +42,7 @@ async def create_api_key(
 
 
 @router.get("/keys", response_model=List[schemas.ApiKeyResponse])
+@router.get("/keys/", response_model=List[schemas.ApiKeyResponse])
 async def get_api_keys(
     current_user: models.User = Depends(auth.get_current_active_user),
     db: Session = Depends(get_db)

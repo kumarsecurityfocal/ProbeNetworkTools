@@ -213,20 +213,35 @@ export const createApiKey = async (data) => {
   try {
     console.log("Creating API key with data:", data);
     
-    // Use the format expected by the backend (ApiKeyCreate schema)
-    // We need to make sure the name is in the request body and expires_days is a query parameter
-    const response = await api.post(`/keys?expires_days=${data.expires_days}`, {
-      name: data.name
+    // Create a FormData object to ensure proper submission
+    const formData = new FormData();
+    formData.append('name', data.name);
+    
+    // Try a more direct approach using fetch instead of axios
+    const token = getToken();
+    const url = `${api.defaults.baseURL}/keys/?expires_days=${data.expires_days}`;
+    
+    console.log("Making direct fetch request to:", url);
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ name: data.name })
     });
     
-    console.log("API key created successfully:", response.data);
-    return response.data;
+    if (!response.ok) {
+      throw new Error(`API key creation failed with status: ${response.status}`);
+    }
+    
+    const responseData = await response.json();
+    console.log("API key created successfully:", responseData);
+    return responseData;
   } catch (error) {
     console.error("Error creating API key:", error);
-    if (error.response) {
-      console.error("Error response data:", error.response.data);
-    }
-    return handleApiError(error);
+    throw new Error(`Failed to create API key: ${error.message}`);
   }
 };
 
