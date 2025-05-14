@@ -102,7 +102,7 @@ const Navbar = ({ darkMode, toggleDarkMode, sidebarCollapsed, toggleSidebar }) =
   
   // Airtable-style sidebar
   const drawer = (
-    <Box sx={{ height: '100%', bgcolor: '#ffffff', overflowY: 'auto', overflowX: 'hidden' }}>
+    <Box sx={{ height: '100%', bgcolor: darkMode ? '#242424' : '#ffffff', overflowY: 'auto', overflowX: 'hidden' }}>
       <Box 
         sx={{ 
           display: 'flex', 
@@ -111,20 +111,7 @@ const Navbar = ({ darkMode, toggleDarkMode, sidebarCollapsed, toggleSidebar }) =
           p: sidebarCollapsed ? 1 : 3
         }}
       >
-        <Logo variant="color" size={sidebarCollapsed ? "sm" : "md"} />
-        {!sidebarCollapsed && (
-          <Typography 
-            variant="h6" 
-            sx={{ 
-              mt: 2, 
-              fontFamily: '"Inter", sans-serif', 
-              fontWeight: 600,
-              color: '#202124'
-            }}
-          >
-            ProbeOps
-          </Typography>
-        )}
+        {/* Logo and ProbeOps text removed as requested */}
       </Box>
       <Divider sx={{ mx: sidebarCollapsed ? 1 : 2 }} />
       <List sx={{ px: sidebarCollapsed ? 0.5 : 1, py: 2 }}>
@@ -227,7 +214,7 @@ const Navbar = ({ darkMode, toggleDarkMode, sidebarCollapsed, toggleSidebar }) =
           zIndex: (theme) => theme.zIndex.drawer + 1,
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)', 
           borderBottom: '1px solid #DADCE0',
-          backgroundColor: darkMode ? '#2D3142' : '#ffffff',
+          backgroundColor: darkMode ? '#242424' : '#ffffff',
           color: darkMode ? '#ffffff' : '#202124'
         }}
       >
@@ -267,19 +254,6 @@ const Navbar = ({ darkMode, toggleDarkMode, sidebarCollapsed, toggleSidebar }) =
                 variant={darkMode ? "light" : "color"} 
                 size="sm" 
               />
-              <Typography
-                variant="h6"
-                component="div"
-                sx={{ 
-                  display: { xs: 'none', sm: 'block' }, 
-                  ml: 1.5, 
-                  fontWeight: 600,
-                  color: darkMode ? '#FFFFFF' : '#202124',
-                  fontFamily: '"DM Sans", sans-serif',
-                }}
-              >
-                ProbeOps
-              </Typography>
             </RouterLink>
           </Box>
           

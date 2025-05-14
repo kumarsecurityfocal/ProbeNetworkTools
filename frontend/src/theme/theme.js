@@ -127,25 +127,96 @@ export const lightTheme = createTheme({
   },
 });
 
-// Dark theme version
+// Dark theme version - Airtable inspired
 export const darkTheme = createTheme({
   ...lightTheme,
   palette: {
-    ...lightTheme.palette,
     mode: 'dark',
     primary: {
-      main: '#63a4ff', // Lighter blue for dark mode
+      main: '#2196f3', // More vibrant blue for dark mode
       dark: '#1976d2', 
-      light: '#9ed5ff',
-      contrastText: '#000000',
+      light: '#64b5f6',
+      contrastText: '#ffffff',
+    },
+    secondary: {
+      main: '#f50057', // Vibrant pink for dark mode
+      light: '#ff4081',
+      dark: '#c51162',
+      contrastText: '#ffffff',
     },
     background: {
-      default: '#121212',
-      paper: '#1e1e1e',
+      default: '#1a1a1a', // Slightly lighter than pure black
+      paper: '#242424',   // Lighter paper background
     },
     text: {
-      primary: '#e1e5ee',
-      secondary: '#a9b2c3',
+      primary: '#ffffff',  // Pure white for primary text
+      secondary: '#b0bec5', // Light blue-grey for secondary text
+    },
+    divider: 'rgba(255, 255, 255, 0.12)',
+  },
+  components: {
+    ...lightTheme.components,
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'none', // Remove the default paper pattern
+          boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.2), 0px 4px 8px rgba(0, 0, 0, 0.2)',
+          borderColor: 'rgba(255, 255, 255, 0.12)',
+        },
+        rounded: {
+          borderRadius: 12,
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#242424',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.2)'
+        }
+      }
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#2c2c2c',
+          borderColor: 'rgba(255, 255, 255, 0.08)',
+          '&:hover': {
+            boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.3), 0px 8px 16px rgba(0, 0, 0, 0.3)',
+          },
+        }
+      }
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          '&:hover': {
+            boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.3)',
+          },
+        },
+        containedPrimary: {
+          '&:hover': {
+            boxShadow: '0px 4px 8px rgba(33, 150, 243, 0.4)',
+          },
+        },
+      },
+    },
+    MuiSwitch: {
+      styleOverrides: {
+        switchBase: {
+          color: '#90caf9',
+          '&.Mui-checked': {
+            color: '#2196f3',
+          },
+          '&.Mui-checked + .MuiSwitch-track': {
+            backgroundColor: '#2196f3',
+          },
+        },
+        track: {
+          backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        },
+      },
     },
   },
 });
