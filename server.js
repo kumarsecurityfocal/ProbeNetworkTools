@@ -205,11 +205,16 @@ app.use('/diagnostics/:tool', (req, res, next) => {
   console.log(`Forwarding to backend: ${apiProxyOptions.target}${backendPath}`);
   console.log(`============================================`);
 
-  // Rewrite the URL to point directly to the tool endpoint on the backend
-  req.url = req.url.replace(`/diagnostics/${tool}`, backendPath);
+  // Create a dedicated proxy middleware with proper path rewriting
+  const diagnosticProxy = createProxyMiddleware({
+    ...apiProxyOptions,
+    pathRewrite: {
+      [`^/diagnostics/${tool}`]: `/${tool}`
+    }
+  });
   
-  // Let the proxy middleware handle the request
-  return apiProxy(req, res, next);
+  // Use the dedicated proxy middleware
+  return diagnosticProxy(req, res, next);
 });
 
 // Diagnostics history endpoint
