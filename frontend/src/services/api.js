@@ -73,15 +73,21 @@ export const loginUser = async (username, password) => {
   try {
     console.log("Logging in with", username);
     
-    // Use JSON format for login which works better with NGINX reverse proxy
-    const response = await api.post('/login/json', 
-      { username, password }, 
+    // Use form data format for login with FastAPI OAuth2
+    const formData = new URLSearchParams();
+    formData.append('username', username);
+    formData.append('password', password);
+    
+    const response = await api.post('/login', 
+      formData.toString(),
       {
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/x-www-form-urlencoded'
         }
       }
     );
+    
+    console.log("Login response:", response.data);
     return response.data;
   } catch (error) {
     console.log("Login error:", error);

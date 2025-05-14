@@ -45,21 +45,32 @@ app.use((req, res, next) => {
 function handleLogin(req, res) {
   console.log(`Login request: ${req.method} ${req.url}`);
   
+  // Check if this is a GET request, which we should ignore
+  if (req.method === 'GET') {
+    return res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  }
+  
   // Determine if this is JSON or form login
   const isJsonLogin = req.url.includes('/login/json');
-  const loginPath = isJsonLogin ? '/token' : '/token';
+  
+  // FastAPI expects requests at /login (not /token)
+  const loginPath = '/login';
   
   // Extract username and password
   let username, password;
   
   if (isJsonLogin) {
-    // Handle JSON login
+    // Handle JSON login - get from request body
     username = req.body.username;
     password = req.body.password;
+    
+    console.log(`JSON login with username: ${username}`);
   } else {
-    // Handle form login
+    // Handle form login - get from request body
     username = req.body.username;
     password = req.body.password;
+    
+    console.log(`Form login with username: ${username}`);
   }
   
   // If missing credentials, return error
@@ -68,10 +79,13 @@ function handleLogin(req, res) {
   }
   
   // Format request for backend token endpoint
+  // FastAPI OAuth2 expects form data
   const requestBody = new URLSearchParams();
   requestBody.append('username', username);
   requestBody.append('password', password);
   const requestBodyString = requestBody.toString();
+  
+  console.log(`Forwarding authentication to: ${loginPath}`);
   
   // Forward request to backend
   const options = {
