@@ -118,12 +118,40 @@ function App() {
             <Route path="/app" element={
               <ThemeProvider theme={lightTheme}>
                 <CssBaseline />
-                <Box component="main" sx={{ flexGrow: 1 }}>
-                  <Routes>
-                    <Route index element={!isAuthenticated ? <AuthForm mode="login" /> : <Navigate to="/dashboard" replace />} />
-                    <Route path="login" element={!isAuthenticated ? <AuthForm mode="login" /> : <Navigate to="/dashboard" replace />} />
-                    <Route path="register" element={!isAuthenticated ? <AuthForm mode="register" /> : <Navigate to="/dashboard" replace />} />
-                  </Routes>
+                <Box sx={{ flexGrow: 1, minHeight: '100vh' }}>
+                  {!isAuthenticated ? <AuthForm mode="login" /> : <Navigate to="/dashboard" replace />}
+                </Box>
+              </ThemeProvider>
+            } />
+            <Route path="/app/login" element={
+              <ThemeProvider theme={lightTheme}>
+                <CssBaseline />
+                <Box sx={{ flexGrow: 1, minHeight: '100vh' }}>
+                  {!isAuthenticated ? <AuthForm mode="login" /> : <Navigate to="/dashboard" replace />}
+                </Box>
+              </ThemeProvider>
+            } />
+            <Route path="/app/register" element={
+              <ThemeProvider theme={lightTheme}>
+                <CssBaseline />
+                <Box sx={{ flexGrow: 1, minHeight: '100vh' }}>
+                  {!isAuthenticated ? <AuthForm mode="register" /> : <Navigate to="/dashboard" replace />}
+                </Box>
+              </ThemeProvider>
+            } />
+            <Route path="/login" element={
+              <ThemeProvider theme={lightTheme}>
+                <CssBaseline />
+                <Box sx={{ flexGrow: 1, minHeight: '100vh' }}>
+                  {!isAuthenticated ? <AuthForm mode="login" /> : <Navigate to="/dashboard" replace />}
+                </Box>
+              </ThemeProvider>
+            } />
+            <Route path="/register" element={
+              <ThemeProvider theme={lightTheme}>
+                <CssBaseline />
+                <Box sx={{ flexGrow: 1, minHeight: '100vh' }}>
+                  {!isAuthenticated ? <AuthForm mode="register" /> : <Navigate to="/dashboard" replace />}
                 </Box>
               </ThemeProvider>
             } />
