@@ -882,7 +882,7 @@ const DiagnosticResult = ({ result }) => {
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Typography variant="caption" display="block" color="text.secondary">
-            Run at: {new Date(result.created_at).toLocaleString()} | Execution time: {result.execution_time} ms
+            Run at: {result.created_at ? new Date(result.created_at).toLocaleString() : 'N/A'} | Execution time: {result.execution_time || 0} ms
           </Typography>
           <Chip 
             label={result.status === 'success' ? 'Success' : 'Failed'} 
