@@ -186,6 +186,9 @@ app.use('/keys', (req, res, next) => {
       if (req.method === 'PUT' || req.method === 'DELETE') {
         // For PUT and DELETE, we need to preserve the original path
         path = `/keys${req.url}`;
+        
+        // Log what we're doing to help with debugging
+        console.log(`Making direct backend request to: ${path}`);
       } else {
         // For POST, use the same finalUrl logic we had before
         path = finalUrl.replace('http://localhost:8000', '');

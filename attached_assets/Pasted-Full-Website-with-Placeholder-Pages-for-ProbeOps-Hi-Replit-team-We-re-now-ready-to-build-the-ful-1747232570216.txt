@@ -1,0 +1,122 @@
+Full Website with Placeholder Pages for ProbeOps
+Hi Replit team 👋
+
+We're now ready to build the full landing page and multi-page website for ProbeOps, our API-first network diagnostics platform built for automation and AI agents.
+
+The goal is a modern, intuitive site that supports:
+
+🚀 Strong product storytelling
+
+🧠 API-based integrations
+
+✍️ Manual (GUI-based) probes
+
+🔄 Scalable layout for future additions (blog, partners, docs)
+
+✅ Pages & Route Structure (with Descriptions + Placeholders)
+1. / — Homepage / Landing Page
+Purpose: Introduce product, highlight problems we solve, push users to sign up.
+
+Sections:
+
+Hero (value prop + CTA)
+
+Problems We Solve
+
+Who It's For
+
+Key Features (JSON, AI Agent-ready, Manual probes)
+
+Live API Example
+
+Pricing Summary Preview
+
+Testimonials (placeholder)
+
+Footer
+
+2. /pricing — Detailed Pricing Page
+Purpose: Show complete tier comparison in a clear, visual table.
+
+Content:
+
+3-tier pricing table (Free / Standard / Enterprise)
+
+Monthly/Yearly toggle (optional future enhancement)
+
+Call-to-actions for each plan
+
+Comparison matrix with ✓ / ✗ per feature
+
+3. /docs — Documentation Hub
+Placeholder Now:
+
+"Our API and integration documentation is coming soon. Stay tuned!"
+
+Future Content:
+
+Getting started guide
+
+Auth, tokens, headers
+
+All endpoints (/ping, /dns, etc.)
+
+Sample integrations (n8n, LangChain, GitHub Actions)
+
+4. /dashboard — Link to Authenticated UI
+Just a button/redirect to actual user dashboard (/app or external hosted SPA)
+
+Show message:
+
+"Already a user? Go to your dashboard → [Login]"
+
+5. /about (Optional Placeholder)
+Purpose: Introduce the team, mission, or startup story.
+
+Content Placeholder:
+
+“ProbeOps was created by engineers tired of digging through logs. We believe diagnostics should be fast, accessible, and automation-friendly.”
+
+6. /blog (Optional Placeholder)
+“Coming Soon: Best practices, automation tips, and AI integration tutorials.”
+
+7. /contact
+Basic email form (or mailto link):
+
+“Got a question? Want a demo? Reach out at: hello@probeops.com”
+
+✅ Design Guidelines
+Use Airtable-style visual language: soft colors, rounded containers, white space
+
+Tailwind CSS for styling
+
+Responsive layout
+
+Modular React components
+
+Support light/dark theme toggle (optional)
+
+Use dummy content or gray boxes where placeholders are needed
+
+✅ Navigation Bar
+Home
+
+Pricing
+
+Docs
+
+Contact
+
+Dashboard/Login (highlighted CTA)
+
+Let me know once the page shell is ready — I’ll help populate each section with microcopy, icons, or illustrations.
+
+Thanks! 🙏
+
+Let me know if you also want:
+
+🧠 A sitemap in visual format (PDF or PNG)
+
+⚛️ React + Tailwind starter boilerplate
+
+🖼️ Sample hero + pricing section design mockup

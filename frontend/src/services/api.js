@@ -261,17 +261,21 @@ export const deactivateApiKey = async (keyId) => {
   try {
     console.log(`Deactivating API token with ID ${keyId}`);
     
+    // Get a fresh token from localStorage to ensure it's valid
+    const token = localStorage.getItem('token');
+    
     // Use fetch directly to avoid any axios transformations
     const response = await fetch(`/keys/${keyId}/deactivate`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getToken()}`
+        'Authorization': `Bearer ${token}`
       }
     });
     
     if (!response.ok) {
-      throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+      console.error("Error deactivating API key:", response.status, response.statusText);
+      throw new Error(`Failed to deactivate API token (${response.status})`);
     }
     
     const responseData = await response.json();
@@ -287,23 +291,21 @@ export const activateApiKey = async (keyId) => {
   try {
     console.log(`Activating API token with ID ${keyId}`);
     
+    // Get a fresh token from localStorage to ensure it's valid
+    const token = localStorage.getItem('token');
+    
     // Use fetch directly to avoid any axios transformations
     const response = await fetch(`/keys/${keyId}/activate`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getToken()}`
+        'Authorization': `Bearer ${token}`
       }
     });
     
     if (!response.ok) {
-      // If the backend endpoint doesn't exist yet, simulate a successful response
-      if (response.status === 404) {
-        console.log("Activate endpoint not found, simulating success");
-        // Return a simulated successful response
-        return { id: keyId, is_active: true };
-      }
-      throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+      console.error("Error activating API key:", response.status, response.statusText);
+      throw new Error(`Failed to activate API token (${response.status})`);
     }
     
     const responseData = await response.json();
