@@ -230,9 +230,17 @@ export const runDiagnostic = async (tool, params = {}, data = null) => {
 
 export const getDiagnosticHistory = async (params = {}) => {
   try {
-    const response = await api.get('/history', { params });
+    console.log("Fetching diagnostic history with params:", params);
+    const response = await api.get('/diagnostics/history', { params });
+    console.log("History response:", response);
     return response.data;
   } catch (error) {
+    console.error("Error fetching diagnostic history:", error);
+    // If we get a 404, the endpoint might not exist yet, return empty array
+    if (error.response && error.response.status === 404) {
+      console.log("History endpoint not found, returning empty array");
+      return [];
+    }
     return handleApiError(error);
   }
 };
