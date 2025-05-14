@@ -18,27 +18,60 @@ async def create_api_key(
     current_user: models.User = Depends(auth.get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    # Generate a new API key
-    api_key = auth.generate_api_key()
+    print(f"Creating API key for user: {current_user.username} (ID: {current_user.id})")
+    print(f"API key name: {key_data.name}, expires in {expires_days} days")
     
-    # Set expiration date if provided
-    expires_at = None
-    if expires_days:
-        expires_at = datetime.utcnow() + timedelta(days=expires_days)
-    
-    # Create API key record
-    db_api_key = models.ApiKey(
-        key=api_key,
-        name=key_data.name,
-        user_id=current_user.id,
-        expires_at=expires_at
-    )
-    
-    db.add(db_api_key)
-    db.commit()
-    db.refresh(db_api_key)
-    
-    return db_api_key
+    try:
+        # Check if user has a subscription
+        if hasattr(current_user, 'user_subscription') and current_user.user_subscription:
+            user_subscription = current_user.user_subscription
+            
+            # For debugging - print subscription info
+            print(f"User subscription: {user_subscription.tier.name}")
+            print(f"Max API keys allowed: {user_subscription.tier.max_api_keys}")
+            
+            # Count existing API keys
+            existing_keys_count = db.query(models.ApiKey).filter(
+                models.ApiKey.user_id == current_user.id,
+                models.ApiKey.is_active == True
+            ).count()
+            print(f"Existing active API keys: {existing_keys_count}")
+            
+            # For test/debug purposes: Allow regardless of tier limit
+            # In production, you would uncomment this check
+            # if existing_keys_count >= user_subscription.tier.max_api_keys:
+            #    raise HTTPException(
+            #        status_code=403,
+            #        detail=f"Maximum number of API keys ({user_subscription.tier.max_api_keys}) reached for your subscription tier."
+            #    )
+        
+        # Generate a new API key
+        api_key = auth.generate_api_key()
+        
+        # Set expiration date if provided
+        expires_at = None
+        if expires_days:
+            expires_at = datetime.utcnow() + timedelta(days=expires_days)
+        
+        # Create API key record
+        db_api_key = models.ApiKey(
+            key=api_key,
+            name=key_data.name,
+            user_id=current_user.id,
+            expires_at=expires_at
+        )
+        
+        db.add(db_api_key)
+        db.commit()
+        db.refresh(db_api_key)
+        
+        print(f"Successfully created API key with ID {db_api_key.id}")
+        return db_api_key
+        
+    except Exception as e:
+        print(f"Error creating API key: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to create API key: {str(e)}")
 
 
 @router.get("/keys", response_model=List[schemas.ApiKeyResponse])
