@@ -642,7 +642,7 @@ const Dashboard = () => {
         {/* Subscription Status - Second Row */}
         <Grid item xs={12} md={4}>
           <Paper sx={{ 
-            ...paperStyle,
+            ...getPaperStyle(darkMode),
             height: '100%',
             display: 'flex',
             flexDirection: 'column'
@@ -925,7 +925,7 @@ const Dashboard = () => {
         
         {/* Active Probes - Third Row */}
         <Grid item xs={12} md={6}>
-          <Paper sx={{ ...paperStyle, p: 3 }}>
+          <Paper sx={{ ...getPaperStyle(darkMode), p: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6">
                 <ScheduleIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
@@ -962,7 +962,7 @@ const Dashboard = () => {
         
         {/* Quick Actions - Fourth Row */}
         <Grid item xs={12}>
-          <Paper sx={{ ...paperStyle, p: 3 }}>
+          <Paper sx={{ ...getPaperStyle(darkMode), p: 3 }}>
             <Typography variant="h6" gutterBottom>
               Quick Actions
             </Typography>
