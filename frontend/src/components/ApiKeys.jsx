@@ -125,7 +125,27 @@ const ApiKeys = () => {
       setLoading(true);
       
       console.log('Creating API key with form data:', formData);
-      const newApiKey = await createApiKey(formData);
+      
+      // Direct fetch approach
+      const token = localStorage.getItem('token');
+      const url = `${window.location.origin}/keys?expires_days=${formData.expires_days}`;
+      
+      console.log('Making direct fetch request to:', url);
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ name: formData.name })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const newApiKey = await response.json();
       
       console.log('Successfully created new API key:', newApiKey);
       setApiKeys([newApiKey, ...apiKeys]);
@@ -135,17 +155,9 @@ const ApiKeys = () => {
     } catch (err) {
       console.error('Error creating API key:', err);
       
-      let errorMessage = 'Failed to create API key. Please try again.';
-      
-      if (err.response && err.response.data && err.response.data.detail) {
-        errorMessage = `Server error: ${err.response.data.detail}`;
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      
       setFormErrors({
         ...formErrors,
-        submit: errorMessage
+        submit: `Failed to create API key: ${err.message}`
       });
     } finally {
       setLoading(false);
