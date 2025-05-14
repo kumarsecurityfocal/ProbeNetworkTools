@@ -569,5 +569,3 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
 };
 
 export default Navbar;
-
-export default Navbar;
