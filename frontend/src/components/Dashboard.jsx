@@ -226,13 +226,20 @@ const Dashboard = () => {
             minWidth: 170,
             '& .MuiOutlinedInput-root': {
               borderRadius: '8px',
-              backgroundColor: '#fcfcfc',
-              border: '1px solid #eaecef',
+              backgroundColor: darkMode ? '#333333' : '#fcfcfc',
+              border: darkMode ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid #eaecef',
+              color: darkMode ? '#ffffff' : 'inherit',
               '&:hover': {
-                backgroundColor: '#ffffff',
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
+                backgroundColor: darkMode ? '#3d3d3d' : '#ffffff',
+                boxShadow: darkMode ? '0 2px 4px rgba(0, 0, 0, 0.25)' : '0 2px 4px rgba(0, 0, 0, 0.05)',
               },
-            }
+            },
+            '& .MuiInputLabel-root': {
+              color: darkMode ? 'rgba(255, 255, 255, 0.7)' : 'inherit',
+            },
+            '& .MuiSelect-icon': {
+              color: darkMode ? 'rgba(255, 255, 255, 0.5)' : 'inherit',
+            },
           }}
         >
           <InputLabel id="time-range-label" sx={{ fontSize: '0.9rem' }}>Time Range</InputLabel>
