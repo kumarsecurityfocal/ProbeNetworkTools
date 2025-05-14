@@ -135,7 +135,7 @@ class UserSubscriptionResponse(UserSubscriptionBase):
     id: int
     user_id: int
     tier_id: int
-    tier: "SubscriptionTierResponse"
+    tier: Optional["SubscriptionTierResponse"] = None
     starts_at: datetime
     created_at: datetime
     

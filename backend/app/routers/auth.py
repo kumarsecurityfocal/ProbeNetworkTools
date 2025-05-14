@@ -67,8 +67,13 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
 
 @router.get("/me", response_model=schemas.UserDetailResponse)
 def read_users_me(current_user: models.User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
-    # Get user with subscription details
-    user_with_subscription = db.query(models.User).filter(models.User.id == current_user.id).first()
+    # Import joinedload
+    from sqlalchemy.orm import joinedload
+    
+    # Get user with subscription details, eagerly loading the user_subscription and tier relationships
+    user_with_subscription = db.query(models.User).options(
+        joinedload(models.User.user_subscription).joinedload(models.UserSubscription.tier)
+    ).filter(models.User.id == current_user.id).first()
     
     # Debug logs to understand the object structure
     print("👤 User to be returned:", user_with_subscription.__dict__)
