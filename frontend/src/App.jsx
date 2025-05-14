@@ -57,20 +57,9 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{ display: 'flex' }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <Navbar />
-        <Box
-          component="main"
-          sx={{
-            flexGrow: 1,
-            width: { sm: `calc(100% - 240px)` },
-            ml: { sm: '240px' },
-            mt: ['64px', '64px', '64px'],
-            p: 3,
-            minHeight: 'calc(100vh - 64px)',
-            backgroundColor: '#f5f5f5'
-          }}
-        >
+        <Box component="main" sx={{ flexGrow: 1, p: 0 }}>
           <Routes>
             <Route path="/login" element={!isAuthenticated ? <AuthForm mode="login" /> : <Navigate to="/dashboard" replace />} />
             <Route path="/register" element={!isAuthenticated ? <AuthForm mode="register" /> : <Navigate to="/dashboard" replace />} />
