@@ -54,7 +54,7 @@ const Pricing = () => {
         { name: 'Diagnostic Types', detail: 'Ping, Traceroute', included: true },
         { name: 'Priority Support', detail: 'Community only', included: true },
       ],
-      buttonText: 'Sign up for free',
+      buttonText: 'Login/Sign Up Free',
       buttonVariant: 'outlined',
     },
     {
@@ -77,7 +77,7 @@ const Pricing = () => {
         { name: 'Diagnostic Types', detail: 'Ping, Traceroute, DNS, WHOIS', included: true },
         { name: 'Priority Support', detail: 'Email', included: true },
       ],
-      buttonText: 'Get started',
+      buttonText: 'Login/Sign Up',
       buttonVariant: 'contained',
       highlight: true,
     },
@@ -242,8 +242,8 @@ const Pricing = () => {
                 <Box sx={{ p: 2, textAlign: 'center' }}>
                   <Button
                     component={Link}
-                    to={tier.title === 'Free' ? '/dashboard' : 
-                       tier.title === 'Enterprise' ? '/contact' : '/dashboard'}
+                    to={tier.title.includes('Free') ? '/dashboard' : 
+                       tier.title.includes('Enterprise') ? '/contact' : '/dashboard'}
                     fullWidth
                     variant={tier.buttonVariant}
                     color={tier.highlight ? 'primary' : 'primary'}
@@ -423,7 +423,7 @@ const Pricing = () => {
           textAlign: 'center'
         }}>
           <Typography variant="h4" gutterBottom>
-            Ready to get started?
+            Ready to try ProbeOps?
           </Typography>
           <Typography variant="h6" sx={{ opacity: 0.9, mb: 4 }}>
             Choose the plan that's right for you

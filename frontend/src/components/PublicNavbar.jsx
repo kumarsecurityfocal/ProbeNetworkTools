@@ -112,7 +112,7 @@ const PublicNavbar = ({ darkMode, toggleDarkMode }) => {
               },
             }}
           >
-            <ListItemText primary="Dashboard" />
+            <ListItemText primary="Login/Sign Up" />
           </ListItemButton>
         </ListItem>
       </List>
@@ -209,7 +209,7 @@ const PublicNavbar = ({ darkMode, toggleDarkMode }) => {
                   variant="contained"
                   color="primary"
                 >
-                  Dashboard
+                  Login/Sign Up
                 </Button>
               </Box>
             </>

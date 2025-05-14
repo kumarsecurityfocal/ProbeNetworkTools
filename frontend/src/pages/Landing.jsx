@@ -190,7 +190,7 @@ const Landing = () => {
                   color="primary"
                   startIcon={<SpeedIcon />}
                 >
-                  Start Free with 3 Probes
+                  Login/Sign Up Free
                 </Button>
                 <Button 
                   component={Link} 
@@ -820,7 +820,7 @@ const Landing = () => {
                 }
               }}
             >
-              Start Free with 3 Probes
+              Login/Sign Up Free
             </Button>
           </Box>
         </Container>
