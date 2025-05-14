@@ -380,12 +380,7 @@ const Dashboard = () => {
         
         {/* Visualizations - Second Row */}
         <Grid item xs={12} md={8}>
-          <Paper sx={{ 
-            p: 4, 
-            borderRadius: '12px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-            border: '1px solid rgba(0,0,0,0.07)'
-          }}>
+          <Paper sx={paperStyle}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
               <Typography 
                 variant="h6" 
@@ -626,11 +621,8 @@ const Dashboard = () => {
         {/* Subscription Status - Second Row */}
         <Grid item xs={12} md={4}>
           <Paper sx={{ 
-            p: 4, 
+            ...paperStyle,
             height: '100%',
-            borderRadius: '12px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-            border: '1px solid rgba(0,0,0,0.07)',
             display: 'flex',
             flexDirection: 'column'
           }}>
@@ -855,12 +847,7 @@ const Dashboard = () => {
         
         {/* Recent Activity - Third Row */}
         <Grid item xs={12} md={6}>
-          <Paper sx={{ 
-            p: 4, 
-            borderRadius: '12px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-            border: '1px solid rgba(0,0,0,0.07)'
-          }}>
+          <Paper sx={paperStyle}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
               <Typography 
                 variant="h6" 
