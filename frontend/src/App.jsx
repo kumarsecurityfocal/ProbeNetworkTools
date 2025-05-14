@@ -4,7 +4,7 @@ import { Box, CssBaseline, ThemeProvider } from '@mui/material';
 import { useAuth } from './context/AuthContext';
 import { lightTheme, darkTheme } from './theme/theme';
 
-// Components
+// App Components
 import AuthForm from './components/AuthForm';
 import Dashboard from './components/Dashboard';
 import Navbar from './components/Navbar';
@@ -16,7 +16,16 @@ import ScheduledProbes from './components/ScheduledProbes';
 import UserProfile from './components/UserProfile';
 import Reports from './components/Reports';
 import Footer from './components/Footer';
-import LandingPage from './components/LandingPage';
+
+// Public Site Components
+import PublicLayout from './components/PublicLayout';
+import Landing from './pages/Landing';
+import Pricing from './pages/Pricing';
+import Docs from './pages/Docs';
+import About from './pages/About';
+import Blog from './pages/Blog';
+import Contact from './pages/Contact';
+import DashboardLink from './pages/DashboardLink';
 
 // Protected route component
 const ProtectedRoute = ({ children }) => {
@@ -56,7 +65,7 @@ function App() {
   };
   
   // Determine if we should show the navbar and sidebar layout
-  const isAppRoute = isAuthenticated && !['/login', '/register', '/'].includes(window.location.pathname);
+  const isAppRoute = isAuthenticated && window.location.pathname.startsWith('/dashboard');
   
   return (
     <ThemeProvider theme={theme}>
@@ -103,20 +112,36 @@ function App() {
             </Routes>
           </Box>
         ) : (
-          // Public routes without app layout - Always use light theme for auth pages
-          <ThemeProvider theme={lightTheme}>
-            <CssBaseline />
-            <Box component="main" sx={{ flexGrow: 1 }}>
-              <Routes>
-                <Route path="/login" element={!isAuthenticated ? <AuthForm mode="login" /> : <Navigate to="/dashboard" replace />} />
-                <Route path="/register" element={!isAuthenticated ? <AuthForm mode="register" /> : <Navigate to="/dashboard" replace />} />
-                <Route path="/" element={!isAuthenticated ? <LandingPage /> : <Navigate to="/dashboard" replace />} />
-                
-                {/* Catch-all for authenticated users */}
-                <Route path="*" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/" replace />} />
-              </Routes>
-            </Box>
-          </ThemeProvider>
+          // Public routes with public layout
+          <Routes>
+            {/* Authentication Routes - Always use light theme */}
+            <Route path="/app" element={
+              <ThemeProvider theme={lightTheme}>
+                <CssBaseline />
+                <Box component="main" sx={{ flexGrow: 1 }}>
+                  <Routes>
+                    <Route index element={!isAuthenticated ? <AuthForm mode="login" /> : <Navigate to="/dashboard" replace />} />
+                    <Route path="login" element={!isAuthenticated ? <AuthForm mode="login" /> : <Navigate to="/dashboard" replace />} />
+                    <Route path="register" element={!isAuthenticated ? <AuthForm mode="register" /> : <Navigate to="/dashboard" replace />} />
+                  </Routes>
+                </Box>
+              </ThemeProvider>
+            } />
+
+            {/* Public Website */}
+            <Route element={<PublicLayout darkMode={darkMode} toggleDarkMode={toggleDarkMode} />}>
+              <Route path="/" element={<Landing />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/docs" element={<Docs />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/dashboard" element={<DashboardLink />} />
+              
+              {/* Catch-all redirect to home */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Route>
+          </Routes>
         )}
         
         {isAppRoute && <Footer />}

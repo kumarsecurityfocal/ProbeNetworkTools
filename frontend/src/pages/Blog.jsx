@@ -37,7 +37,7 @@ const Blog = () => {
     },
     {
       title: 'Automating Network Tests in CI/CD Pipelines',
-      description: 'Ensure your deployments don't break connectivity by adding diagnostics to your CI/CD process.',
+      description: "Ensure your deployments don't break connectivity by adding diagnostics to your CI/CD process.",
       category: 'DevOps',
       imageText: 'CI/CD Pipelines'
     }
