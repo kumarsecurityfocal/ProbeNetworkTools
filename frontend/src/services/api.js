@@ -186,21 +186,14 @@ export const getDiagnosticHistory = async (params = {}) => {
 // Dashboard metrics
 export const getDashboardMetrics = async () => {
   try {
+    // Route is defined as /metrics/dashboard in the backend
+    // Express server.js routes /metrics/* to backend/metrics/*
     const response = await api.get('/metrics/dashboard');
     return response.data;
   } catch (error) {
-    // For now, if the endpoint doesn't exist, return mock data structure that will be
-    // replaced when the backend endpoint is implemented
-    if (error.response && error.response.status === 404) {
-      return {
-        diagnostic_count: 0,
-        api_key_count: 0,
-        scheduled_probe_count: 0,
-        success_rate: 0,
-        avg_response_time: 0
-      };
-    }
-    return handleApiError(error);
+    console.log("Error fetching dashboard data:", error);
+    // If endpoint fails, return null and let the component handle fallback calculation
+    return null;
   }
 };
 

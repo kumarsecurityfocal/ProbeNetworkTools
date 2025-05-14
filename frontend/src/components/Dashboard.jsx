@@ -49,6 +49,31 @@ const cardStyle = {
   }
 };
 
+// Card styles for Airtable-inspired UI
+const cardStyle = {
+  borderRadius: '8px', 
+  border: '1px solid rgba(0,0,0,0.05)', 
+  boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+  backgroundColor: '#ffffff',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: '0 4px 8px rgba(0,0,0,0.05)'
+  }
+};
+
+// Icon container style for Airtable-inspired UI
+const iconContainerStyle = { 
+  display: 'flex', 
+  alignItems: 'center', 
+  mb: 2,
+  backgroundColor: 'rgba(25, 118, 210, 0.08)', 
+  color: '#1976d2',
+  width: 'fit-content',
+  p: 1,
+  borderRadius: '6px'
+};
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
