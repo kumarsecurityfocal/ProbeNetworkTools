@@ -701,7 +701,7 @@ const DiagnosticHistory = ({ refreshTrigger, onRepeatDiagnostic }) => {
             >
               {tools.map(tool => (
                 <MenuItem key={tool} value={tool}>
-                  {tool === 'all' ? 'All Tools' : tool.toUpperCase()}
+                  {tool === 'all' ? 'All Tools' : (tool ? tool.toUpperCase() : 'UNKNOWN')}
                 </MenuItem>
               ))}
             </Select>
@@ -742,7 +742,7 @@ const DiagnosticHistory = ({ refreshTrigger, onRepeatDiagnostic }) => {
                   <TableRow key={item.id}>
                     <TableCell>
                       <Chip 
-                        label={item.tool.toUpperCase()} 
+                        label={item.tool ? item.tool.toUpperCase() : 'UNKNOWN'} 
                         color="primary" 
                         variant="outlined" 
                         size="small" 
@@ -878,7 +878,7 @@ const DiagnosticResult = ({ result }) => {
       
       <Box sx={{ mb: 2 }}>
         <Typography variant="subtitle1">
-          {result.tool.toUpperCase()}: {result.target}
+          {result.tool ? result.tool.toUpperCase() : 'UNKNOWN'}: {result.target || 'No target'}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Typography variant="caption" display="block" color="text.secondary">
