@@ -123,7 +123,7 @@ const Navbar = () => {
   
   return (
     <>
-      <AppBar position="sticky" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
         <Toolbar>
           {isAuthenticated && (
             <IconButton
@@ -263,8 +263,8 @@ const Navbar = () => {
               '& .MuiDrawer-paper': { 
                 boxSizing: 'border-box', 
                 width: drawerWidth,
-                position: 'relative',
-                height: 'calc(100vh - 64px)'
+                borderRight: '1px solid rgba(0, 0, 0, 0.12)',
+                marginTop: '64px'
               },
             }}
             open

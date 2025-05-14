@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Box, CssBaseline, ThemeProvider, createTheme } from '@mui/material';
+import { Box, CssBaseline, ThemeProvider, createTheme, Container } from '@mui/material';
 import { useAuth } from './context/AuthContext';
 
 // Components
@@ -57,10 +57,20 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <Box sx={{ display: 'flex' }}>
         <Navbar />
-        <Box sx={{ display: 'flex', flexGrow: 1 }}>
-          <Box component="main" sx={{ flexGrow: 1, pl: { sm: '240px' }, width: { sm: 'calc(100% - 240px)' } }}>
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            width: { sm: `calc(100% - 240px)` },
+            ml: { sm: '240px' },
+            mt: ['64px', '64px', '64px'],
+            p: 3,
+            minHeight: 'calc(100vh - 64px)',
+            backgroundColor: '#f5f5f5'
+          }}
+        >
           <Routes>
             <Route path="/login" element={!isAuthenticated ? <AuthForm mode="login" /> : <Navigate to="/dashboard" replace />} />
             <Route path="/register" element={!isAuthenticated ? <AuthForm mode="register" /> : <Navigate to="/dashboard" replace />} />
@@ -115,7 +125,6 @@ function App() {
             
             <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
           </Routes>
-          </Box>
         </Box>
       </Box>
     </ThemeProvider>

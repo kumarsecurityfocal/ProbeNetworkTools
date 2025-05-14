@@ -138,7 +138,7 @@ const Dashboard = () => {
   }
   
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Box sx={{ width: '100%' }}>
       <Typography variant="h4" gutterBottom>
         Welcome, {user?.username || 'User'}!
       </Typography>
@@ -476,7 +476,7 @@ const Dashboard = () => {
           </Paper>
         </Grid>
       </Grid>
-    </Container>
+    </Box>
   );
 };
 
