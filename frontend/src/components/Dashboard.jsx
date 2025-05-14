@@ -904,7 +904,7 @@ const Dashboard = () => {
         
         {/* Active Probes - Third Row */}
         <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2 }}>
+          <Paper sx={{ ...paperStyle, p: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6">
                 <ScheduleIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
@@ -941,7 +941,7 @@ const Dashboard = () => {
         
         {/* Quick Actions - Fourth Row */}
         <Grid item xs={12}>
-          <Paper sx={{ p: 2 }}>
+          <Paper sx={{ ...paperStyle, p: 3 }}>
             <Typography variant="h6" gutterBottom>
               Quick Actions
             </Typography>
