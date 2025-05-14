@@ -140,7 +140,7 @@ const AuthForm = ({ mode }) => {
   };
   
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50" style={{ backgroundColor: '#f9fafc' }}>
       <Container maxWidth="sm" className="py-8">
         <div className="flex flex-col items-center mb-6">
           <Logo size="xl" />

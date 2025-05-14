@@ -103,17 +103,20 @@ function App() {
             </Routes>
           </Box>
         ) : (
-          // Public routes without app layout
-          <Box component="main" sx={{ flexGrow: 1 }}>
-            <Routes>
-              <Route path="/login" element={!isAuthenticated ? <AuthForm mode="login" /> : <Navigate to="/dashboard" replace />} />
-              <Route path="/register" element={!isAuthenticated ? <AuthForm mode="register" /> : <Navigate to="/dashboard" replace />} />
-              <Route path="/" element={!isAuthenticated ? <LandingPage /> : <Navigate to="/dashboard" replace />} />
-              
-              {/* Catch-all for authenticated users */}
-              <Route path="*" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/" replace />} />
-            </Routes>
-          </Box>
+          // Public routes without app layout - Always use light theme for auth pages
+          <ThemeProvider theme={lightTheme}>
+            <CssBaseline />
+            <Box component="main" sx={{ flexGrow: 1 }}>
+              <Routes>
+                <Route path="/login" element={!isAuthenticated ? <AuthForm mode="login" /> : <Navigate to="/dashboard" replace />} />
+                <Route path="/register" element={!isAuthenticated ? <AuthForm mode="register" /> : <Navigate to="/dashboard" replace />} />
+                <Route path="/" element={!isAuthenticated ? <LandingPage /> : <Navigate to="/dashboard" replace />} />
+                
+                {/* Catch-all for authenticated users */}
+                <Route path="*" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/" replace />} />
+              </Routes>
+            </Box>
+          </ThemeProvider>
         )}
         
         {isAppRoute && <Footer />}
