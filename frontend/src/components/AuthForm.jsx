@@ -152,13 +152,7 @@ const AuthForm = ({ mode }) => {
           >
             ProbeOps
           </Typography>
-          <Typography 
-            variant="body1" 
-            className="text-gray-500 mt-2"
-            sx={{ fontFamily: '"Inter", sans-serif' }}
-          >
-            ProbeOps Dashboard
-          </Typography>
+
         </div>
         
         <Paper 
