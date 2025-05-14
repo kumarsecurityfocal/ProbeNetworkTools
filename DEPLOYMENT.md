@@ -623,9 +623,17 @@ Before deploying to production, review this checklist to ensure compatibility:
 
 - [x] Configure FastAPI routers with empty prefix (`prefix=""`) in main.py
 - [x] Verify that health check endpoint is at `/health` not `/api/health`
+- [x] Update OAuth2PasswordBearer tokenUrl to `/login` instead of `/api/login`
 - [ ] Test API routes after NGINX proxy configuration
 - [ ] Ensure all backend routes match frontend expectations after prefix stripping
 - [ ] Validate authentication endpoints are accessible
+
+### 7.5.1 JWT Authentication Configuration
+
+- [x] Ensure NGINX properly forwards the Authorization header with `proxy_set_header Authorization $http_authorization;`
+- [ ] Verify JWT token is properly stored in localStorage after login
+- [ ] Confirm token is attached to subsequent API requests
+- [ ] Test token expiration and refresh functionality
 
 ### 7.6 Environment Variables
 
