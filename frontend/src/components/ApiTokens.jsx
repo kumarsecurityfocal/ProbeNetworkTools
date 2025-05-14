@@ -434,11 +434,14 @@ const ApiTokens = () => {
   // New table-based layout for API tokens
   const renderApiKeysTable = () => {
     return (
-      <Paper sx={{ width: '100%', mb: 2, overflow: 'hidden' }}>
+      <Paper sx={{ 
+        ...sharedStyles.tableContainerStyles(theme),
+        width: '100%',
+        overflow: 'hidden'
+      }}>
         <Toolbar
           sx={{
-            pl: { sm: 2 },
-            pr: { xs: 1, sm: 1 },
+            ...sharedStyles.toolbarStyles(theme),
             bgcolor: selectedKeys.length > 0 ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
             color: selectedKeys.length > 0 ? theme.palette.primary.main : theme.palette.text.primary
           }}
@@ -508,7 +511,10 @@ const ApiTokens = () => {
           )}
         </Toolbar>
         <TableContainer>
-          <Table aria-label="API tokens table">
+          <Table 
+            aria-label="API tokens table"
+            sx={sharedStyles.tableStyles(theme)}
+          >
             <TableHead>
               <TableRow>
                 <TableCell padding="checkbox">
@@ -642,16 +648,29 @@ const ApiTokens = () => {
   // Loading state
   if (loading && apiKeys.length === 0) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
-        <CircularProgress />
-      </Box>
+      <Container sx={sharedStyles.pageContainerStyles(theme)}>
+        <Box sx={{ 
+          ...sharedStyles.loadingOverlayStyles(theme),
+          height: '400px' 
+        }}>
+          <CircularProgress size={40} />
+          <Typography variant="h6" sx={{ mt: 2 }}>
+            Loading API Tokens...
+          </Typography>
+        </Box>
+      </Container>
     );
   }
   
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
+    <Container sx={sharedStyles.pageContainerStyles(theme)}>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        mb: 3 
+      }}>
+        <Typography variant="h4" component="h1" sx={sharedStyles.pageHeadingStyles(theme)}>
           API Tokens
         </Typography>
         <Button 
@@ -672,7 +691,7 @@ const ApiTokens = () => {
       </Box>
       
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert severity="error" sx={sharedStyles.alertStyles(theme)}>
           {error}
         </Alert>
       )}
@@ -680,15 +699,13 @@ const ApiTokens = () => {
       {apiKeys.length === 0 ? (
         <Paper 
           sx={{ 
-            p: 6, 
-            borderRadius: 2,
+            ...sharedStyles.sectionStyles(theme),
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             textAlign: 'center',
-            backgroundColor: isDarkMode ? alpha(theme.palette.background.paper, 0.7) : theme.palette.background.paper,
-            boxShadow: theme.shadows[2]
+            p: 6,
           }}
         >
           <Typography variant="h5" color="text.secondary" gutterBottom>

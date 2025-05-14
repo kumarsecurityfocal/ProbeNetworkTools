@@ -123,3 +123,24 @@ async def deactivate_api_key(
     db.refresh(api_key)
     
     return api_key
+
+
+@router.put("/keys/{api_key_id}/activate", response_model=schemas.ApiKeyResponse)
+async def activate_api_key(
+    api_key_id: int,
+    current_user: models.User = Depends(auth.get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    api_key = db.query(models.ApiKey).filter(
+        models.ApiKey.id == api_key_id,
+        models.ApiKey.user_id == current_user.id
+    ).first()
+    
+    if not api_key:
+        raise HTTPException(status_code=404, detail="API key not found")
+    
+    api_key.is_active = True
+    db.commit()
+    db.refresh(api_key)
+    
+    return api_key
