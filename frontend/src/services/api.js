@@ -107,8 +107,8 @@ export const registerUser = async (username, email, password) => {
 export const getUserProfile = async () => {
   try {
     console.log("Fetching user profile...");
-    // Use /me without the /api prefix to match the backend route
-    const response = await api.get('/me');
+    // Use /users/me without the /api prefix to match the backend route
+    const response = await api.get('/users/me');
     console.log("User profile response:", response.data);
     return response.data;
   } catch (error) {
@@ -119,8 +119,8 @@ export const getUserProfile = async () => {
 
 export const updateUserProfile = async (profileData) => {
   try {
-    // Use /me without the /api prefix to match the backend route
-    const response = await api.put('/me', profileData);
+    // Use /users/me without the /api prefix to match the backend route
+    const response = await api.put('/users/me', profileData);
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -129,7 +129,7 @@ export const updateUserProfile = async (profileData) => {
 
 export const changePassword = async (currentPassword, newPassword) => {
   try {
-    const response = await api.post('/me/change-password', {
+    const response = await api.post('/users/me/change-password', {
       current_password: currentPassword,
       new_password: newPassword
     });
@@ -141,7 +141,7 @@ export const changePassword = async (currentPassword, newPassword) => {
 
 export const resendVerificationEmail = async () => {
   try {
-    const response = await api.post('/me/resend-verification');
+    const response = await api.post('/users/me/resend-verification');
     return response.data;
   } catch (error) {
     return handleApiError(error);
@@ -150,7 +150,7 @@ export const resendVerificationEmail = async () => {
 
 export const logoutAllDevices = async () => {
   try {
-    const response = await api.post('/me/logout-all');
+    const response = await api.post('/users/me/logout-all');
     return response.data;
   } catch (error) {
     return handleApiError(error);

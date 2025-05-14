@@ -155,6 +155,33 @@ def create_new_user(
     return db_user
 
 
+@router.get("/users/me", response_model=schemas.UserDetailResponse)
+def read_users_me(current_user: models.User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
+    """Get details of the current authenticated user."""
+    # Get user with subscription details, eagerly loading the user_subscription and tier relationships
+    user_with_subscription = db.query(models.User).options(
+        joinedload(models.User.user_subscription).joinedload(models.UserSubscription.tier)
+    ).filter(models.User.id == current_user.id).first()
+    
+    # Debug logs to understand the object structure
+    print("👤 User in /users/me route to be returned:", user_with_subscription.__dict__)
+    if hasattr(user_with_subscription, "user_subscription") and user_with_subscription.user_subscription:
+        print("📊 User subscription:", user_with_subscription.user_subscription.__dict__)
+        if hasattr(user_with_subscription.user_subscription, "tier") and user_with_subscription.user_subscription.tier:
+            print("🏆 Subscription tier:", user_with_subscription.user_subscription.tier.__dict__)
+    
+    try:
+        response = schemas.UserDetailResponse.model_validate(user_with_subscription)
+        print("✅ Final Pydantic object:", response)
+        return response
+    except ValidationError as e:
+        print("❌ ValidationError in /users/me route:\n", e.json())
+        raise HTTPException(status_code=500, detail="Response model validation failed")
+    except Exception as e:
+        print(f"❌ Unexpected error in /users/me route: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error processing user data: {str(e)}")
+
+
 @router.get("/users/{user_id}", response_model=schemas.UserDetailResponse)
 def get_user_details(
     user_id: int,
