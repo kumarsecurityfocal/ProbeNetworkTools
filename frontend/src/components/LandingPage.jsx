@@ -505,7 +505,7 @@ const LandingPage = () => {
                 >
                   {/* Network visualization with animated nodes */}
                   <Box sx={{ position: 'relative', width: '300px', height: '300px' }}>
-                    <Logo size="xl" variant="color" />
+                    <Logo size="2xl" variant="color" />
                     <Typography 
                       variant="h5" 
                       sx={{ 

@@ -3,27 +3,28 @@ import React from 'react';
 const Logo = ({ size = 'md', variant = 'color', className = '' }) => {
   // Size mapping for logo
   const sizeMap = {
-    xs: '16px',
-    sm: '24px',
-    md: '32px',
-    lg: '40px',
-    xl: '48px',
-    '2xl': '64px',
+    xs: '20px',
+    sm: '28px',
+    md: '36px',
+    lg: '44px',
+    xl: '52px',
+    '2xl': '68px',
   };
 
   const logoHeight = sizeMap[size] || sizeMap.md;
   
-  // Recreating the exact logo from the image
+  // Recreating the exact logo from the image with proper padding
   return (
-    <div className={`inline-flex items-center ${className}`}>
+    <div className={`inline-flex items-center ${className}`} style={{ lineHeight: 0 }}>
       <svg 
         height={logoHeight}
-        viewBox="0 0 180 40" 
+        viewBox="0 0 180 54" 
         xmlns="http://www.w3.org/2000/svg"
         style={{ display: 'block' }}
+        preserveAspectRatio="xMidYMid meet"
       >
-        {/* Circles container */}
-        <g>
+        {/* Added padding to prevent clipping */}
+        <g transform="translate(0, 7)">
           {/* Red Circle (top left) */}
           <circle cx="14" cy="14" r="12" fill="#FF5252" />
           
@@ -44,6 +45,7 @@ const Logo = ({ size = 'md', variant = 'color', className = '' }) => {
               fontFamily="Arial, sans-serif" 
               fontWeight="bold" 
               fill="#2196F3"
+              dominantBaseline="middle"
             >
               Probe
             </text>
@@ -55,6 +57,7 @@ const Logo = ({ size = 'md', variant = 'color', className = '' }) => {
               fontWeight="bold" 
               fill="#4CAF50"
               x="64"
+              dominantBaseline="middle"
             >
               Ops
             </text>
