@@ -65,11 +65,70 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.get("/me", response_model=schemas.UserDetailResponse)
+@router.get("/me")
 def read_users_me(current_user: models.User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
     # Get user with subscription details
     user_with_subscription = db.query(models.User).filter(models.User.id == current_user.id).first()
-    return user_with_subscription
+    
+    # Debug logs to understand the object structure
+    print("👤 User to be returned:", user_with_subscription.__dict__)
+    if hasattr(user_with_subscription, "user_subscription") and user_with_subscription.user_subscription:
+        print("📊 User subscription:", user_with_subscription.user_subscription.__dict__)
+        if hasattr(user_with_subscription.user_subscription, "tier") and user_with_subscription.user_subscription.tier:
+            print("🏆 Subscription tier:", user_with_subscription.user_subscription.tier.__dict__)
+    
+    # Create a simple hardcoded response to isolate the issue from Pydantic validation
+    # Note: Removed response_model from the decorator above
+    if user_with_subscription.user_subscription and user_with_subscription.user_subscription.tier:
+        tier_data = {
+            "id": user_with_subscription.user_subscription.tier.id,
+            "name": user_with_subscription.user_subscription.tier.name,
+            "description": user_with_subscription.user_subscription.tier.description,
+            "price_monthly": user_with_subscription.user_subscription.tier.price_monthly,
+            "price_yearly": user_with_subscription.user_subscription.tier.price_yearly,
+            "features": user_with_subscription.user_subscription.tier.features,
+            "rate_limit_minute": user_with_subscription.user_subscription.tier.rate_limit_minute,
+            "rate_limit_hour": user_with_subscription.user_subscription.tier.rate_limit_hour,
+            "max_scheduled_probes": user_with_subscription.user_subscription.tier.max_scheduled_probes,
+            "max_api_keys": user_with_subscription.user_subscription.tier.max_api_keys,
+            "max_history_days": user_with_subscription.user_subscription.tier.max_history_days,
+            "allow_scheduled_probes": user_with_subscription.user_subscription.tier.allow_scheduled_probes,
+            "allow_api_access": user_with_subscription.user_subscription.tier.allow_api_access,
+            "allow_export": user_with_subscription.user_subscription.tier.allow_export,
+            "allow_alerts": user_with_subscription.user_subscription.tier.allow_alerts,
+            "allow_custom_intervals": user_with_subscription.user_subscription.tier.allow_custom_intervals,
+            "priority_support": user_with_subscription.user_subscription.tier.priority_support,
+            "created_at": user_with_subscription.user_subscription.tier.created_at.isoformat(),
+            "updated_at": user_with_subscription.user_subscription.tier.updated_at.isoformat()
+        }
+        
+        subscription_data = {
+            "id": user_with_subscription.user_subscription.id,
+            "user_id": user_with_subscription.user_subscription.user_id,
+            "tier_id": user_with_subscription.user_subscription.tier_id,
+            "is_active": user_with_subscription.user_subscription.is_active,
+            "expires_at": user_with_subscription.user_subscription.expires_at.isoformat() if user_with_subscription.user_subscription.expires_at else None,
+            "payment_id": user_with_subscription.user_subscription.payment_id,
+            "payment_method": user_with_subscription.user_subscription.payment_method,
+            "starts_at": user_with_subscription.user_subscription.starts_at.isoformat() if user_with_subscription.user_subscription.starts_at else None,
+            "created_at": user_with_subscription.user_subscription.created_at.isoformat(),
+            "tier": tier_data
+        }
+    else:
+        subscription_data = None
+    
+    response = {
+        "id": user_with_subscription.id,
+        "username": user_with_subscription.username, 
+        "email": user_with_subscription.email,
+        "is_active": user_with_subscription.is_active,
+        "is_admin": user_with_subscription.is_admin,
+        "email_verified": user_with_subscription.email_verified,
+        "created_at": user_with_subscription.created_at.isoformat(),
+        "user_subscription": subscription_data
+    }
+    
+    return response
 
 
 @router.get("/users", response_model=List[schemas.UserResponse])

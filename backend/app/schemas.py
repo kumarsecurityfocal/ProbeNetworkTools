@@ -41,6 +41,10 @@ class UserResponse(UserBase):
 
 class UserDetailResponse(UserResponse):
     user_subscription: Optional["UserSubscriptionResponse"] = None
+    
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class ApiKeyBase(BaseModel):
