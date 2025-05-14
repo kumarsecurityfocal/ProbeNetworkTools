@@ -138,6 +138,7 @@ class UserSubscriptionResponse(UserSubscriptionBase):
     tier: Optional["SubscriptionTierResponse"] = None
     starts_at: datetime
     created_at: datetime
+    updated_at: datetime  # ✅ Required for full model conversion
     
     model_config = {
         "from_attributes": True
