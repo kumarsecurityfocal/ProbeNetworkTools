@@ -200,17 +200,17 @@ const Dashboard = () => {
   }
   
   return (
-    <Container maxWidth="lg" sx={{ mt: 3, mb: 6 }}>
+    <Container maxWidth="lg" sx={{ mt: 0, mb: 3 }}>
       <Box sx={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center', 
-        mb: 4,
-        pb: 2,
+        mb: 2,
+        pb: 1,
         borderBottom: '1px solid #f0f0f5',
       }}>
         <Typography 
-          variant="h4" 
+          variant="h5" 
           sx={{ 
             fontWeight: 600, 
             color: darkMode ? '#ffffff' : '#111827',
@@ -218,7 +218,7 @@ const Dashboard = () => {
             letterSpacing: '-0.01em'
           }}
         >
-          Welcome, {user?.username || 'User'}!
+          Dashboard
         </Typography>
         
         <FormControl 
@@ -259,19 +259,19 @@ const Dashboard = () => {
         </FormControl>
       </Box>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={2}>
         {/* Stats Cards - First Row with Airtable-inspired styling */}
         <Grid item xs={12} sm={6} md={3}>
           <Card sx={getCardStyle(darkMode)}>
-            <CardContent sx={{ p: 3 }}>
+            <CardContent sx={{ p: 2 }}>
               <Box sx={iconContainerStyle}>
                 <NetworkIcon fontSize="medium" />
               </Box>
               <Typography 
-                variant="h4" 
+                variant="h5" 
                 sx={{ 
                   fontWeight: 600, 
-                  mb: 1, 
+                  mb: 0.5, 
                   color: darkMode ? '#ffffff' : '#111827',
                   fontFamily: '"Inter", sans-serif'
                 }}
@@ -294,7 +294,7 @@ const Dashboard = () => {
         
         <Grid item xs={12} sm={6} md={3}>
           <Card sx={getCardStyle(darkMode)}>
-            <CardContent sx={{ p: 3 }}>
+            <CardContent sx={{ p: 2 }}>
               <Box sx={{
                 ...iconContainerStyle,
                 backgroundColor: darkMode ? 'rgba(76, 175, 80, 0.15)' : 'rgba(76, 175, 80, 0.08)', 
@@ -303,10 +303,10 @@ const Dashboard = () => {
                 <ScheduleIcon fontSize="medium" />
               </Box>
               <Typography 
-                variant="h4" 
+                variant="h5" 
                 sx={{ 
                   fontWeight: 600, 
-                  mb: 1, 
+                  mb: 0.5, 
                   color: darkMode ? '#ffffff' : '#111827',
                   fontFamily: '"Inter", sans-serif'
                 }}
