@@ -38,6 +38,7 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   const { isAuthenticated } = useAuth();
   const [darkMode, setDarkMode] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const theme = darkMode ? darkTheme : lightTheme;
   
   // Check for user's preferred color scheme
@@ -50,6 +51,10 @@ function App() {
     setDarkMode(!darkMode);
   };
   
+  const toggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
+  
   // Determine if we should show the navbar and sidebar layout
   const isAppRoute = isAuthenticated && !['/login', '/register', '/'].includes(window.location.pathname);
   
@@ -57,7 +62,12 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <div className="min-h-screen flex flex-col">
-        {isAppRoute && <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />}
+        {isAppRoute && <Navbar 
+          darkMode={darkMode} 
+          toggleDarkMode={toggleDarkMode} 
+          sidebarCollapsed={sidebarCollapsed} 
+          toggleSidebar={toggleSidebar} 
+        />}
         
         {isAppRoute ? (
           // App layout for authenticated routes
@@ -66,9 +76,15 @@ function App() {
             sx={{
               flexGrow: 1,
               p: 3,
-              width: { sm: `calc(100% - 240px)` },
-              ml: { sm: '240px' },
+              bgcolor: '#FFFFFF',
+              width: { 
+                sm: `calc(100% - ${sidebarCollapsed ? '72px' : '240px'})` 
+              },
+              ml: { 
+                sm: sidebarCollapsed ? '72px' : '240px' 
+              },
               mt: '64px',
+              transition: 'margin 0.2s ease-out, width 0.2s ease-out',
             }}
           >
             <Routes>

@@ -47,23 +47,22 @@ import Logo from './Logo';
 const drawerWidthExpanded = 240;
 const drawerWidthCollapsed = 72;
 
-const Navbar = ({ darkMode, toggleDarkMode }) => {
+const Navbar = ({ darkMode, toggleDarkMode, sidebarCollapsed, toggleSidebar }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [drawerCollapsed, setDrawerCollapsed] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
-  const drawerWidth = drawerCollapsed ? drawerWidthCollapsed : drawerWidthExpanded;
+  const drawerWidth = sidebarCollapsed ? drawerWidthCollapsed : drawerWidthExpanded;
   
   const handleDrawerToggle = () => {
     if (isMobile) {
       setMobileOpen(!mobileOpen);
     } else {
-      setDrawerCollapsed(!drawerCollapsed);
+      toggleSidebar();
     }
   };
   
@@ -103,92 +102,105 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
   
   // Airtable-style sidebar
   const drawer = (
-    <Box sx={{ height: '100%', bgcolor: '#ffffff', overflowY: 'auto' }}>
+    <Box sx={{ height: '100%', bgcolor: '#ffffff', overflowY: 'auto', overflowX: 'hidden' }}>
       <Box 
         sx={{ 
           display: 'flex', 
           flexDirection: 'column', 
           alignItems: 'center',
-          p: 3
+          p: sidebarCollapsed ? 1 : 3
         }}
       >
-        <Logo variant="color" size="md" />
-        <Typography 
-          variant="h6" 
-          sx={{ 
-            mt: 2, 
-            fontFamily: '"Inter", sans-serif', 
-            fontWeight: 600,
-            color: '#202124'
-          }}
-        >
-          ProbeOps
-        </Typography>
+        <Logo variant="color" size={sidebarCollapsed ? "sm" : "md"} />
+        {!sidebarCollapsed && (
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              mt: 2, 
+              fontFamily: '"Inter", sans-serif', 
+              fontWeight: 600,
+              color: '#202124'
+            }}
+          >
+            ProbeOps
+          </Typography>
+        )}
       </Box>
-      <Divider sx={{ mx: 2 }} />
-      <List sx={{ px: 1, py: 2 }}>
+      <Divider sx={{ mx: sidebarCollapsed ? 1 : 2 }} />
+      <List sx={{ px: sidebarCollapsed ? 0.5 : 1, py: 2 }}>
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
-            <ListItem 
-              button 
+            <Tooltip
+              title={sidebarCollapsed ? item.name : ""}
+              placement="right"
               key={item.name}
-              component={RouterLink}
-              to={item.path}
-              selected={isActive}
-              onClick={() => setMobileOpen(false)}
-              sx={{
-                borderRadius: '8px',
-                mb: 0.5,
-                color: isActive ? '#2563EB' : '#4B5563',
-                bgcolor: isActive ? 'rgba(37, 99, 235, 0.08)' : 'transparent',
-                '&:hover': {
-                  bgcolor: 'rgba(37, 99, 235, 0.04)',
-                },
-                '& .MuiListItemIcon-root': {
-                  color: isActive ? '#2563EB' : '#6B7280',
-                  minWidth: '40px',
-                }
-              }}
             >
-              <ListItemIcon>
-                {React.cloneElement(item.icon, { 
-                  style: { color: isActive ? '#2563EB' : '#6B7280' } 
-                })}
-              </ListItemIcon>
-              <ListItemText 
-                primary={item.name} 
-                primaryTypographyProps={{
-                  fontWeight: isActive ? 600 : 500,
-                  fontSize: '0.95rem'
+              <ListItem 
+                button 
+                component={RouterLink}
+                to={item.path}
+                selected={isActive}
+                onClick={() => setMobileOpen(false)}
+                sx={{
+                  borderRadius: '8px',
+                  mb: 0.5,
+                  px: sidebarCollapsed ? 1 : 2,
+                  color: isActive ? '#2563EB' : '#4B5563',
+                  bgcolor: isActive ? 'rgba(37, 99, 235, 0.08)' : 'transparent',
+                  '&:hover': {
+                    bgcolor: 'rgba(37, 99, 235, 0.04)',
+                  },
+                  '& .MuiListItemIcon-root': {
+                    color: isActive ? '#2563EB' : '#6B7280',
+                    minWidth: sidebarCollapsed ? '30px' : '40px',
+                    justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
+                  }
                 }}
-              />
-            </ListItem>
+              >
+                <ListItemIcon>
+                  {React.cloneElement(item.icon, { 
+                    style: { color: isActive ? '#2563EB' : '#6B7280' } 
+                  })}
+                </ListItemIcon>
+                {!sidebarCollapsed && (
+                  <ListItemText 
+                    primary={item.name} 
+                    primaryTypographyProps={{
+                      fontWeight: isActive ? 600 : 500,
+                      fontSize: '0.95rem'
+                    }}
+                  />
+                )}
+              </ListItem>
+            </Tooltip>
           );
         })}
       </List>
       
-      <Divider sx={{ my: 1, mx: 2 }} />
+      <Divider sx={{ my: 1, mx: sidebarCollapsed ? 1 : 2 }} />
       
-      <Box sx={{ px: 3, py: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Typography variant="body2" sx={{ color: '#6B7280', fontWeight: 500 }}>
-          {darkMode ? 'Dark Mode' : 'Light Mode'}
-        </Typography>
-        <Switch
-          checked={darkMode}
-          onChange={toggleDarkMode}
-          color="primary"
-          size="small"
-          sx={{
-            '& .MuiSwitch-switchBase.Mui-checked': {
-              color: '#2563EB',
-            },
-            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-              backgroundColor: '#2563EB',
-            },
-          }}
-        />
-      </Box>
+      {!sidebarCollapsed && (
+        <Box sx={{ px: 3, py: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="body2" sx={{ color: '#6B7280', fontWeight: 500 }}>
+            {darkMode ? 'Dark Mode' : 'Light Mode'}
+          </Typography>
+          <Switch
+            checked={darkMode}
+            onChange={toggleDarkMode}
+            color="primary"
+            size="small"
+            sx={{
+              '& .MuiSwitch-switchBase.Mui-checked': {
+                color: '#2563EB',
+              },
+              '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                backgroundColor: '#2563EB',
+              },
+            }}
+          />
+        </Box>
+      )}
     </Box>
   );
   
@@ -485,7 +497,8 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
           component="nav" 
           sx={{ 
             width: { sm: drawerWidth }, 
-            flexShrink: { sm: 0 } 
+            flexShrink: { sm: 0 },
+            transition: 'width 0.2s ease-out',
           }}
         >
           <Drawer
@@ -499,8 +512,9 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
               display: { xs: 'block', sm: 'none' },
               '& .MuiDrawer-paper': { 
                 boxSizing: 'border-box', 
-                width: drawerWidth,
-                borderRight: '1px solid #DADCE0'
+                width: drawerWidthExpanded,
+                borderRight: '1px solid #DADCE0',
+                bgcolor: '#ffffff',
               },
             }}
           >
@@ -515,7 +529,10 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
                 boxSizing: 'border-box', 
                 width: drawerWidth,
                 marginTop: '64px',
-                borderRight: '1px solid #DADCE0'
+                borderRight: '1px solid #DADCE0',
+                bgcolor: '#ffffff',
+                transition: 'width 0.2s ease-out',
+                overflowX: 'hidden',
               },
             }}
             open
