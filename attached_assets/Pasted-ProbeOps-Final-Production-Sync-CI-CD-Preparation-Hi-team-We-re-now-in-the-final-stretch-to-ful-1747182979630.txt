@@ -1,0 +1,93 @@
+ProbeOps — Final Production Sync & CI/CD Preparation
+Hi team,
+
+We’re now in the final stretch to fully integrate Replit with our live AWS EC2 deployment.
+
+Please treat this as more than just a migration — this setup is designed to evolve into a GitHub-based CI/CD pipeline, and must match production behavior as closely as possible.
+
+✅ Current AWS Setup (Already Live)
+Dockerized services: frontend, backend, probe, nginx
+
+Deployed via docker-compose on EC2
+
+SSL termination via Certbot (NGINX + cron-based renewal)
+
+PostgreSQL on AWS RDS
+
+Domain routing: probeops.com with HTTPS
+
+deploy.sh script automates pull, build, up, and Alembic migration
+
+🔧 Tasks for Replit Alignment
+Please ensure the Replit codebase:
+
+✅ Matches Our Production Architecture
+
+Keep all services (frontend, backend, probe, nginx) modular
+
+docker-compose.yml and Dockerfiles must reflect current structure
+
+No deviation from frontend/src, backend/app, etc.
+
+✅ Preserves Deployment Compatibility
+
+All secrets and configs must be .env-driven (no hardcoded secrets)
+
+Backend must support:
+
+bash
+Copy
+Edit
+alembic upgrade head  # For auto-running DB migrations
+Replit should assume a PostgreSQL connection string like:
+
+bash
+Copy
+Edit
+postgresql+psycopg2://postgres:<password>@<rds-endpoint>:5432/probeops
+✅ Respects NGINX + SSL Setup
+
+Do not modify or duplicate NGINX config used for SSL/domain routing
+
+If Express is being used as a dev-only proxy, document it; otherwise, remove it
+
+If any rewrite, header, or proxy behavior is configured in dev, mirror it to production style
+
+✅ Supports GitHub-Based Deployment
+
+Push final dev-aligned version to GitHub main branch
+
+Include:
+
+.env.template files
+
+All Dockerfiles
+
+docker-compose.yml
+
+Any Replit-local customization clearly marked
+
+If deploy.sh requires updates, flag them in README
+
+📦 What We’ll Handle on EC2
+SSL cert renewals via cert-renewal.sh (already cron-scheduled)
+
+Domain resolution, DNS routing, firewall rules
+
+Persistent RDS and production DB
+
+Deployment script automation
+
+✅ Goal
+A clean, production-aligned codebase in GitHub that:
+
+Can be pulled directly to EC2
+
+Can be built with a single ./deploy.sh
+
+Matches Replit behavior identically (or closely) in API, UI, and probe handling
+
+Once you're ready, let us know. We'll test in staging and promote to live.
+
+Appreciate all the great work 🙌
+
