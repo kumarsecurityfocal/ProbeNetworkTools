@@ -159,19 +159,36 @@ export const logoutAllDevices = async () => {
 // Diagnostic APIs
 export const runDiagnostic = async (tool, params = {}, data = null) => {
   try {
+    console.log(`Running diagnostic ${tool} with params:`, params);
+    
+    // Create a direct backend axios instance to bypass the proxy
+    const backendApi = axios.create({
+      baseURL: 'http://localhost:8000',
+      timeout: 60000
+    });
+    
+    // Add auth header
+    const token = getToken();
+    if (token) {
+      backendApi.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+    
     // Use the specific tool endpoint directly
     const endpoint = `/${tool}`;
     
     // For HTTP requests, we need to use POST with a body
+    let response;
     if (tool === 'http') {
-      const response = await api.post(endpoint, data, { params });
-      return response.data;
+      response = await backendApi.post(endpoint, data, { params });
     } else {
-      const response = await api.get(endpoint, { params });
-      return response.data;
+      response = await backendApi.get(endpoint, { params });
     }
+    
+    console.log(`Diagnostic ${tool} response:`, response.data);
+    return response.data;
   } catch (error) {
     console.log("Error response data:", error.response?.data);
+    console.log("Full error:", error);
     return handleApiError(error);
   }
 };
