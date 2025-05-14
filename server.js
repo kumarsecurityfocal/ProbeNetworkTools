@@ -192,6 +192,26 @@ app.use('/http', (req, res, next) => {
   return httpProxy(req, res, next);
 });
 
+// Add a new consolidated diagnostics endpoint
+app.use('/diagnostics/:tool', (req, res, next) => {
+  const tool = req.params.tool;
+  console.log(`============================================`);
+  console.log(`Diagnostics endpoint request received: ${req.method} ${req.path}`);
+  console.log(`Tool requested: ${tool}`);
+  console.log(`Original URL: ${req.originalUrl}`);
+
+  // Forward to the correct backend endpoint based on the tool parameter
+  const backendPath = `/${tool}`;
+  console.log(`Forwarding to backend: ${apiProxyOptions.target}${backendPath}`);
+  console.log(`============================================`);
+
+  // Rewrite the URL to point directly to the tool endpoint on the backend
+  req.url = req.url.replace(`/diagnostics/${tool}`, backendPath);
+  
+  // Let the proxy middleware handle the request
+  return apiProxy(req, res, next);
+});
+
 // Diagnostics history endpoint
 app.use('/history', (req, res, next) => {
   console.log(`============================================`);
