@@ -42,7 +42,23 @@ const handleApiError = (error) => {
     // The request was made and the server responded with a status code
     // that falls out of the range of 2xx
     const data = error.response.data;
-    errorMessage = data.detail || data.message || `Error: ${error.response.status}`;
+    
+    // Create more user-friendly error messages
+    if (error.response.status === 401) {
+      errorMessage = 'Incorrect username or password. Please try again.';
+    } else if (error.response.status === 500) {
+      errorMessage = 'Server error. Please try again in a few moments.';
+    } else if (error.response.status === 404) {
+      errorMessage = 'The requested resource was not found.';
+    } else if (error.response.status === 403) {
+      errorMessage = 'You do not have permission to access this resource.';
+    } else {
+      // Use the server-provided error message if available
+      errorMessage = data.detail || data.message || `Error: ${error.response.status}`;
+    }
+    
+    // Log the full error details for debugging
+    console.log('Error response data:', data);
   } else if (error.request) {
     // The request was made but no response was received
     errorMessage = 'No response from server. Please check your connection.';

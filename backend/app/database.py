@@ -32,6 +32,7 @@ def get_db():
     """
     max_retries = 3
     retry_delay = 1  # seconds
+    db = None
     
     for retry in range(max_retries):
         db = SessionLocal()
@@ -48,6 +49,10 @@ def get_db():
             else:
                 print(f"Failed to connect to database after {max_retries} attempts: {str(e)}")
                 raise
+    
+    # If we've exhausted retries and still don't have a valid db, raise an exception
+    if db is None:
+        raise RuntimeError("Failed to establish database connection")
     
     try:
         yield db

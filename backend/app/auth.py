@@ -36,16 +36,50 @@ def get_user_by_email(db: Session, email: str):
 
 
 def authenticate_user(db: Session, username: str, password: str):
-    user = get_user(db, username)
-    if not user:
-        # Try email login
-        user = get_user_by_email(db, username)
-        if not user:
-            return False
+    # Print debug info
+    print(f"Auth attempt - Input username/email: {username}")
     
-    if not verify_password(password, user.hashed_password):
+    # If the username contains @, it's likely an email
+    if '@' in username:
+        print(f"Treating as email first: {username}")
+        # Try email login first
+        user = get_user_by_email(db, username)
+        if user:
+            print(f"Found user by email: {user.username}")
+        else:
+            print(f"No user found with email: {username}")
+            # As fallback, try it as a username too (some usernames might contain @)
+            user = get_user(db, username)
+            if user:
+                print(f"Found user by username (containing @): {user.username}")
+            else:
+                print(f"No user found with username: {username}")
+    else:
+        print(f"Treating as username first: {username}")
+        # Try username login first
+        user = get_user(db, username)
+        if user:
+            print(f"Found user by username: {user.username}")
+        else:
+            print(f"No user found with username: {username}")
+            # As fallback, try it as an email too (unlikely but possible)
+            user = get_user_by_email(db, username)
+            if user:
+                print(f"Found user by email (no @ symbol): {user.username}")
+            else:
+                print(f"No user found with email: {username}")
+    
+    # If no user found, return False
+    if not user:
+        print(f"Authentication failed: No matching user found")
         return False
     
+    # Check password
+    if not verify_password(password, user.hashed_password):
+        print(f"Authentication failed: Password incorrect for user: {user.username}")
+        return False
+    
+    print(f"Authentication successful for user: {user.username}")
     return user
 
 

@@ -43,13 +43,21 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=schemas.Token)
 def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    # Print debug information about login attempt
+    print(f"Login attempt for username: {form_data.username}")
+
     user = auth.authenticate_user(db, form_data.username, form_data.password)
     if not user:
+        print(f"Authentication failed for username: {form_data.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    
+    # Print successful login message
+    print(f"Authentication successful for user: {user.username} (email: {user.email})")
+    
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = auth.create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
