@@ -88,7 +88,7 @@ const Footer = () => {
                 Register
               </Link>
             </>
-          )
+          )}
         </Box>
       </Container>
     </Box>
