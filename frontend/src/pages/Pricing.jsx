@@ -242,8 +242,8 @@ const Pricing = () => {
                 <Box sx={{ p: 2, textAlign: 'center' }}>
                   <Button
                     component={Link}
-                    to={tier.title.includes('Free') ? '/dashboard' : 
-                       tier.title.includes('Enterprise') ? '/contact' : '/dashboard'}
+                    to={tier.title.includes('Free') ? '/app' : 
+                       tier.title.includes('Enterprise') ? '/contact' : '/app'}
                     fullWidth
                     variant={tier.buttonVariant}
                     color={tier.highlight ? 'primary' : 'primary'}
@@ -430,7 +430,7 @@ const Pricing = () => {
           </Typography>
           <Button 
             component={Link}
-            to="/dashboard"
+            to="/app"
             variant="contained" 
             size="large"
             sx={{ 
