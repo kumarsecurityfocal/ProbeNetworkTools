@@ -57,7 +57,12 @@ import {
   LockOpen as EnabledIcon,
   Lock as DisabledIcon,
   Refresh as RefreshIcon,
-  FilterList as FilterListIcon
+  FilterList as FilterListIcon,
+  VpnKey as TokenIcon,
+  DarkMode as DarkModeIcon,
+  LightMode as LightModeIcon,
+  Brightness4 as BrightnessIcon,
+  Brightness7 as BrightnessDayIcon
 } from '@mui/icons-material';
 import { getApiKeys, createApiKey, deleteApiKey, deactivateApiKey } from '../services/api';
 
@@ -118,8 +123,8 @@ const ApiKeys = () => {
       // Ensure keys is an array even if the API returns null or undefined
       setApiKeys(Array.isArray(keys) ? keys : []);
     } catch (err) {
-      console.error('Error fetching API keys:', err);
-      setError('Failed to load API keys. Please try again.');
+      console.error('Error fetching API tokens:', err);
+      setError('Failed to load API tokens. Please try again.');
       // Set empty array on error
       setApiKeys([]);
     } finally {
@@ -131,7 +136,7 @@ const ApiKeys = () => {
     setRefreshing(true);
     await fetchApiKeys();
     setRefreshing(false);
-    showNotification('API keys refreshed successfully', 'success');
+    showNotification('API tokens refreshed successfully', 'success');
   };
   
   useEffect(() => {
@@ -224,19 +229,19 @@ const ApiKeys = () => {
       setError('');
       
       // Use the api service function
-      console.log('Creating API key with formData:', formData);
+      console.log('Creating API token with formData:', formData);
       const newApiKey = await createApiKey(formData);
       
-      console.log('Successfully created new API key:', newApiKey);
+      console.log('Successfully created new API token:', newApiKey);
       setApiKeys([newApiKey, ...apiKeys]);
       handleCreateDialogClose();
-      showNotification(`API key "${newApiKey.name}" created successfully`);
+      showNotification(`API token "${newApiKey.name}" created successfully`);
     } catch (err) {
-      console.error('Error creating API key:', err);
+      console.error('Error creating API token:', err);
       
       setFormErrors({
         ...formErrors,
-        submit: `Failed to create API key: ${err.message}`
+        submit: `Failed to create API token: ${err.message}`
       });
     } finally {
       setLoading(false);
@@ -251,10 +256,10 @@ const ApiKeys = () => {
       await deleteApiKey(selectedKey.id);
       setApiKeys(apiKeys.filter(key => key.id !== selectedKey.id));
       handleDeleteDialogClose();
-      showNotification(`API key "${selectedKey.name}" deleted successfully`);
+      showNotification(`API token "${selectedKey.name}" deleted successfully`);
     } catch (err) {
-      console.error('Error deleting API key:', err);
-      setError('Failed to delete API key. Please try again.');
+      console.error('Error deleting API token:', err);
+      setError('Failed to delete API token. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -265,11 +270,11 @@ const ApiKeys = () => {
       setLoading(true);
       const updatedKey = await deactivateApiKey(apiKey.id);
       setApiKeys(apiKeys.map(key => key.id === updatedKey.id ? updatedKey : key));
-      showNotification(`API key "${apiKey.name}" deactivated successfully`);
+      showNotification(`API token "${apiKey.name}" deactivated successfully`);
     } catch (err) {
-      console.error('Error deactivating API key:', err);
-      setError('Failed to deactivate API key. Please try again.');
-      showNotification('Failed to deactivate API key', 'error');
+      console.error('Error deactivating API token:', err);
+      setError('Failed to deactivate API token. Please try again.');
+      showNotification('Failed to deactivate API token', 'error');
     } finally {
       setLoading(false);
     }
@@ -278,22 +283,22 @@ const ApiKeys = () => {
   const handleActivateApiKey = async (apiKey) => {
     try {
       setLoading(true);
-      // Assuming there's an API endpoint to activate a key
+      // Assuming there's an API endpoint to activate a token
       // You need to implement this in the backend
       try {
         const updatedKey = await activateApiKey(apiKey.id);
         setApiKeys(apiKeys.map(key => key.id === updatedKey.id ? updatedKey : key));
-        showNotification(`API key "${apiKey.name}" activated successfully`);
+        showNotification(`API token "${apiKey.name}" activated successfully`);
       } catch (err) {
         // If the backend endpoint is not implemented yet, just show a simulated success
         const simulatedKey = { ...apiKey, is_active: true };
         setApiKeys(apiKeys.map(key => key.id === apiKey.id ? simulatedKey : key));
-        showNotification(`API key "${apiKey.name}" activated successfully`);
+        showNotification(`API token "${apiKey.name}" activated successfully`);
       }
     } catch (err) {
-      console.error('Error activating API key:', err);
-      setError('Failed to activate API key. Please try again.');
-      showNotification('Failed to activate API key', 'error');
+      console.error('Error activating API token:', err);
+      setError('Failed to activate API token. Please try again.');
+      showNotification('Failed to activate API token', 'error');
     } finally {
       setLoading(false);
     }
@@ -341,12 +346,12 @@ const ApiKeys = () => {
       setLoading(true);
       
       if (bulkAction === 'delete') {
-        // Delete all selected keys
+        // Delete all selected tokens
         await Promise.all(selectedKeys.map(keyId => deleteApiKey(keyId)));
         setApiKeys(apiKeys.filter(key => !selectedKeys.includes(key.id)));
-        showNotification(`${selectedKeys.length} API key(s) deleted successfully`);
+        showNotification(`${selectedKeys.length} API token(s) deleted successfully`);
       } else if (bulkAction === 'deactivate') {
-        // Deactivate all selected keys
+        // Deactivate all selected tokens
         const deactivatedKeys = await Promise.all(
           selectedKeys.map(async keyId => {
             try {
@@ -364,9 +369,9 @@ const ApiKeys = () => {
           return updated ? { ...key, is_active: false } : key;
         }));
         
-        showNotification(`${selectedKeys.length} API key(s) deactivated successfully`);
+        showNotification(`${selectedKeys.length} API token(s) deactivated successfully`);
       } else if (bulkAction === 'activate') {
-        // Activate all selected keys
+        // Activate all selected tokens
         const activatedKeys = await Promise.all(
           selectedKeys.map(async keyId => {
             try {
@@ -384,7 +389,7 @@ const ApiKeys = () => {
           return updated ? { ...key, is_active: true } : key;
         }));
         
-        showNotification(`${selectedKeys.length} API key(s) activated successfully`);
+        showNotification(`${selectedKeys.length} API token(s) activated successfully`);
       }
       
       // Clear selection
@@ -392,8 +397,8 @@ const ApiKeys = () => {
       handleBulkActionDialogClose();
     } catch (err) {
       console.error(`Error performing bulk action ${bulkAction}:`, err);
-      setError(`Failed to ${bulkAction} API keys. Please try again.`);
-      showNotification(`Failed to ${bulkAction} API keys`, 'error');
+      setError(`Failed to ${bulkAction} API tokens. Please try again.`);
+      showNotification(`Failed to ${bulkAction} API tokens`, 'error');
     } finally {
       setLoading(false);
     }
@@ -425,7 +430,7 @@ const ApiKeys = () => {
     };
   };
   
-  // New table-based layout for API keys
+  // New table-based layout for API tokens
   const renderApiKeysTable = () => {
     return (
       <Paper sx={{ width: '100%', mb: 2, overflow: 'hidden' }}>
@@ -453,7 +458,7 @@ const ApiKeys = () => {
               id="tableTitle"
               component="div"
             >
-              API Keys
+              API Tokens
             </Typography>
           )}
           
@@ -494,7 +499,7 @@ const ApiKeys = () => {
               </Tooltip>
             </Stack>
           ) : (
-            <Tooltip title="Refresh API keys">
+            <Tooltip title="Refresh API tokens">
               <IconButton onClick={refreshApiKeys} disabled={refreshing}>
                 {refreshing ? <CircularProgress size={24} /> : <RefreshIcon />}
               </IconButton>
@@ -502,7 +507,7 @@ const ApiKeys = () => {
           )}
         </Toolbar>
         <TableContainer>
-          <Table aria-label="API keys table">
+          <Table aria-label="API tokens table">
             <TableHead>
               <TableRow>
                 <TableCell padding="checkbox">
@@ -510,12 +515,12 @@ const ApiKeys = () => {
                     indeterminate={selectedKeys.length > 0 && selectedKeys.length < apiKeys.length}
                     checked={apiKeys.length > 0 && selectedKeys.length === apiKeys.length}
                     onChange={handleSelectAllKeys}
-                    inputProps={{ 'aria-label': 'select all API keys' }}
+                    inputProps={{ 'aria-label': 'select all API tokens' }}
                   />
                 </TableCell>
                 <TableCell>Name</TableCell>
                 <TableCell>Status</TableCell>
-                <TableCell>Key</TableCell>
+                <TableCell>Token</TableCell>
                 <TableCell>Expiration</TableCell>
                 <TableCell>Created</TableCell>
                 <TableCell align="right">Actions</TableCell>
@@ -541,10 +546,10 @@ const ApiKeys = () => {
                       <Checkbox
                         checked={isSelected}
                         onChange={(event) => handleSelectKey(event, apiKey.id)}
-                        inputProps={{ 'aria-labelledby': `api-key-${apiKey.id}` }}
+                        inputProps={{ 'aria-labelledby': `api-token-${apiKey.id}` }}
                       />
                     </TableCell>
-                    <TableCell component="th" id={`api-key-${apiKey.id}`} scope="row">
+                    <TableCell component="th" id={`api-token-${apiKey.id}`} scope="row">
                       {apiKey.name}
                     </TableCell>
                     <TableCell>
@@ -646,7 +651,7 @@ const ApiKeys = () => {
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          API Keys
+          API Tokens
         </Typography>
         <Button 
           variant="contained" 
@@ -661,7 +666,7 @@ const ApiKeys = () => {
             }
           }}
         >
-          Create New Key
+          Create New Token
         </Button>
       </Box>
       
@@ -686,11 +691,11 @@ const ApiKeys = () => {
           }}
         >
           <Typography variant="h5" color="text.secondary" gutterBottom>
-            No API Keys Yet
+            No API Tokens Yet
           </Typography>
           <Typography variant="body1" color="text.secondary" paragraph>
-            API keys are used to authenticate requests to the ProbeOps API.
-            Create your first API key to integrate with the platform.
+            API tokens are used to authenticate requests to the ProbeOps API.
+            Create your first API token to integrate with the platform.
           </Typography>
           <Button 
             variant="contained" 
@@ -699,14 +704,14 @@ const ApiKeys = () => {
             size="large"
             sx={{ mt: 2 }}
           >
-            Create API Key
+            Create API Token
           </Button>
         </Paper>
       ) : (
         renderApiKeysTable()
       )}
       
-      {/* Create API Key Dialog */}
+      {/* Create API Token Dialog */}
       <Dialog 
         open={openCreateDialog} 
         onClose={handleCreateDialogClose}
@@ -717,10 +722,10 @@ const ApiKeys = () => {
           }
         }}
       >
-        <DialogTitle>Create New API Key</DialogTitle>
+        <DialogTitle>Create New API Token</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            API keys are used to authenticate requests to the ProbeOps API. Choose a descriptive name and expiration period.
+            API tokens are used to authenticate requests to the ProbeOps API. Choose a descriptive name and expiration period.
           </DialogContentText>
           
           {formErrors.submit && (
@@ -734,7 +739,7 @@ const ApiKeys = () => {
               <TextField
                 autoFocus
                 name="name"
-                label="API Key Name"
+                label="API Token Name"
                 fullWidth
                 variant="outlined"
                 value={formData.name}
@@ -780,7 +785,7 @@ const ApiKeys = () => {
             disabled={loading}
             startIcon={loading ? <CircularProgress size={20} /> : <AddIcon />}
           >
-            {loading ? 'Creating...' : 'Create API Key'}
+            {loading ? 'Creating...' : 'Create API Token'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -795,10 +800,10 @@ const ApiKeys = () => {
           }
         }}
       >
-        <DialogTitle>Delete API Key?</DialogTitle>
+        <DialogTitle>Delete API Token?</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete the API key "{selectedKey?.name}"? This action cannot be undone.
+            Are you sure you want to delete the API token "{selectedKey?.name}"? This action cannot be undone.
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3 }}>
@@ -828,15 +833,15 @@ const ApiKeys = () => {
         }}
       >
         <DialogTitle>
-          {bulkAction === 'delete' ? 'Delete API Keys?' : 
-           bulkAction === 'deactivate' ? 'Disable API Keys?' :
-           'Enable API Keys?'}
+          {bulkAction === 'delete' ? 'Delete API Tokens?' : 
+           bulkAction === 'deactivate' ? 'Disable API Tokens?' :
+           'Enable API Tokens?'}
         </DialogTitle>
         <DialogContent>
           <DialogContentText>
             Are you sure you want to {bulkAction === 'delete' ? 'delete' : 
                                      bulkAction === 'deactivate' ? 'disable' : 
-                                     'enable'} {selectedKeys.length} selected API key(s)?
+                                     'enable'} {selectedKeys.length} selected API token(s)?
             {bulkAction === 'delete' && ' This action cannot be undone.'}
           </DialogContentText>
         </DialogContent>
