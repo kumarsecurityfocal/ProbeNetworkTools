@@ -37,9 +37,11 @@ import {
   FilterList as FilterListIcon,
   Edit as EditIcon,
   Block as BlockIcon,
+  Delete as DeleteIcon,
   ArrowDropDown as ArrowDropDownIcon,
   ArrowDropUp as ArrowDropUpIcon,
-  ContentCopy as ContentCopyIcon
+  ContentCopy as ContentCopyIcon,
+  VpnKey as VpnKeyIcon
 } from '@mui/icons-material';
 import { getProbeNodes, getProbeNodeDetails, updateProbeNode, deactivateProbeNode, createRegistrationToken, getRegistrationTokens, revokeRegistrationToken } from '../services/probeNodes';
 import dayjs from 'dayjs';
