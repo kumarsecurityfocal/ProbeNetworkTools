@@ -42,9 +42,11 @@ import {
   Cancel as CancelIcon,
   DeleteOutline as DeleteIcon,
   Refresh as RefreshIcon,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  SettingsRemote as SettingsRemoteIcon
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
+import ProbeNodesManagement from './ProbeNodesManagement';
 import { 
   getAllSubscriptions, 
   getSubscriptionTiers, 
@@ -892,6 +894,7 @@ const AdminPanel = () => {
           <Tab icon={<SubscriptionIcon />} label="Subscriptions" />
           <Tab icon={<PersonIcon />} label="Users" />
           <Tab icon={<SettingsIcon />} label="Tier Management" />
+          <Tab icon={<SettingsRemoteIcon />} label="Probe Nodes" />
         </Tabs>
       </Box>
 
