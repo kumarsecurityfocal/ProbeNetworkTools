@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
-from app.routers import auth, diagnostics, api_keys, subscriptions, scheduled_probes, metrics
+from app.routers import auth, diagnostics, api_keys, subscriptions, scheduled_probes, metrics, probe_nodes
 from app.database import engine, Base, get_db
 from app.config import settings
 from app.initialize_db import initialize_database

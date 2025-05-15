@@ -277,5 +277,97 @@ class UserStatusUpdate(BaseModel):
     is_active: bool
 
 
+# ProbeNode schemas
+class ProbeNodeBase(BaseModel):
+    """Base schema for probe node data."""
+    name: str
+    hostname: str
+    region: str
+    zone: Optional[str] = None
+    internal_ip: Optional[str] = None
+    external_ip: Optional[str] = None
+    version: Optional[str] = None
+    supported_tools: Optional[Dict[str, bool]] = None
+    hardware_info: Optional[Dict[str, Any]] = None
+    network_info: Optional[Dict[str, Any]] = None
+
+
+class ProbeNodeCreate(ProbeNodeBase):
+    """Schema for creating a new probe node."""
+    registration_token: str  # Required for initial registration
+
+
+class ProbeNodeUpdate(BaseModel):
+    """Schema for updating an existing probe node."""
+    name: Optional[str] = None
+    hostname: Optional[str] = None
+    region: Optional[str] = None
+    zone: Optional[str] = None
+    internal_ip: Optional[str] = None
+    external_ip: Optional[str] = None
+    version: Optional[str] = None
+    is_active: Optional[bool] = None
+    max_concurrent_probes: Optional[int] = None
+    supported_tools: Optional[Dict[str, bool]] = None
+    hardware_info: Optional[Dict[str, Any]] = None
+    network_info: Optional[Dict[str, Any]] = None
+    priority: Optional[int] = None
+    admin_notes: Optional[str] = None
+    config: Optional[Dict[str, Any]] = None
+
+
+class ProbeNodeAdminUpdate(ProbeNodeUpdate):
+    """Admin-only schema for updating probe node configuration."""
+    status: Optional[str] = None
+    priority: Optional[int] = None
+    max_concurrent_probes: Optional[int] = None
+    config: Optional[Dict[str, Any]] = None
+
+
+class ProbeNodeHeartbeat(BaseModel):
+    """Schema for probe node heartbeat updates."""
+    node_uuid: str
+    current_load: float
+    avg_response_time: float
+    error_count: int = 0
+    version: Optional[str] = None
+    hardware_stats: Optional[Dict[str, Any]] = None  # Current CPU, memory usage, etc.
+
+
+class ProbeNodeResponse(ProbeNodeBase):
+    """Schema for returning probe node data."""
+    id: int
+    node_uuid: str
+    is_active: bool
+    status: str
+    last_heartbeat: Optional[datetime] = None
+    max_concurrent_probes: int
+    priority: int
+    current_load: float
+    avg_response_time: float
+    error_count: int
+    total_probes_executed: int
+    created_at: datetime
+    updated_at: datetime
+    config: Optional[Dict[str, Any]] = None
+
+    class Config:
+        orm_mode = True
+
+
+class ProbeNodeAdminResponse(ProbeNodeResponse):
+    """Admin-only schema with additional node details."""
+    api_key: str  # Only visible to admins
+
+
+class ProbeNodeRegistrationResponse(BaseModel):
+    """Response after successful node registration."""
+    node_uuid: str
+    api_key: str
+    status: str
+    config: Dict[str, Any]
+    message: str = "Node registered successfully"
+
+
 # Fix circular references
 UserDetailResponse.update_forward_refs()

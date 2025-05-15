@@ -278,3 +278,23 @@ class NodeDiagnostic(Base):
     diagnostic_id = Column(Integer, ForeignKey("diagnostics.id"), primary_key=True)
     executed_at = Column(DateTime, default=datetime.utcnow)
     execution_time = Column(Float)  # Time taken to execute in ms
+
+
+class NodeRegistrationToken(Base):
+    """Registration tokens for new probe nodes."""
+    __tablename__ = "node_registration_tokens"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    token = Column(String, unique=True, index=True)
+    description = Column(String)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime)
+    is_used = Column(Boolean, default=False)
+    used_at = Column(DateTime, nullable=True)
+    created_by_user_id = Column(Integer, ForeignKey("users.id"))
+    node_id = Column(Integer, ForeignKey("probe_nodes.id"), nullable=True)
+    intended_region = Column(String, nullable=True)
+    
+    # Relationships
+    created_by = relationship("User", foreign_keys=[created_by_user_id])
+    node = relationship("ProbeNode", foreign_keys=[node_id], backref="registration_token")
