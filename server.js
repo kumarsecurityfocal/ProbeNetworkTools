@@ -15,6 +15,7 @@ app.use(express.urlencoded({ extended: true })); // Add this to parse form data
 // Parse and handle API routes
 app.use((req, res, next) => {
   const url = req.url;
+  console.log(`Incoming request: ${req.method} ${url}`);
   
   // Handle specific routes directly
   if (url.startsWith('/login') || url.startsWith('/token')) {
