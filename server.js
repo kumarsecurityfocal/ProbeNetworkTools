@@ -167,7 +167,7 @@ function handleLogin(req, res) {
         const now = Math.floor(Date.now() / 1000);
         const exp = now + (30 * 60); // 30 minutes from now
         return res.json({
-          access_token: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBwcm9iZW9wcy5jb20iLCJleHAiOiR7ZXhwfX0.dummy_signature`,
+          access_token: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBwcm9iZW9wcy5jb20iLCJleHAiOiR7ZXhwfX0.dummy_signature`.replace("${exp}", exp),
           token_type: 'bearer'
         });
       }
