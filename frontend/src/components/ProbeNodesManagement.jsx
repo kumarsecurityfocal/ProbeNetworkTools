@@ -42,7 +42,8 @@ import {
   ContentCopy as ContentCopyIcon
 } from '@mui/icons-material';
 import { getProbeNodes, getProbeNodeDetails, updateProbeNode, deactivateProbeNode, createRegistrationToken } from '../services/probeNodes';
-import { formatDistanceToNow } from 'date-fns';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
 import sharedStyles from '../theme/sharedStyles';
 
 const ProbeNodesManagement = () => {
@@ -249,11 +250,13 @@ const ProbeNodesManagement = () => {
     }
   };
 
+  // Initialize dayjs relativeTime plugin
+  dayjs.extend(relativeTime);
+
   // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return 'Never';
-    const date = new Date(dateString);
-    return formatDistanceToNow(date, { addSuffix: true });
+    return dayjs(dateString).fromNow();
   };
 
   return (
