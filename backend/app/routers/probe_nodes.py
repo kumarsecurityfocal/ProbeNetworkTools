@@ -23,6 +23,83 @@ router = APIRouter(prefix="/probe-nodes", tags=["probe_nodes"])
 # Create a separate router for registration token endpoints that will be mounted at root level
 registration_token_router = APIRouter(tags=["probe_nodes_registration"])
 
+@registration_token_router.post("/registration-token", response_model=schemas.NodeRegistrationTokenResponse)
+async def create_registration_token_root(
+    token_data: schemas.NodeRegistrationTokenCreate,
+    current_user: models.User = Depends(auth.get_admin_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Root-level endpoint to create a new registration token for probe nodes (admin only).
+    This endpoint generates a unique token that can be used to register new probe nodes.
+    The token is valid for the specified expiry period and can only be used once.
+    """
+    # Generate a secure token
+    token = f"pnrt_{secrets.token_urlsafe(32)}"
+    
+    # Calculate expiry time
+    expires_at = datetime.utcnow() + timedelta(hours=token_data.expiry_hours)
+    
+    # Create token record
+    token_record = models.NodeRegistrationToken(
+        token=token,
+        description=token_data.description,
+        expires_at=expires_at,
+        created_by_user_id=current_user.id,
+        intended_region=token_data.intended_region
+    )
+    
+    db.add(token_record)
+    db.commit()
+    db.refresh(token_record)
+    
+    return token_record
+
+@registration_token_router.get("/registration-token", response_model=List[schemas.NodeRegistrationTokenResponse])
+async def get_registration_tokens_root(
+    include_expired: bool = Query(False, description="Include expired tokens"),
+    include_used: bool = Query(False, description="Include already used tokens"),
+    current_user: models.User = Depends(auth.get_admin_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Root-level endpoint to get all registration tokens (admin only).
+    This endpoint returns a list of all registration tokens in the system.
+    """
+    query = db.query(models.NodeRegistrationToken)
+    
+    # Apply filters
+    if not include_expired:
+        query = query.filter(models.NodeRegistrationToken.expires_at > datetime.utcnow())
+    
+    if not include_used:
+        query = query.filter(models.NodeRegistrationToken.is_used == False)
+    
+    # Get results
+    tokens = query.order_by(models.NodeRegistrationToken.created_at.desc()).all()
+    
+    return tokens
+
+@registration_token_router.get("/registration-token/{token_id}", response_model=schemas.NodeRegistrationTokenResponse)
+async def get_registration_token_details_root(
+    token_id: int,
+    current_user: models.User = Depends(auth.get_admin_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Root-level endpoint to get a specific registration token by ID (admin only).
+    This endpoint returns detailed information about a single registration token.
+    """
+    token = db.query(models.NodeRegistrationToken).filter(models.NodeRegistrationToken.id == token_id).first()
+    
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Registration token not found"
+        )
+    
+    return token
+
 
 def generate_node_api_key() -> str:
     """Generate a secure random API key for a probe node."""
@@ -55,6 +132,131 @@ async def register_node(
     Register a new probe node in the system.
     This endpoint is used for the initial node registration using a valid registration token.
     """
+    # Validate registration token
+    try:
+        token_record = get_registration_token(db, node_data.registration_token)
+    except HTTPException as e:
+        logger.warning(f"Failed node registration attempt: {e.detail}")
+        raise
+    
+    # Create the new node
+    api_key = generate_node_api_key()
+    node_uuid = str(uuid.uuid4())
+    
+    new_node = models.ProbeNode(
+        name=node_data.name,
+        hostname=node_data.hostname,
+        node_uuid=node_uuid,
+        region=node_data.region,
+        zone=node_data.zone,
+        internal_ip=node_data.internal_ip,
+        external_ip=node_data.external_ip,
+        version=node_data.version,
+        api_key=api_key,
+        status="registered",
+        supported_tools=node_data.supported_tools or {"ping": True, "traceroute": True, "dns": True, "http": True},
+        hardware_info=node_data.hardware_info or {},
+        network_info=node_data.network_info or {},
+        config={"initial_registration": datetime.utcnow().isoformat()},
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
+    )
+    
+    # Mark token as used
+    token_record.is_used = True
+    token_record.used_at = datetime.utcnow()
+    token_record.node_id = new_node.id
+    
+    try:
+        db.add(new_node)
+        db.commit()
+        db.refresh(new_node)
+        
+        logger.info(f"New probe node registered: {new_node.name} ({node_uuid}) in region {new_node.region}")
+        
+        # Return the registration response with API key
+        return {
+            "node_uuid": node_uuid,
+            "api_key": api_key,
+            "status": "registered",
+            "config": new_node.config,
+            "message": "Node registered successfully"
+        }
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error registering node: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to register node: {str(e)}"
+        )
+
+# Add the same endpoint at the root level without the prefix
+@registration_token_router.post("/register", response_model=schemas.ProbeNodeRegistrationResponse)
+async def register_node_root(
+    node_data: schemas.ProbeNodeCreate, 
+    db: Session = Depends(get_db)
+):
+    """
+    Root-level endpoint to register a new probe node in the system.
+    This endpoint is used for the initial node registration using a valid registration token.
+    """
+    # Validate registration token
+    try:
+        token_record = get_registration_token(db, node_data.registration_token)
+    except HTTPException as e:
+        logger.warning(f"Failed node registration attempt: {e.detail}")
+        raise
+    
+    # Create the new node
+    api_key = generate_node_api_key()
+    node_uuid = str(uuid.uuid4())
+    
+    new_node = models.ProbeNode(
+        name=node_data.name,
+        hostname=node_data.hostname,
+        node_uuid=node_uuid,
+        region=node_data.region,
+        zone=node_data.zone,
+        internal_ip=node_data.internal_ip,
+        external_ip=node_data.external_ip,
+        version=node_data.version,
+        api_key=api_key,
+        status="registered",
+        supported_tools=node_data.supported_tools or {"ping": True, "traceroute": True, "dns": True, "http": True},
+        hardware_info=node_data.hardware_info or {},
+        network_info=node_data.network_info or {},
+        config={"initial_registration": datetime.utcnow().isoformat()},
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
+    )
+    
+    # Mark token as used
+    token_record.is_used = True
+    token_record.used_at = datetime.utcnow()
+    token_record.node_id = new_node.id
+    
+    try:
+        db.add(new_node)
+        db.commit()
+        db.refresh(new_node)
+        
+        logger.info(f"New probe node registered via root endpoint: {new_node.name} ({node_uuid}) in region {new_node.region}")
+        
+        # Return the registration response with API key
+        return {
+            "node_uuid": node_uuid,
+            "api_key": api_key,
+            "status": "registered",
+            "config": new_node.config,
+            "message": "Node registered successfully"
+        }
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error registering node: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to register node: {str(e)}"
+        )
     # Validate registration token
     try:
         token_record = get_registration_token(db, node_data.registration_token)
