@@ -55,13 +55,49 @@ python run_probe_node.py --backend https://probeops.com --uuid your-node-uuid --
 
 ### Running the Probe Node
 
+#### Manual Execution
+
 Start the WebSocket client with:
 
 ```bash
 python run_probe_node.py
 ```
 
-For deployment in production environments, use a process manager like systemd, supervisor, or Docker to ensure the client stays running.
+#### Docker Deployment (Recommended)
+
+For production deployments, we recommend using the provided `deploy-probe.sh` script which uses Docker Compose to run the probe node in a containerized environment:
+
+1. Set the required environment variables:
+
+```bash
+export PROBEOPS_BACKEND_URL="https://probeops.com"
+export PROBEOPS_NODE_UUID="your-node-uuid"
+export PROBEOPS_API_KEY="your-api-key"
+```
+
+2. Run the deployment script:
+
+```bash
+./deploy-probe.sh
+```
+
+The script will:
+- Check if Docker and Docker Compose are installed (and install them if needed)
+- Create the required environment file
+- Pull the latest probe node code
+- Build and start the Docker container
+- Set up automatic restart on system reboot
+
+3. Verify the deployment:
+
+```bash
+docker compose -f docker-compose.probe.yml ps
+docker compose -f docker-compose.probe.yml logs
+```
+
+#### Alternative Deployment Options
+
+For deployment without Docker, use a process manager like systemd, supervisor, or PM2 to ensure the client stays running.
 
 ## WebSocket Protocol
 
