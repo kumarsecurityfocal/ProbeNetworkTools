@@ -27,6 +27,10 @@ app.use((req, res, next) => {
   else if (url === '/users') {
     return handleAllUsers(req, res);
   }
+  else if (url.startsWith('/users/')) {
+    console.log(`User-specific request: ${req.method} ${url}`);
+    return handleGenericApi(req, res);
+  }
   else if (url.startsWith('/history')) {
     return handleHistory(req, res);
   } 

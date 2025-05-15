@@ -596,12 +596,28 @@ const AdminPanel = () => {
   
   const handleToggleUserStatus = async (user) => {
     try {
+      console.log(`Toggling status for user ${user.id} (${user.username}) from ${user.is_active} to ${!user.is_active}`);
+      
+      // Call the API to change status
       await changeUserStatus(user.id, !user.is_active);
       
-      // Refresh users
-      const usersData = await getAllUsers();
-      setUsers(usersData);
+      // Refresh users AND subscriptions in parallel
+      const [usersData, subsData] = await Promise.all([
+        getAllUsers(),
+        getAllSubscriptions()
+      ]);
       
+      console.log('Users data after toggle:', usersData);
+      console.log('Subscriptions data after toggle:', subsData);
+      
+      // Update subscriptions state
+      setSubscriptions(subsData);
+      
+      // Enhance users with subscription data
+      const enhancedUsers = enhanceUsersWithSubscriptions(usersData, subsData);
+      setUsers(enhancedUsers);
+      
+      // Show success message
       setSnackbar({
         open: true,
         message: `User ${user.is_active ? 'deactivated' : 'activated'} successfully`,
@@ -609,9 +625,11 @@ const AdminPanel = () => {
       });
     } catch (error) {
       console.error('Error changing user status:', error);
+      console.error('Error details:', error.response?.data || error.message);
+      
       setSnackbar({
         open: true,
-        message: 'Failed to change user status',
+        message: `Failed to change user status: ${error.message}`,
         severity: 'error'
       });
     }
