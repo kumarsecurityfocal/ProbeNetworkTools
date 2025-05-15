@@ -14,7 +14,7 @@ COPY . .
 RUN npm install --legacy-peer-deps
 
 # Install PostCSS and Tailwind plugins explicitly
-RUN npm install autoprefixer postcss tailwindcss --no-save --legacy-peer-deps
+RUN npm install autoprefixer postcss tailwindcss @tailwindcss/postcss --no-save --legacy-peer-deps
 
 # Build the frontend with output to ../public directory
 RUN npm run build -- --outDir=../public

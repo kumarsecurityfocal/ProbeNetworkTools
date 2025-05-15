@@ -58,7 +58,7 @@ if [ ! -d "./public" ] || [ ! -f "./public/index.html" ]; then
         fi
         
         log_info "Installing PostCSS and Tailwind plugins..."
-        npm install autoprefixer postcss tailwindcss --no-save --legacy-peer-deps
+        npm install autoprefixer postcss tailwindcss @tailwindcss/postcss --no-save --legacy-peer-deps
         if [ $? -ne 0 ]; then
             log_error "Installing PostCSS and Tailwind plugins failed with exit code $?"
             exit 1
@@ -67,22 +67,24 @@ if [ ! -d "./public" ] || [ ! -f "./public/index.html" ]; then
         log_info "Checking postcss.config.js for proper configuration..."
         cat postcss.config.js
         
-        # Fix postcss.config.js file - replace @tailwindcss/postcss with tailwindcss
-        if grep -q "@tailwindcss/postcss" postcss.config.js; then
-            log_warning "Found invalid reference to @tailwindcss/postcss in postcss.config.js. Fixing..."
-            sed -i 's/@tailwindcss\/postcss/tailwindcss/g' postcss.config.js
+        # Fix postcss.config.js file - ensure it's using @tailwindcss/postcss
+        if ! grep -q "@tailwindcss/postcss" postcss.config.js; then
+            log_warning "postcss.config.js is not using @tailwindcss/postcss. Fixing..."
+            sed -i 's/tailwindcss/@tailwindcss\/postcss/g' postcss.config.js
             log_success "Fixed postcss.config.js configuration"
             cat postcss.config.js
+        else
+            log_success "postcss.config.js has correct configuration with @tailwindcss/postcss"
         fi
         
         # Also ensure the npm package is properly installed
-        log_info "Checking if tailwindcss package is properly installed..."
-        NODE_MODULES=$(npm list tailwindcss)
-        if [[ $NODE_MODULES != *"tailwindcss"* ]]; then
-            log_warning "tailwindcss package not found. Installing explicitly..."
-            npm install tailwindcss --legacy-peer-deps
+        log_info "Checking if @tailwindcss/postcss package is properly installed..."
+        NODE_MODULES=$(npm list @tailwindcss/postcss)
+        if [[ $NODE_MODULES != *"@tailwindcss/postcss"* ]]; then
+            log_warning "@tailwindcss/postcss package not found. Installing explicitly..."
+            npm install @tailwindcss/postcss --legacy-peer-deps
         else
-            log_success "tailwindcss package found in node_modules"
+            log_success "@tailwindcss/postcss package found in node_modules"
         fi
         
         log_info "Running build with detailed output..."
