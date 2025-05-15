@@ -662,7 +662,12 @@ const AdminPanel = () => {
     return new Date(dateStr).toLocaleString();
   };
 
-  // Note: getTierName is now defined at the top level component
+  // Utility function to get the tier name by ID
+  const getTierNameById = (tierId) => {
+    if (!tierId) return 'UNKNOWN';
+    const tier = tiers.find(t => t.id === parseInt(tierId, 10));
+    return tier ? tier.name : `TIER ${tierId}`;
+  };
 
   // Debugging indicator that can be displayed while showing the admin panel
   const renderDebugInfo = () => (
@@ -965,7 +970,7 @@ const AdminPanel = () => {
                             <Chip 
                               color="info" 
                               size="small" 
-                              label={getTierName(user.subscription.tier_id)} 
+                              label={getTierNameById(user.subscription.tier_id)} 
                             />
                           </Tooltip>
                         ) : (
