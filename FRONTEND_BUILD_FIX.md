@@ -14,13 +14,15 @@ probeops-frontend-build | /docker-entrypoint.sh: exec: line 47: npm: not found
 [BUILD_ERROR] - Frontend build failed, deployment will be incomplete
 ```
 
-2. Second error when trying to extract assets with the fixed approach:
+2. Second error when trying to extract assets with our first attempted fix:
 ```
-$ docker run --rm -v /home/ubuntu/ProbeNetworkTools/public:/public probeops-frontend-build cp -r /app/dist/* /public/
-cp: can't stat '/app/dist/*': No such file or directory
+$ docker run --rm -v /home/ubuntu/ProbeNetworkTools/public:/public probeops-frontend-build cp -r /usr/share/nginx/html/* /public/
+cp: can't stat '/usr/share/nginx/html/*': No such file or directory
 ```
 
-Despite using a `node:20-alpine` base image in the Dockerfile, the container could not find the `npm` command when launched via docker-compose. Additionally, the multi-stage build in the Dockerfile placed the final assets in `/usr/share/nginx/html` rather than `/app/dist`.
+There were two main issues:
+1. Despite using a `node:20-alpine` base image in the Dockerfile, the container could not find the `npm` command when launched via docker-compose
+2. We had a mismatch in our approach - the Dockerfile IS correctly using a multi-stage build with assets in `/usr/share/nginx/html`, but our deployment script is bypassing this multi-stage process and only building the first stage, where assets would be in `/app/dist`. Since we're bypassing docker-compose, we need to use `/app/dist` which is where assets are built in the first stage.
 
 ## Solution
 
@@ -40,7 +42,7 @@ The following changes were made to all deployment scripts:
 
 2. **Direct Asset Extraction**:
    ```bash
-   docker run --rm -v $(pwd)/public:/public probeops-frontend-build cp -r /usr/share/nginx/html/* /public/
+   docker run --rm -v $(pwd)/public:/public probeops-frontend-build cp -r /app/dist/* /public/
    ```
 
 3. **Enhanced Verification**:
