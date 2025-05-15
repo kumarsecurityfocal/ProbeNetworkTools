@@ -1161,9 +1161,22 @@ function handleNodes(req, res) {
     console.log(`Nodes index: ${nodesIndex}`);
     
     if (nodesIndex !== -1) {
-      const tokenPath = pathParts.slice(nodesIndex).join('/');
-      console.log(`Mapped ${pathPart} to backend /${tokenPath} (token endpoint)`);
-      backendPath = `/${tokenPath}`;
+      // Check if we have a specific registration token ID
+      const tokenIdIndex = pathParts.indexOf('registration-token') + 1;
+      if (tokenIdIndex < pathParts.length) {
+        // We have a token ID, construct the path properly
+        const tokenId = pathParts[tokenIdIndex];
+        console.log(`Mapped ${pathPart} to backend /nodes/registration-token/${tokenId} (token detail endpoint)`);
+        backendPath = `/nodes/registration-token/${tokenId}`;
+      } else if (pathPart.includes('create')) {
+        // Handle token creation endpoint
+        console.log(`Mapped ${pathPart} to backend /nodes/registration-token/create (token creation endpoint)`);
+        backendPath = `/nodes/registration-token/create`;
+      } else {
+        // Handle token listing endpoint
+        console.log(`Mapped ${pathPart} to backend /nodes/registration-token (token list endpoint)`);
+        backendPath = `/nodes/registration-token`;
+      }
     } else {
       console.log(`Invalid token path: ${pathPart} - nodes segment not found`);
       backendPath = `/nodes/registration-token`;
