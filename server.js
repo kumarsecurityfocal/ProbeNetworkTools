@@ -38,6 +38,9 @@ app.use((req, res, next) => {
   else if (url.startsWith('/probes')) {
     return handleProbes(req, res);
   }
+  else if (url.startsWith('/metrics')) {
+    return handleMetrics(req, res);
+  }
   else if (url.startsWith('/api/')) {
     // Generic API handler for other endpoints
     return handleGenericApi(req, res);
@@ -669,6 +672,137 @@ function handleProbes(req, res) {
     // For other requests, return error detail
     res.status(500).json({
       detail: `Backend service unavailable: ${error.message}`,
+      status: 'error'
+    });
+  });
+  
+  backendReq.end();
+}
+
+// Handler for metrics endpoints (dashboard metrics, etc.)
+function handleMetrics(req, res) {
+  console.log(`Metrics request: ${req.method} ${req.url}`);
+  
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
+  
+  if (!token) {
+    return res.status(401).json({ detail: 'Not authenticated' });
+  }
+  
+  // Extract the metrics endpoint from the URL
+  const url = new URL(`http://localhost${req.url}`);
+  const pathParts = url.pathname.split('/').filter(p => p);
+  const metricType = pathParts.length > 1 ? pathParts[1] : '';
+  
+  // Get the query parameters
+  const searchParams = url.searchParams.toString();
+  
+  // Construct the backend path
+  let backendPath = `/metrics/${metricType}`;
+  if (searchParams) {
+    backendPath += `?${searchParams}`;
+  }
+  
+  console.log(`Forwarding metrics request to: ${backendPath}`);
+  
+  // Forward request to backend
+  const options = {
+    hostname: 'localhost',
+    port: 8000,
+    path: backendPath,
+    method: req.method,
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  };
+  
+  // Create backend request
+  const backendReq = http.request(options, (backendRes) => {
+    // Collect response data
+    let responseData = '';
+    backendRes.on('data', chunk => {
+      responseData += chunk;
+    });
+    
+    backendRes.on('end', () => {
+      res.setHeader('Content-Type', 'application/json');
+      res.status(backendRes.statusCode);
+      
+      // If we received a 307 redirect or 404, log it but return an empty object instead
+      if (backendRes.statusCode === 307 || backendRes.statusCode === 404) {
+        console.log(`Received ${backendRes.statusCode} from backend for metrics, returning empty metrics object`);
+        
+        // For dashboard metrics, return an empty metrics object with default values
+        if (metricType === 'dashboard') {
+          return res.json({
+            diagnostic_count: 0,
+            api_key_count: 0,
+            scheduled_probe_count: 0,
+            success_rate: 0,
+            avg_response_time: 0
+          });
+        }
+        
+        // For other metrics, return an empty object
+        return res.json({});
+      }
+      
+      if (responseData) {
+        try {
+          const jsonData = JSON.parse(responseData);
+          console.log(`Metrics response successful with status ${backendRes.statusCode}`);
+          res.json(jsonData);
+        } catch (e) {
+          console.error('Error parsing metrics response:', e);
+          
+          // Return default metrics object on error
+          res.json({
+            diagnostic_count: 0,
+            api_key_count: 0,
+            scheduled_probe_count: 0,
+            success_rate: 0,
+            avg_response_time: 0
+          });
+        }
+      } else {
+        // Empty response but success status
+        if (backendRes.statusCode >= 200 && backendRes.statusCode < 300) {
+          res.json({});
+        } else {
+          res.json({
+            detail: 'No data returned from backend',
+            status: backendRes.statusCode
+          });
+        }
+      }
+    });
+  });
+  
+  // Handle request body if present
+  if ((req.method === 'POST') && req.body) {
+    const bodyData = JSON.stringify(req.body);
+    backendReq.write(bodyData);
+  }
+  
+  backendReq.on('error', error => {
+    console.error('Error with metrics request:', error);
+    
+    // Return default metrics on error
+    if (metricType === 'dashboard') {
+      return res.json({
+        diagnostic_count: 0,
+        api_key_count: 0,
+        scheduled_probe_count: 0,
+        success_rate: 0,
+        avg_response_time: 0
+      });
+    }
+    
+    res.status(500).json({
+      detail: 'Failed to retrieve metrics',
       status: 'error'
     });
   });
