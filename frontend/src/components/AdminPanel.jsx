@@ -85,7 +85,7 @@ const AdminPanel = () => {
   // Default was 0 (Subscriptions)
   const [tabValue, setTabValue] = useState(1); // Set to Users tab by default for testing
   
-  // Utility functions will be defined below
+  // Component state variables
   
   // Subscription state
   const [subscriptions, setSubscriptions] = useState([]);
@@ -662,11 +662,10 @@ const AdminPanel = () => {
     return new Date(dateStr).toLocaleString();
   };
 
-  // Utility function to get the tier name by ID
-  const getTierNameById = (tierId) => {
-    if (!tierId) return 'UNKNOWN';
-    const tier = tiers.find(t => t.id === parseInt(tierId, 10));
-    return tier ? tier.name : `TIER ${tierId}`;
+  // Utility function to get subscription tier name for display
+  const getSubscriptionDisplayName = (subscription) => {
+    if (!subscription || !subscription.tier) return 'UNKNOWN';
+    return subscription.tier.name || `TIER ${subscription.tier_id}`;
   };
 
   // Debugging indicator that can be displayed while showing the admin panel
@@ -741,7 +740,7 @@ const AdminPanel = () => {
                   <TableRow key={sub.id}>
                     <TableCell>{sub.id}</TableCell>
                     <TableCell>{sub.user_id}</TableCell>
-                    <TableCell>{getTierName(sub.tier_id)}</TableCell>
+                    <TableCell>{sub.tier?.name || `TIER ${sub.tier_id}`}</TableCell>
                     <TableCell>
                       {sub.is_active ? (
                         <Chip 
@@ -970,7 +969,7 @@ const AdminPanel = () => {
                             <Chip 
                               color="info" 
                               size="small" 
-                              label={getTierNameById(user.subscription.tier_id)} 
+                              label={user.subscription.tier?.name || `TIER ${user.subscription.tier_id}`} 
                             />
                           </Tooltip>
                         ) : (
