@@ -388,16 +388,44 @@ const AdminPanel = () => {
     console.log('Refreshing users list...');
     try {
       setUserLoading(true);
-      const usersData = await getAllUsers();
+      
+      // Fetch both users and subscriptions in parallel
+      const [usersData, subsData] = await Promise.all([
+        getAllUsers(),
+        getAllSubscriptions()
+      ]);
+      
       console.log('Users data after refresh:', usersData);
+      console.log('Subscriptions data after refresh:', subsData);
+      
       if (Array.isArray(usersData)) {
-        setUsers(usersData);
-        console.log(`User list refreshed, ${usersData.length} users found`);
+        // Update subscriptions state
+        if (Array.isArray(subsData)) {
+          setSubscriptions(subsData);
+        }
+        
+        // Enhance users with subscription data
+        const enhancedUsers = enhanceUsersWithSubscriptions(usersData, subsData);
+        setUsers(enhancedUsers);
+        
+        console.log(`User list refreshed, ${usersData.length} users found with subscription data`);
+        
+        // Show success message
+        setSnackbar({
+          open: true,
+          message: `User list refreshed. ${usersData.length} users found.`,
+          severity: 'success'
+        });
       } else {
         console.error('Invalid users data returned:', usersData);
       }
     } catch (err) {
       console.error('Error refreshing users list:', err);
+      setSnackbar({
+        open: true,
+        message: `Error refreshing user list: ${err.message}`,
+        severity: 'error'
+      });
     } finally {
       setUserLoading(false);
     }
