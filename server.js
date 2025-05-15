@@ -46,6 +46,9 @@ app.use((req, res, next) => {
   else if (url.startsWith('/probes')) {
     return handleProbes(req, res);
   }
+  else if (url.startsWith('/nodes')) {
+    return handleNodes(req, res);
+  }
   else if (url.includes('/metrics') || url.includes('metrics/')) {
     console.log(`Handling metrics request (ANY format): ${req.method} ${url}`);
     return handleMetrics(req, res);
@@ -1121,6 +1124,104 @@ function handleGenericApi(req, res) {
   backendReq.on('error', error => {
     console.error('Error with backend request:', error);
     res.status(500).json({ error: 'Failed to process API request' });
+  });
+  
+  backendReq.end();
+}
+
+// Handler for probe nodes API
+function handleNodes(req, res) {
+  console.log(`Nodes request: ${req.method} ${req.url}`);
+  
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
+  
+  if (!token) {
+    return res.status(401).json({ detail: 'Not authenticated' });
+  }
+  
+  // Extract path and parameters
+  const url = new URL(`http://localhost${req.url}`);
+  const pathPart = url.pathname;
+  const searchParams = url.searchParams.toString();
+  
+  // Determine backend path
+  let backendPath;
+  
+  if (pathPart === '/nodes' || pathPart === '/nodes/') {
+    // For collection endpoints, be consistent with trailing slash
+    console.log('Mapped /nodes to backend /nodes (collection endpoint)');
+    backendPath = '/nodes';
+  } else if (pathPart.includes('registration-token')) {
+    // Handle registration token endpoints
+    const pathParts = pathPart.split('/');
+    const tokenPath = pathParts.slice(pathParts.indexOf('nodes')).join('/');
+    console.log(`Mapped ${pathPart} to backend /${tokenPath} (token endpoint)`);
+    backendPath = `/${tokenPath}`;
+  } else {
+    // Extract ID or detail route
+    const pathParts = pathPart.split('/').filter(Boolean);
+    backendPath = `/nodes/${pathParts.slice(1).join('/')}`;
+    console.log(`Mapped ${pathPart} to backend ${backendPath} (detail endpoint)`);
+  }
+  
+  // Add search parameters if present
+  if (searchParams) {
+    backendPath += `?${searchParams}`;
+  }
+  
+  // Forward request to backend
+  const options = {
+    hostname: 'localhost',
+    port: 8000,
+    path: backendPath,
+    method: req.method,
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  };
+  
+  console.log(`Forwarding nodes request to: ${backendPath}`);
+  
+  // Create backend request
+  const backendReq = http.request(options, (backendRes) => {
+    // Collect response data
+    let responseData = '';
+    backendRes.on('data', chunk => {
+      responseData += chunk;
+    });
+    
+    backendRes.on('end', () => {
+      res.setHeader('Content-Type', 'application/json');
+      res.status(backendRes.statusCode);
+      
+      if (responseData) {
+        try {
+          const jsonData = JSON.parse(responseData);
+          res.json(jsonData);
+          console.log(`Node response successful with status ${backendRes.statusCode}`);
+        } catch (e) {
+          console.error('Error parsing nodes response:', e);
+          res.json([]);
+        }
+      } else {
+        res.json([]);
+      }
+    });
+  });
+  
+  // Handle request body if present
+  if ((req.method === 'POST' || req.method === 'PUT') && req.body) {
+    const bodyData = JSON.stringify(req.body);
+    backendReq.write(bodyData);
+    console.log(`Nodes request body sent: ${bodyData}`);
+  }
+  
+  backendReq.on('error', error => {
+    console.error('Error with nodes API request:', error);
+    res.status(500).json({ detail: 'Nodes API server unavailable' });
   });
   
   backendReq.end();
