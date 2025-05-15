@@ -1,6 +1,7 @@
 import subprocess
 import socket
 import dns.resolver
+import dns.reversename
 import ipaddress
 from ping3 import ping
 import time

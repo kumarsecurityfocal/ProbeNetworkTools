@@ -127,6 +127,33 @@ async def whois_lookup(
     return diagnostic
 
 
+@router.get("/rdns", response_model=schemas.DiagnosticResponse)
+async def reverse_dns_lookup(
+    ip_address: str = Query(..., description="IP address to lookup (IPv4 or IPv6)"),
+    current_user: models.User = Depends(auth.get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    start_time = time.time()
+    success, result = run_reverse_dns_lookup(ip_address)
+    execution_time = int((time.time() - start_time) * 1000)  # Convert to ms
+    
+    # Create diagnostic record
+    diagnostic = models.Diagnostic(
+        tool="reverse_dns_lookup",
+        target=ip_address,
+        result=result,
+        status="success" if success else "failure",
+        user_id=current_user.id,
+        execution_time=execution_time
+    )
+    
+    db.add(diagnostic)
+    db.commit()
+    db.refresh(diagnostic)
+    
+    return diagnostic
+
+
 @router.get("/nmap", response_model=schemas.DiagnosticResponse)
 async def nmap_scan(
     target: str = Query(..., description="Hostname or IP address to scan"),
