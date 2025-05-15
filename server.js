@@ -49,8 +49,16 @@ app.use((req, res, next) => {
   else if (url.startsWith('/api/probe-nodes') || url.startsWith('/probe-nodes')) {
     // Handle probe nodes API requests
     console.log(`Probe nodes request detected: ${req.method} ${url}`);
-    // Strip /api prefix if present
-    const modifiedUrl = url.replace(/^\/api/, '');
+    // Strip /api prefix if present and modify URL to match the backend structure
+    // The backend route is actually just /registration-token not /probe-nodes/registration-token
+    let modifiedUrl = url.replace(/^\/api/, '');
+    
+    // Adjust registration-token routes
+    if (modifiedUrl.includes('/probe-nodes/registration-token')) {
+      modifiedUrl = modifiedUrl.replace('/probe-nodes/registration-token', '/registration-token');
+      console.log(`Adjusted registration token URL: ${modifiedUrl}`);
+    }
+    
     req.url = modifiedUrl;  // Update the request URL before forwarding
     console.log(`Modified URL for probe nodes: ${modifiedUrl}`);
     return handleGenericApi(req, res);
