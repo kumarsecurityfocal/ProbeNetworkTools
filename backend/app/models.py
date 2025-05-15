@@ -194,3 +194,27 @@ class SystemMetric(Base):
     metric_value = Column(Float)
     
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class UsageLog(Base):
+    """
+    Detailed usage log for tracking all API requests with more comprehensive metrics.
+    This expands on ApiUsageLog with additional fields for rate limiting and analytics.
+    """
+    __tablename__ = "usage_logs"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    endpoint = Column(String)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    success = Column(Boolean, default=True)
+    response_time = Column(Float)  # in seconds (float for higher precision)
+    ip_address = Column(String, nullable=True)
+    
+    # Additional fields for better analytics
+    tier_id = Column(Integer, ForeignKey("subscription_tiers.id"), nullable=True)
+    api_key_id = Column(Integer, ForeignKey("api_keys.id"), nullable=True)
+    was_queued = Column(Boolean, default=False)
+    queue_time = Column(Float, nullable=True)  # How long it waited in queue (in seconds)
+    
+    # Relationships could be added if needed
