@@ -1,161 +1,177 @@
 #!/bin/bash
 
-# ProbeOps Fix Frontend Deployment Script
-# This script focuses on fixing the issue where default NGINX page is shown instead of frontend
+# ProbeOps Frontend Deployment Fix Script
+# This script specifically fixes frontend asset deployment issues
 
 # Set script to exit on error
 set -e
 
-# Text formatting
-RED='\033[0;31m'
+# Output formatting
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Helper function for logging
-log_success() {
+# Helper functions
+function log_success() {
     echo -e "${GREEN}✅ $1${NC}"
 }
 
-log_warning() {
+function log_warning() {
     echo -e "${YELLOW}⚠️ $1${NC}"
 }
 
-log_error() {
+function log_error() {
     echo -e "${RED}❌ $1${NC}"
 }
 
-log_info() {
-    echo -e "ℹ️ $1"
+function log_info() {
+    echo -e "${BLUE}ℹ️ $1${NC}"
 }
 
-echo "==== ProbeOps Frontend Deployment Fix ===="
-echo "This script will fix the issue with default NGINX page showing instead of the React frontend."
-echo ""
+echo "==========================================="
+echo "🚀 PROBEOPS FRONTEND DEPLOYMENT FIX SCRIPT"
+echo "==========================================="
 
-# Make sure we're in the project root
-if [ ! -f "docker-compose.yml" ]; then
-    log_error "This script must be run from the project root directory."
-    exit 1
-fi
+# Step 1: Check if frontend assets exist in various locations
+log_info "Step 1: Checking for frontend assets..."
 
-# Step 1: Check if frontend assets directory exists
-log_info "Step 1: Checking frontend build assets..."
-if [ ! -d "./public" ] || [ ! -f "./public/index.html" ]; then
-    log_warning "Missing frontend build files. Building the frontend..."
-    cd frontend
-    # Use our improved build process
-    if [ -f "docker-build.sh" ]; then
-        chmod +x docker-build.sh
-        ./docker-build.sh
-    else
-        # Fallback to simpler build if script is not available
-        log_info "Installing dependencies with --legacy-peer-deps..."
-        npm install --legacy-peer-deps
-        if [ $? -ne 0 ]; then
-            log_error "npm install failed with exit code $?"
-            exit 1
-        fi
-        
-        log_info "Installing PostCSS and Tailwind plugins..."
-        npm install autoprefixer postcss tailwindcss @tailwindcss/postcss --no-save --legacy-peer-deps
-        if [ $? -ne 0 ]; then
-            log_error "Installing PostCSS and Tailwind plugins failed with exit code $?"
-            exit 1
-        fi
-        
-        log_info "Checking postcss.config.js for proper configuration..."
-        cat postcss.config.js
-        
-        # Fix postcss.config.js file - ensure it's using @tailwindcss/postcss
-        if ! grep -q "@tailwindcss/postcss" postcss.config.js; then
-            log_warning "postcss.config.js is not using @tailwindcss/postcss. Fixing..."
-            sed -i 's/tailwindcss/@tailwindcss\/postcss/g' postcss.config.js
-            log_success "Fixed postcss.config.js configuration"
-            cat postcss.config.js
-        else
-            log_success "postcss.config.js has correct configuration with @tailwindcss/postcss"
-        fi
-        
-        # Also ensure the npm package is properly installed
-        log_info "Checking if @tailwindcss/postcss package is properly installed..."
-        NODE_MODULES=$(npm list @tailwindcss/postcss)
-        if [[ $NODE_MODULES != *"@tailwindcss/postcss"* ]]; then
-            log_warning "@tailwindcss/postcss package not found. Installing explicitly..."
-            npm install @tailwindcss/postcss --legacy-peer-deps
-        else
-            log_success "@tailwindcss/postcss package found in node_modules"
-        fi
-        
-        log_info "Running build with detailed output..."
-        npm run build -- --outDir=../public
+# Array of possible frontend asset locations
+locations=(
+    "frontend/dist"
+    "frontend/build"
+    "public"
+    "frontend/public"
+)
+
+found_assets=false
+asset_location=""
+
+for loc in "${locations[@]}"; do
+    if [ -d "$loc" ] && [ -f "$loc/index.html" ]; then
+        found_assets=true
+        asset_location="$loc"
+        log_success "Found frontend assets in $loc"
+        break
+    elif [ -d "$loc" ]; then
+        log_warning "Found $loc directory, but no index.html inside"
     fi
-    cd ..
-    log_success "Frontend built successfully"
-else
-    log_success "Frontend build assets found in ./public"
+done
+
+if [ "$found_assets" = false ]; then
+    log_error "No frontend assets found in any expected location!"
+    
+    # Prompt user to rebuild
+    read -p "Do you want to rebuild the frontend? (y/n): " rebuild_choice
+    if [[ $rebuild_choice =~ ^[Yy]$ ]]; then
+        log_info "Rebuilding frontend..."
+        
+        # Check if we should use Docker or direct build
+        if command -v npm &> /dev/null && [ -d "frontend" ]; then
+            log_info "npm found, building directly..."
+            cd frontend
+            npm install
+            npm run build
+            cd ..
+            
+            if [ -d "frontend/dist" ]; then
+                asset_location="frontend/dist"
+                found_assets=true
+                log_success "Successfully rebuilt frontend assets"
+            else
+                log_error "Frontend build failed to produce dist directory"
+            fi
+        else
+            log_info "Using Docker to build frontend..."
+            docker compose build frontend-build
+            docker compose up -d frontend-build
+            
+            # Wait for build to complete
+            log_info "Waiting for Docker build to complete..."
+            sleep 15
+            docker compose logs frontend-build
+            
+            if [ -d "public" ]; then
+                asset_location="public"
+                found_assets=true
+                log_success "Docker build successful, assets in public directory"
+            else
+                log_error "Docker build failed to produce assets"
+            fi
+        fi
+    else
+        log_info "Creating placeholder assets..."
+        mkdir -p public
+        echo '<html><head><title>ProbeOps</title></head><body><h1>ProbeOps</h1><p>Frontend assets not found. This is a placeholder.</p></body></html>' > public/index.html
+        asset_location="public"
+        found_assets=true
+        log_warning "Created placeholder frontend assets"
+    fi
 fi
 
-# Step 2: Prepare NGINX frontend-build directory
-log_info "Step 2: Preparing NGINX frontend-build directory..."
-mkdir -p ./nginx/frontend-build
-# Make sure the copy script is executable
-chmod +x ./copy-frontend-assets.sh
-./copy-frontend-assets.sh
-log_success "Frontend assets copied to nginx/frontend-build"
+# Step 2: Ensure NGINX frontend directory exists
+log_info "Step 2: Ensuring NGINX frontend directory exists..."
+mkdir -p nginx/frontend-build
+log_success "NGINX frontend directory ready"
 
-# Step 3: Create a marker file in the NGINX build directory
-log_info "Step 3: Creating marker files for troubleshooting..."
-echo "<!DOCTYPE html>
-<html>
-<head>
-    <title>ProbeOps Deployment Verification</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; }
-        h1 { color: #333; }
-        .success { color: green; }
-        .code { background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; }
-        .note { background: #fffde7; padding: 10px; border-radius: 4px; }
-    </style>
-</head>
-<body>
-    <h1>ProbeOps Frontend Deployment Test</h1>
-    <p class=\"success\">If you're seeing this page, it means the NGINX container is correctly serving static content from /usr/share/nginx/html.</p>
-    <p>This is a <strong>temporary test page</strong> and should be replaced by the actual React app.</p>
-    <p>Deployment timestamp: $(date)</p>
-    <div class=\"note\">
-        <p><strong>Note:</strong> This file was created by the fix-frontend-deployment.sh script.</p>
-    </div>
-</body>
-</html>" > ./nginx/frontend-build/test-page.html
+# Step 3: Copy frontend assets to NGINX
+log_info "Step 3: Copying frontend assets to NGINX..."
 
-log_success "Created test page at ./nginx/frontend-build/test-page.html"
+# First clear the destination directory
+log_info "Clearing existing assets in NGINX directory..."
+rm -rf nginx/frontend-build/*
 
-# Step 4: Stop existing containers
-log_info "Step 4: Stopping existing containers..."
-docker compose down
-log_success "Containers stopped"
+# Then copy new assets
+log_info "Copying assets from $asset_location to nginx/frontend-build..."
+cp -rv "$asset_location"/* nginx/frontend-build/ || {
+    log_error "Failed to copy assets with cp -rv. Trying alternate approach..."
+    find "$asset_location" -type f -exec cp {} nginx/frontend-build/ \;
+}
 
-# Step 5: Rebuild and start containers
-log_info "Step 5: Rebuilding and starting containers..."
-docker compose up -d --build
-log_success "Containers rebuilt and started"
+# Check if the copy was successful
+if [ -f "nginx/frontend-build/index.html" ]; then
+    log_success "Frontend assets successfully copied to NGINX directory"
+else
+    log_error "Failed to copy frontend assets properly"
+    log_info "Creating emergency placeholder..."
+    echo '<html><head><title>ProbeOps</title></head><body><h1>ProbeOps Emergency Placeholder</h1><p>Asset copying failed. Please check the deployment logs.</p></body></html>' > nginx/frontend-build/index.html
+    log_warning "Created emergency placeholder"
+fi
 
-# Step 6: Provide next steps
+# Step 4: Verify NGINX is using the correct directory
+log_info "Step 4: Verifying NGINX configuration..."
+if [ -f "nginx/nginx.conf" ]; then
+    if grep -q "frontend-build" nginx/nginx.conf; then
+        log_success "NGINX configuration refers to frontend-build directory correctly"
+    else
+        log_warning "NGINX configuration may not reference frontend-build directory"
+        log_info "Check nginx/nginx.conf to ensure assets are being served from the correct location"
+    fi
+else
+    log_warning "Unable to locate nginx.conf for verification"
+fi
+
+# Step 5: Restart NGINX container if running
+log_info "Step 5: Restarting NGINX container..."
+if docker ps | grep -q "probeops-nginx"; then
+    docker compose restart nginx
+    log_success "NGINX container restarted"
+else
+    log_warning "NGINX container not running, skipping restart"
+fi
+
+# Step 6: Clear browser cache suggestion
+log_info "Step 6: Final checks..."
 echo ""
-echo "==== Next Steps ===="
-echo "1. Check if the frontend is now working by visiting https://probeops.com"
-echo "2. If still seeing default NGINX page, try accessing the test page: https://probeops.com/test-page.html"
-echo "3. Check container logs with: docker compose logs nginx"
-echo ""
-echo "For troubleshooting, you can:"
-echo "- Inspect the NGINX container: docker compose exec nginx /bin/sh"
-echo "- View the content in /usr/share/nginx/html: docker compose exec nginx ls -la /usr/share/nginx/html"
-echo "- Check NGINX configuration: docker compose exec nginx cat /etc/nginx/nginx.conf"
-echo ""
-echo "If all else fails, try:"
-echo "1. docker compose down"
-echo "2. docker system prune -a --volumes"
-echo "3. ./fix-frontend-deployment.sh"
-echo ""
-echo "==== Deployment Complete ===="
+echo "==========================================="
+log_success "FRONTEND DEPLOYMENT FIX COMPLETED!"
+echo "==========================================="
+echo "To ensure you see the latest version:"
+echo "1. Clear your browser cache (Ctrl+F5 or Cmd+Shift+R)"
+echo "2. Make sure you're accessing the correct URL"
+echo "3. If issues persist, check docker logs with: docker compose logs nginx"
+echo "==========================================="
+
+# Display final NGINX status
+docker compose ps nginx || log_warning "Unable to display NGINX container status"

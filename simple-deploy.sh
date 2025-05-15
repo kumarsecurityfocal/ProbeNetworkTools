@@ -1,126 +1,162 @@
 #!/bin/bash
 
-# ProbeOps Simple Deployment Script for AWS EC2
-# This is a simplified version for initial deployment that avoids Git-related issues
+# Simplified Deployment Script for ProbeOps
+# This script focuses on proper frontend asset deployment
 
 # Set script to exit on error
 set -e
 
-# Text formatting for better readability
-RED='\033[0;31m'
+# Output formatting
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Variables
-TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
-LOG_FILE="deployment.log"
-
-# Initialize log file
-echo "===== SIMPLE DEPLOYMENT STARTED: $TIMESTAMP =====" > $LOG_FILE
-
-# Helper function for logging
-log_message() {
-    echo -e "${GREEN}$1${NC}"
-    echo "$(date +"%Y-%m-%d %H:%M:%S") - $1" >> $LOG_FILE
+# Helper functions
+function log_success() {
+    echo -e "${GREEN}✅ $1${NC}"
 }
 
-log_warning() {
+function log_warning() {
     echo -e "${YELLOW}⚠️ $1${NC}"
-    echo "$(date +"%Y-%m-%d %H:%M:%S") - WARNING: $1" >> $LOG_FILE
 }
 
-log_error() {
+function log_error() {
     echo -e "${RED}❌ $1${NC}"
-    echo "$(date +"%Y-%m-%d %H:%M:%S") - ERROR: $1" >> $LOG_FILE
 }
 
-# Function to execute command and log output
-execute_command() {
-    local cmd="$1"
-    local message="$2"
-    local continue_on_error="${3:-false}"
-    
-    log_message "🔄 $message"
-    echo "$ $cmd" >> $LOG_FILE
-    
-    # Execute command and capture output
-    if output=$(eval "$cmd" 2>&1); then
-        echo "$output" >> $LOG_FILE
-        log_message "✅ $message completed successfully"
-        return 0
-    else
-        echo "$output" >> $LOG_FILE
-        log_error "$message failed"
-        if [ "$continue_on_error" = "true" ]; then
-            log_warning "Continuing despite error (as requested)"
-            return 0
-        else
-            return 1
-        fi
-    fi
+function log_info() {
+    echo -e "${BLUE}ℹ️ $1${NC}"
 }
 
-# Step 1: Make SSL directories
-log_message "Step 1: Creating SSL directories if needed..."
-execute_command "mkdir -p nginx/ssl/live/probeops.com-0001" "Creating SSL directories" true
-execute_command "mkdir -p nginx/ssl/archive/probeops.com-0001" "Creating SSL archive directories" true
-execute_command "mkdir -p nginx/ssl/renewal" "Creating SSL renewal directories" true 
-execute_command "mkdir -p nginx/ssl/webroot/.well-known/acme-challenge" "Creating webroot challenge directories" true
+echo "==========================================="
+echo "🚀 PROBEOPS SIMPLIFIED DEPLOYMENT SCRIPT"
+echo "==========================================="
 
-# Step 2: Make sure all scripts are executable
-log_message "Step 2: Setting script permissions..."
-execute_command "chmod +x *.sh" "Setting executable permissions on scripts" true
+# Step 1: Pull latest code
+log_info "Step 1: Pulling latest code..."
+git pull origin main || {
+    log_warning "Git pull failed. Continuing with existing code."
+}
 
-# Step 3: Build the frontend
-log_message "Step 3: Building frontend..."
-if [ -d "frontend" ]; then
-    execute_command "cd frontend && npm install && npm run build" "Installing frontend dependencies and building" true
-    
-    # Instead of relying on the copy script, manually copy the assets
-    log_message "Manually copying frontend assets to nginx/frontend-build..."
-    execute_command "mkdir -p nginx/frontend-build" "Creating nginx/frontend-build directory" true
-    
-    # Check if public directory exists and has files
-    if [ -d "public" ] && [ -f "public/index.html" ]; then
-        execute_command "cp -r public/* nginx/frontend-build/" "Copying public/* to nginx/frontend-build/" true
-        execute_command "echo 'ProbeOps frontend build copied at $(date)' > nginx/frontend-build/.probeops-build-copied" "Creating build marker" true
-        log_message "✅ Frontend assets copied manually to nginx/frontend-build"
-    else
-        log_warning "Public directory or index.html not found. Will try to create a fallback index.html"
-        execute_command "echo '<html><head><title>ProbeOps</title></head><body><h1>ProbeOps</h1><p>Frontend assets not found. This is a placeholder.</p></body></html>' > nginx/frontend-build/index.html" "Creating fallback index.html" true
-    fi
+# Step 2: Make scripts executable
+log_info "Step 2: Making scripts executable..."
+chmod +x *.sh || {
+    log_warning "Failed to make scripts executable. This might cause issues."
+}
+
+# Step 3: Check and set environment variables
+log_info "Step 3: Checking environment variables..."
+if [ -f ".env" ]; then
+    log_success "Found .env file"
 else
-    log_warning "Frontend directory not found. Skipping frontend build."
+    if [ -f ".env.template" ]; then
+        log_warning "Creating .env from template. Please update with actual values!"
+        cp .env.template .env
+    else
+        log_error "No .env or .env.template file found. Deployment might fail!"
+    fi
 fi
 
-# Step 4: Stop existing containers
-log_message "Step 4: Stopping any existing containers..."
-execute_command "docker compose down" "Stopping existing containers" true
+# Step 4: Check database connection
+log_info "Step 4: Testing database connection..."
+if [ -z "$DATABASE_URL" ]; then
+    log_error "DATABASE_URL not set! Check your .env file."
+    log_info "Using default value from .env.backend if available."
+    if [ -f "backend/.env.backend" ]; then
+        export DATABASE_URL=$(grep DATABASE_URL backend/.env.backend | cut -d= -f2)
+        log_info "Using DATABASE_URL from backend/.env.backend"
+    fi
+fi
 
-# Step 5: Rebuild and start containers
-log_message "Step 5: Building and starting containers..."
-execute_command "docker compose up -d --build" "Building and starting containers"
+# Step 5: Stop existing containers
+log_info "Step 5: Stopping existing containers..."
+docker compose down || {
+    log_warning "Failed to stop containers. They might not exist yet, continuing..."
+}
 
-# Step 6: Wait for services to initialize
-log_message "Step 6: Waiting for services to initialize..."
-execute_command "sleep 15" "Waiting for services" true
+# Step 6: Rebuild frontend
+log_info "Step 6: Building frontend assets..."
+cd frontend
+log_info "Running npm install to ensure dependencies are up to date..."
+npm install
+log_info "Building frontend with npm run build..."
+npm run build || {
+    log_error "Frontend build failed! Attempting build through Docker instead."
+    cd ..
+    docker compose build frontend-build
+    docker compose up -d frontend-build
+    # Wait for build to complete
+    sleep 15
+    docker compose logs frontend-build
+}
 
-# Step 7: Apply database migrations
-log_message "Step 7: Applying database migrations..."
-execute_command "docker compose exec -T backend alembic upgrade head" "Applying database migrations" true
+# Return to root directory if we're in frontend/
+cd "$(dirname "$0")" || {
+    log_info "Returning to project root directory..."
+}
 
-# Step 8: Verify services
-log_message "Step 8: Verifying services..."
-execute_command "docker compose ps" "Checking container status" true
+# Step 7: Ensure built assets exist
+log_info "Step 7: Checking built frontend assets..."
+if [ -d "frontend/dist" ]; then
+    log_success "Frontend assets found in frontend/dist"
+    # Copy them to public folder
+    mkdir -p public
+    cp -r frontend/dist/* public/
+    log_success "Copied frontend assets to public folder"
+elif [ -d "public" ]; then
+    log_success "Frontend assets found in public folder"
+else
+    log_error "No frontend assets found in frontend/dist or public! Using fallback."
+    mkdir -p public
+    echo '<html><head><title>ProbeOps</title></head><body><h1>ProbeOps</h1><p>Frontend assets not found. This is a placeholder.</p></body></html>' > public/index.html
+    log_warning "Created placeholder frontend assets"
+fi
 
-# Final status
-log_message "===== DEPLOYMENT COMPLETED: $(date +"%Y-%m-%d %H:%M:%S") ====="
-log_message "📊 Deployment Status: ✅ SUCCESS"
-log_message "📝 See $LOG_FILE for detailed logs"
+# Step 8: Copy frontend assets to NGINX directory
+log_info "Step 8: Copying frontend assets to NGINX..."
+if [ -f "copy-frontend-assets.sh" ]; then
+    log_info "Running copy-frontend-assets.sh..."
+    ./copy-frontend-assets.sh
+else
+    log_warning "copy-frontend-assets.sh not found, performing manual copy..."
+    # Ensure NGINX frontend directory exists
+    mkdir -p nginx/frontend-build
+    # Copy frontend assets
+    cp -rv public/* nginx/frontend-build/ || {
+        log_error "Failed to copy assets with cp -rv. Trying alternate approach..."
+        find public -type f -exec cp {} nginx/frontend-build/ \;
+    }
+    log_success "Frontend assets copied to nginx/frontend-build"
+fi
 
-echo ""
-echo "Deployment completed. Check deployment.log for details."
-echo "To view logs: tail -f deployment.log"
-echo "To view running containers: docker compose ps"
-echo ""
+# Step 9: Start or restart services
+log_info "Step 9: Starting services..."
+docker compose up -d --build || {
+    log_error "Docker Compose failed! Checking for errors..."
+    docker compose logs
+    exit 1
+}
+
+# Step 10: Check service status
+log_info "Step 10: Checking service status..."
+docker compose ps
+
+# Step 11: Test endpoints
+log_info "Step 11: Testing endpoints..."
+log_info "Testing backend API endpoint..."
+curl -s http://localhost:8000/ | grep -q "Welcome to ProbeOps API" && log_success "Backend API is responding correctly" || log_warning "Backend API check failed"
+
+log_info "Testing frontend endpoint..."
+curl -s -I http://localhost:80 | grep -q "200 OK" && log_success "Frontend is accessible" || log_warning "Frontend check failed"
+
+echo "==========================================="
+log_success "DEPLOYMENT COMPLETED!"
+echo "==========================================="
+echo "If you're still seeing old content:"
+echo "1. Try clearing your browser cache"
+echo "2. Run './fix-frontend-deployment.sh'"
+echo "3. Check the NGINX configuration"
+echo "4. Verify the backend API is responding correctly"
+echo "==========================================="
