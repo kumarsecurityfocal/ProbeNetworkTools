@@ -168,27 +168,31 @@ const DiagnosticTool = ({ onRunComplete, prefilledTool }) => {
           }
           break;
         
-        case 'port':
-          params.ports = options.port.ports;
-          params.protocol = options.port.protocol;
-          params.timeout = options.port.timeout;
+        case 'nmap':
+          params.ports = options.nmap.ports;
+          params.protocol = options.nmap.protocol;
+          params.timeout = options.nmap.timeout;
+          break;
+          
+        case 'rdns':
+          params.ip_address = target;
           break;
         
-        case 'http':
+        case 'curl':
           params.url = target;
-          params.method = options.http.method;
-          params.follow_redirects = options.http.followRedirects;
-          params.timeout = options.http.timeout;
+          params.method = options.curl.method;
+          params.follow_redirects = options.curl.followRedirects;
+          params.timeout = options.curl.timeout;
           
           // For POST/PUT, prepare the body and headers
-          if (options.http.method === 'POST' || options.http.method === 'PUT') {
+          if (options.curl.method === 'POST' || options.curl.method === 'PUT') {
             data = {
-              body: options.http.body,
-              headers: parseHeaders(options.http.headers)
+              body: options.curl.body,
+              headers: parseHeaders(options.curl.headers)
             };
-          } else if (options.http.headers) {
+          } else if (options.curl.headers) {
             data = {
-              headers: parseHeaders(options.http.headers)
+              headers: parseHeaders(options.curl.headers)
             };
           }
           break;
@@ -237,9 +241,10 @@ const DiagnosticTool = ({ onRunComplete, prefilledTool }) => {
                 <MenuItem value="ping">Ping</MenuItem>
                 <MenuItem value="traceroute">Traceroute</MenuItem>
                 <MenuItem value="dns">DNS Lookup</MenuItem>
+                <MenuItem value="rdns">Reverse DNS Lookup</MenuItem>
                 <MenuItem value="whois">WHOIS Lookup</MenuItem>
-                <MenuItem value="port">Port Check</MenuItem>
-                <MenuItem value="http">HTTP(S) Request</MenuItem>
+                <MenuItem value="nmap">Port Check (nmap)</MenuItem>
+                <MenuItem value="curl">HTTP(S) Request (curl)</MenuItem>
               </Select>
             </FormControl>
           </Grid>
@@ -247,11 +252,11 @@ const DiagnosticTool = ({ onRunComplete, prefilledTool }) => {
           <Grid item xs={12} sm={8}>
             <TextField
               fullWidth
-              label={tool === 'http' ? "URL" : "Target (hostname or IP)"}
+              label={tool === 'curl' ? "URL" : "Target (hostname or IP)"}
               value={target}
               onChange={handleTargetChange}
               disabled={loading}
-              helperText={tool === 'http' ? "e.g., https://example.com/api/status" : "e.g., example.com, 8.8.8.8"}
+              helperText={tool === 'curl' ? "e.g., https://example.com/api/status" : "e.g., example.com, 8.8.8.8"}
             />
           </Grid>
           
@@ -404,14 +409,14 @@ const DiagnosticTool = ({ onRunComplete, prefilledTool }) => {
             </>
           )}
           
-          {/* Port Check Options */}
-          {tool === 'port' && (
+          {/* Port Check Options (nmap) */}
+          {tool === 'nmap' && (
             <>
               <Grid item xs={12} sm={4}>
                 <TextField
                   fullWidth
                   label="Port(s)"
-                  value={options.port.ports}
+                  value={options.nmap.ports}
                   onChange={(e) => handleOptionChange('ports', e.target.value)}
                   disabled={loading}
                   helperText="Single port or comma-separated list"
@@ -421,7 +426,7 @@ const DiagnosticTool = ({ onRunComplete, prefilledTool }) => {
                 <FormControl fullWidth>
                   <InputLabel>Protocol</InputLabel>
                   <Select
-                    value={options.port.protocol}
+                    value={options.nmap.protocol}
                     label="Protocol"
                     onChange={(e) => handleOptionChange('protocol', e.target.value)}
                     disabled={loading}
@@ -439,7 +444,7 @@ const DiagnosticTool = ({ onRunComplete, prefilledTool }) => {
                   fullWidth
                   type="number"
                   label="Timeout"
-                  value={options.port.timeout}
+                  value={options.nmap.timeout}
                   onChange={(e) => handleOptionChange('timeout', parseInt(e.target.value))}
                   disabled={loading}
                   inputProps={{ min: 1, max: 60 }}
@@ -449,14 +454,14 @@ const DiagnosticTool = ({ onRunComplete, prefilledTool }) => {
             </>
           )}
           
-          {/* HTTP Request Options */}
-          {tool === 'http' && (
+          {/* HTTP Request Options (curl) */}
+          {tool === 'curl' && (
             <>
               <Grid item xs={12} sm={4}>
                 <FormControl fullWidth>
                   <InputLabel>Method</InputLabel>
                   <Select
-                    value={options.http.method}
+                    value={options.curl.method}
                     label="Method"
                     onChange={(e) => handleOptionChange('method', e.target.value)}
                     disabled={loading}
@@ -475,7 +480,7 @@ const DiagnosticTool = ({ onRunComplete, prefilledTool }) => {
                   fullWidth
                   type="number"
                   label="Timeout"
-                  value={options.http.timeout}
+                  value={options.curl.timeout}
                   onChange={(e) => handleOptionChange('timeout', parseInt(e.target.value))}
                   disabled={loading}
                   inputProps={{ min: 1, max: 300 }}
@@ -486,7 +491,7 @@ const DiagnosticTool = ({ onRunComplete, prefilledTool }) => {
                 <FormControlLabel
                   control={
                     <Switch
-                      checked={options.http.followRedirects}
+                      checked={options.curl.followRedirects}
                       onChange={(e) => handleOptionChange('followRedirects', e.target.checked)}
                       disabled={loading}
                     />
@@ -499,7 +504,7 @@ const DiagnosticTool = ({ onRunComplete, prefilledTool }) => {
                 <TextField
                   fullWidth
                   label="Headers"
-                  value={options.http.headers}
+                  value={options.curl.headers}
                   onChange={(e) => handleOptionChange('headers', e.target.value)}
                   disabled={loading}
                   multiline
@@ -508,12 +513,12 @@ const DiagnosticTool = ({ onRunComplete, prefilledTool }) => {
                 />
               </Grid>
               
-              {(options.http.method === 'POST' || options.http.method === 'PUT') && (
+              {(options.curl.method === 'POST' || options.curl.method === 'PUT') && (
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
                     label="Request Body"
-                    value={options.http.body}
+                    value={options.curl.body}
                     onChange={(e) => handleOptionChange('body', e.target.value)}
                     disabled={loading}
                     multiline
@@ -527,7 +532,7 @@ const DiagnosticTool = ({ onRunComplete, prefilledTool }) => {
           
           {/* Tool options toggle */}
           <Grid item xs={12}>
-            {tool !== 'whois' && (
+            {(tool !== 'whois' && tool !== 'rdns') && (
               <FormControlLabel
                 control={
                   <Switch
