@@ -975,27 +975,36 @@ const AdminPanel = () => {
               defaultValue="all"
               onChange={(e) => {
                 const tierFilter = e.target.value;
-                alert(`Filtering by tier: ${tierFilter}`);
+                console.log('Selected tier filter:', tierFilter);
                 
-                // Directly filter the existing users instead of refreshing
-                if (tierFilter === 'all') {
-                  // Refresh to get all users
-                  refreshUsersList();
-                } else if (tierFilter === 'none') {
-                  // Users with no subscription
-                  const withoutSub = users.filter(user => !user.subscription);
-                  alert(`Found ${withoutSub.length} users without subscriptions`);
-                  setUsers(withoutSub);
-                } else {
-                  // Filter by specific tier ID
-                  const withTier = users.filter(user => 
-                    user.subscription && 
-                    user.subscription.tier_id && 
-                    user.subscription.tier_id.toString() === tierFilter
-                  );
-                  alert(`Found ${withTier.length} users with tier ID ${tierFilter}`);
-                  setUsers(withTier);
-                }
+                // Get all users with their subscriptions
+                getAllUsers().then(async (usersData) => {
+                  const subsData = await getAllSubscriptions();
+                  
+                  // Ensure we have the complete dataset to filter from
+                  const allUsersWithSubs = enhanceUsersWithSubscriptions(usersData, subsData);
+                  console.log('Complete user data with subscriptions:', allUsersWithSubs);
+                  
+                  // Apply filter
+                  if (tierFilter === 'all') {
+                    // Show all users
+                    setUsers(allUsersWithSubs);
+                  } else if (tierFilter === 'none') {
+                    // Users with no subscription
+                    const withoutSub = allUsersWithSubs.filter(user => !user.subscription);
+                    console.log('Users without subscription:', withoutSub);
+                    setUsers(withoutSub);
+                  } else {
+                    // Filter by specific tier ID
+                    const withTier = allUsersWithSubs.filter(user => 
+                      user.subscription && 
+                      user.subscription.tier_id && 
+                      user.subscription.tier_id.toString() === tierFilter
+                    );
+                    console.log(`Users with tier ID ${tierFilter}:`, withTier);
+                    setUsers(withTier);
+                  }
+                });
               }}
             >
               <MenuItem value="all">All Tiers</MenuItem>
