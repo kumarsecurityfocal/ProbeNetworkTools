@@ -257,13 +257,14 @@ export const getDashboardMetrics = async () => {
     // Route is defined as /metrics/dashboard in the backend
     // When Express server receives this, it will forward to backend/metrics/dashboard
     // Using just the endpoint, not the full /api prefix
+    console.log("Fetching dashboard metrics from /metrics/dashboard");
     const response = await api.get('/metrics/dashboard');
     console.log("Dashboard metrics response:", response.data);
     return response.data;
   } catch (error) {
     console.log("Error fetching dashboard data:", error);
-    // If endpoint fails, return null and let the component handle fallback calculation
-    return null;
+    // Throw the error so the Dashboard component can handle it properly
+    throw error;
   }
 };
 

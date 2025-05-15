@@ -40,6 +40,7 @@ app.use((req, res, next) => {
     return handleProbes(req, res);
   }
   else if (url.startsWith('/metrics')) {
+    console.log(`Handling metrics request: ${req.method} ${url}`);
     return handleMetrics(req, res);
   }
   else if (url.startsWith('/api/')) {
