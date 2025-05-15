@@ -90,7 +90,7 @@ export const deactivateProbeNode = async (nodeUuid) => {
 export const createRegistrationToken = async (tokenData) => {
   try {
     const response = await axios.post(
-      `${API_URL}/probe-nodes/registration-token`,
+      `/probe-nodes/registration-token`,
       {
         description: tokenData.description,
         expiry_hours: tokenData.expiryHours,
@@ -113,8 +113,10 @@ export const createRegistrationToken = async (tokenData) => {
  */
 export const getRegistrationTokens = async (includeExpired = false, includeUsed = false) => {
   try {
+    // This endpoint should match the backend's actual route which is:
+    // @router.get("/registration-token", response_model=List[schemas.NodeRegistrationTokenResponse])
     const response = await axios.get(
-      `${API_URL}/probe-nodes/registration-token?include_expired=${includeExpired}&include_used=${includeUsed}`,
+      `/probe-nodes/registration-token?include_expired=${includeExpired}&include_used=${includeUsed}`,
       { headers: getAuthHeader() }
     );
     return response.data;
@@ -132,7 +134,7 @@ export const getRegistrationTokens = async (includeExpired = false, includeUsed 
 export const getRegistrationTokenDetails = async (tokenId) => {
   try {
     const response = await axios.get(
-      `${API_URL}/probe-nodes/registration-token/${tokenId}`,
+      `/probe-nodes/registration-token/${tokenId}`,
       { headers: getAuthHeader() }
     );
     return response.data;
@@ -150,7 +152,7 @@ export const getRegistrationTokenDetails = async (tokenId) => {
 export const revokeRegistrationToken = async (tokenId) => {
   try {
     await axios.delete(
-      `${API_URL}/probe-nodes/registration-token/${tokenId}`,
+      `/probe-nodes/registration-token/${tokenId}`,
       { headers: getAuthHeader() }
     );
     return { success: true };
