@@ -942,13 +942,13 @@ const AdminPanel = () => {
               defaultValue="all"
               onChange={(e) => {
                 const statusFilter = e.target.value;
-                getAllUsers().then(allUsers => {
+                refreshUsersList().then(() => {
                   if (statusFilter === 'all') {
-                    setUsers(allUsers);
+                    // No filter needed, refreshUsersList already set all users
                   } else if (statusFilter === 'active') {
-                    setUsers(allUsers.filter(user => user.is_active));
+                    setUsers(prev => prev.filter(user => user.is_active));
                   } else {
-                    setUsers(allUsers.filter(user => !user.is_active));
+                    setUsers(prev => prev.filter(user => !user.is_active));
                   }
                 });
               }}
@@ -956,6 +956,40 @@ const AdminPanel = () => {
               <MenuItem value="all">All Status</MenuItem>
               <MenuItem value="active">Active</MenuItem>
               <MenuItem value="inactive">Inactive</MenuItem>
+            </Select>
+          </FormControl>
+          
+          {/* Subscription tier filter */}
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <InputLabel id="subscription-filter-label">Subscription Tier</InputLabel>
+            <Select
+              labelId="subscription-filter-label"
+              label="Subscription Tier"
+              defaultValue="all"
+              onChange={(e) => {
+                const tierFilter = e.target.value;
+                refreshUsersList().then(() => {
+                  if (tierFilter === 'all') {
+                    // No filter needed, refreshUsersList already set all users
+                  } else if (tierFilter === 'none') {
+                    // Users with no subscription
+                    setUsers(prev => prev.filter(user => !user.subscription_tier_id));
+                  } else {
+                    // Filter by specific tier ID
+                    setUsers(prev => prev.filter(user => 
+                      user.subscription_tier_id && user.subscription_tier_id.toString() === tierFilter
+                    ));
+                  }
+                });
+              }}
+            >
+              <MenuItem value="all">All Tiers</MenuItem>
+              <MenuItem value="none">No Subscription</MenuItem>
+              {tiers.map(tier => (
+                <MenuItem key={tier.id} value={tier.id.toString()}>
+                  {tier.name}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Box>
