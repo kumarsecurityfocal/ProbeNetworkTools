@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     # Database settings
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL", 
-        "postgresql+psycopg2://postgres:postgres@db:5432/probeops"
+        "postgresql+psycopg2://postgres:postgres@localhost:5432/probeops"
     )
     
     @property
