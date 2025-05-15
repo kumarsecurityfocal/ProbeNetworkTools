@@ -85,6 +85,8 @@ const AdminPanel = () => {
   // Default was 0 (Subscriptions)
   const [tabValue, setTabValue] = useState(1); // Set to Users tab by default for testing
   
+  // Utility functions will be defined below
+  
   // Subscription state
   const [subscriptions, setSubscriptions] = useState([]);
   const [tiers, setTiers] = useState([]);
@@ -502,8 +504,30 @@ const AdminPanel = () => {
       // Close dialog first
       setEditUserDialog(false);
       
-      // Then refresh users list (separate try/catch to handle refresh errors)
-      await refreshUsersList();
+      // Refresh all necessary data
+      try {
+        setUserLoading(true);
+        
+        // Fetch updated data
+        const [usersData, subsData] = await Promise.all([
+          getAllUsers(),
+          getAllSubscriptions()
+        ]);
+        
+        // Update subscriptions state
+        setSubscriptions(subsData || []);
+        
+        // Enhance users with their subscription data
+        const enhancedUsers = enhanceUsersWithSubscriptions(usersData, subsData);
+        console.log("Enhanced users with subscription data after save:", enhancedUsers);
+        
+        // Update users state
+        setUsers(enhancedUsers);
+      } catch (refreshError) {
+        console.error('Error refreshing data after save:', refreshError);
+      } finally {
+        setUserLoading(false);
+      }
       
     } catch (error) {
       console.error('Error saving user:', error);
@@ -638,11 +662,7 @@ const AdminPanel = () => {
     return new Date(dateStr).toLocaleString();
   };
 
-  // Get tier name by ID
-  const getTierName = (tierId) => {
-    const tier = tiers.find(t => t.id === tierId);
-    return tier ? tier.name : 'Unknown';
-  };
+  // Note: getTierName is now defined at the top level component
 
   // Debugging indicator that can be displayed while showing the admin panel
   const renderDebugInfo = () => (
