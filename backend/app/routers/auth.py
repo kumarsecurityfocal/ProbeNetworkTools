@@ -10,6 +10,7 @@ from app import models, schemas, auth
 from app.database import get_db
 from app.config import settings
 from app.models import UserSubscription
+from app.middleware.rate_limit import rate_limit_dependency
 
 router = APIRouter()
 
@@ -45,7 +46,8 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 @router.post("/login", response_model=schemas.Token)
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_id: int = Depends(rate_limit_dependency)
 ):
     # Print debug information about login attempt
     print(f"Login attempt for username: {form_data.username}")

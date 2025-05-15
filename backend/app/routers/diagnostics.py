@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app import models, schemas, auth
 from app.database import get_db
+from app.middleware.rate_limit import rate_limit_dependency
 from app.diagnostics.tools import (
     run_ping, run_traceroute, run_dns_lookup, run_reverse_dns_lookup,
     run_whois_lookup, run_port_check, run_http_request
@@ -21,7 +22,8 @@ async def ping_target(
     target: str = Query(..., description="Hostname or IP address to ping"),
     count: int = Query(4, description="Number of packets to send"),
     current_user: models.User = Depends(auth.get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_id: int = Depends(rate_limit_dependency)
 ):
     start_time = time.time()
     success, result = run_ping(target, count)
@@ -48,6 +50,7 @@ async def ping_target(
 async def traceroute_target(
     target: str = Query(..., description="Hostname or IP address to trace"),
     max_hops: int = Query(30, description="Maximum number of hops"),
+    user_id: int = Depends(rate_limit_dependency),
     current_user: models.User = Depends(auth.get_current_active_user),
     db: Session = Depends(get_db)
 ):
