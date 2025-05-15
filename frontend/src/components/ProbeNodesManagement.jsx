@@ -41,7 +41,7 @@ import {
   ArrowDropUp as ArrowDropUpIcon,
   ContentCopy as ContentCopyIcon
 } from '@mui/icons-material';
-import { getProbeNodes, getProbeNodeDetails, updateProbeNode, deactivateProbeNode, createRegistrationToken } from '../services/probeNodes';
+import { getProbeNodes, getProbeNodeDetails, updateProbeNode, deactivateProbeNode, createRegistrationToken, getRegistrationTokens, revokeRegistrationToken } from '../services/probeNodes';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import sharedStyles from '../theme/sharedStyles';
@@ -76,6 +76,12 @@ const ProbeNodesManagement = () => {
     status: '',
     admin_notes: '',
     is_active: true
+  });
+  const [registrationTokens, setRegistrationTokens] = useState([]);
+  const [tokensLoading, setTokensLoading] = useState(false);
+  const [tokenFilters, setTokenFilters] = useState({
+    includeExpired: false,
+    includeUsed: false
   });
 
   // Load probe nodes on component mount

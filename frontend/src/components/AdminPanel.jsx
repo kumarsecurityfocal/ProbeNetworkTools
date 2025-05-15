@@ -286,7 +286,7 @@ const AdminPanel = () => {
     if (currentLoggedInUser && currentLoggedInUser.is_admin && tabValue === 1) {
       fetchUsers();
     }
-  }, [currentLoggedInUser, tabValue, subscriptions]);
+  }, [currentLoggedInUser, tabValue]);
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);

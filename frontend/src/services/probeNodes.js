@@ -104,3 +104,58 @@ export const createRegistrationToken = async (tokenData) => {
     throw error;
   }
 };
+
+/**
+ * Get all registration tokens
+ * @param {Boolean} includeExpired - Whether to include expired tokens
+ * @param {Boolean} includeUsed - Whether to include used tokens
+ * @returns {Promise} - Promise with registration tokens
+ */
+export const getRegistrationTokens = async (includeExpired = false, includeUsed = false) => {
+  try {
+    const response = await axios.get(
+      `${API_URL}/nodes/registration-tokens?include_expired=${includeExpired}&include_used=${includeUsed}`,
+      { headers: getAuthHeader() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching registration tokens:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get details for a specific registration token
+ * @param {string} tokenId - ID of the registration token
+ * @returns {Promise} - Promise with token details
+ */
+export const getRegistrationTokenDetails = async (tokenId) => {
+  try {
+    const response = await axios.get(
+      `${API_URL}/nodes/registration-tokens/${tokenId}`,
+      { headers: getAuthHeader() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching registration token ${tokenId}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Revoke a registration token
+ * @param {string} tokenId - ID of the registration token
+ * @returns {Promise} - Promise with operation result
+ */
+export const revokeRegistrationToken = async (tokenId) => {
+  try {
+    await axios.delete(
+      `${API_URL}/nodes/registration-tokens/${tokenId}`,
+      { headers: getAuthHeader() }
+    );
+    return { success: true };
+  } catch (error) {
+    console.error(`Error revoking registration token ${tokenId}:`, error);
+    throw error;
+  }
+};
