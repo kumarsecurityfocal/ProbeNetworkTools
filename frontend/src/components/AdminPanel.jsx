@@ -198,11 +198,18 @@ const AdminPanel = () => {
       const userSubscription = subscriptions.find(sub => sub.user_id === user.id);
       
       if (userSubscription) {
-        // Return user with subscription data added
+        // Find tier information
+        const tierInfo = tiers.find(tier => tier.id === userSubscription.tier_id);
+        
+        // Return user with full subscription data added
         return {
           ...user,
-          subscription: userSubscription,
-          subscription_tier_id: userSubscription.tier_id
+          subscription: {
+            ...userSubscription,
+            tier: tierInfo
+          },
+          subscription_tier_id: userSubscription.tier_id,
+          subscription_tier_name: tierInfo ? tierInfo.name : `TIER ${userSubscription.tier_id}`
         };
       }
       
@@ -662,11 +669,7 @@ const AdminPanel = () => {
     return new Date(dateStr).toLocaleString();
   };
 
-  // Utility function to get subscription tier name for display
-  const getSubscriptionDisplayName = (subscription) => {
-    if (!subscription || !subscription.tier) return 'UNKNOWN';
-    return subscription.tier.name || `TIER ${subscription.tier_id}`;
-  };
+  // Utility functions are defined inline where needed
 
   // Debugging indicator that can be displayed while showing the admin panel
   const renderDebugInfo = () => (
@@ -740,7 +743,12 @@ const AdminPanel = () => {
                   <TableRow key={sub.id}>
                     <TableCell>{sub.id}</TableCell>
                     <TableCell>{sub.user_id}</TableCell>
-                    <TableCell>{sub.tier?.name || `TIER ${sub.tier_id}`}</TableCell>
+                    <TableCell>
+                      {(() => {
+                        const tierInfo = tiers.find(t => t.id === sub.tier_id);
+                        return tierInfo ? tierInfo.name : `TIER ${sub.tier_id}`;
+                      })()}
+                    </TableCell>
                     <TableCell>
                       {sub.is_active ? (
                         <Chip 
@@ -964,12 +972,12 @@ const AdminPanel = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        {user.subscription ? (
-                          <Tooltip title={`Subscription ID: ${user.subscription.id}`}>
+                        {user.subscription_tier_name ? (
+                          <Tooltip title={`Subscription ID: ${user.subscription?.id || 'None'}`}>
                             <Chip 
                               color="info" 
                               size="small" 
-                              label={user.subscription.tier?.name || `TIER ${user.subscription.tier_id}`} 
+                              label={user.subscription_tier_name}
                             />
                           </Tooltip>
                         ) : (
