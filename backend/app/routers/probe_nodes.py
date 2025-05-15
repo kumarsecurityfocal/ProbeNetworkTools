@@ -244,7 +244,7 @@ async def update_node(
     return node
 
 
-@router.get("/nodes/registration-token", response_model=List[schemas.NodeRegistrationTokenResponse])
+@router.get("/registration-token", response_model=List[schemas.NodeRegistrationTokenResponse])
 async def get_registration_tokens(
     include_expired: bool = Query(False, description="Include expired tokens"),
     include_used: bool = Query(False, description="Include already used tokens"),
