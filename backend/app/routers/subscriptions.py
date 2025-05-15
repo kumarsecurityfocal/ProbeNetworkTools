@@ -164,3 +164,98 @@ def list_subscription_tiers(db: Session = Depends(get_db)):
     """
     tiers = db.query(models.SubscriptionTier).all()
     return tiers
+
+
+@router.get("/subscription-tiers/{tier_id}", response_model=schemas.SubscriptionTierResponse)
+def get_subscription_tier(
+    tier_id: int = Path(..., title="The ID of the subscription tier to get"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get a subscription tier by ID. Public endpoint.
+    """
+    tier = db.query(models.SubscriptionTier).filter(models.SubscriptionTier.id == tier_id).first()
+    if not tier:
+        raise HTTPException(status_code=404, detail="Subscription tier not found")
+    return tier
+
+
+@router.post("/subscription-tiers", response_model=schemas.SubscriptionTierResponse)
+def create_subscription_tier(
+    tier: schemas.SubscriptionTierCreate,
+    current_user: models.User = Depends(auth.get_admin_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Create a new subscription tier (admin only).
+    """
+    # Check if a tier with this name already exists
+    existing_tier = db.query(models.SubscriptionTier).filter(models.SubscriptionTier.name == tier.name).first()
+    if existing_tier:
+        raise HTTPException(status_code=400, detail="A subscription tier with this name already exists")
+    
+    # Create new tier
+    db_tier = models.SubscriptionTier(**tier.dict())
+    db.add(db_tier)
+    db.commit()
+    db.refresh(db_tier)
+    return db_tier
+
+
+@router.put("/subscription-tiers/{tier_id}", response_model=schemas.SubscriptionTierResponse)
+def update_subscription_tier(
+    tier_data: schemas.SubscriptionTierCreate,
+    tier_id: int = Path(..., title="The ID of the subscription tier to update"),
+    current_user: models.User = Depends(auth.get_admin_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Update a subscription tier (admin only).
+    """
+    tier = db.query(models.SubscriptionTier).filter(models.SubscriptionTier.id == tier_id).first()
+    if not tier:
+        raise HTTPException(status_code=404, detail="Subscription tier not found")
+    
+    # Check if renaming would cause a conflict
+    if tier_data.name != tier.name:
+        existing_tier = db.query(models.SubscriptionTier).filter(models.SubscriptionTier.name == tier_data.name).first()
+        if existing_tier:
+            raise HTTPException(status_code=400, detail="A subscription tier with this name already exists")
+    
+    # Update tier attributes
+    for key, value in tier_data.dict().items():
+        setattr(tier, key, value)
+    
+    db.commit()
+    db.refresh(tier)
+    return tier
+
+
+@router.delete("/subscription-tiers/{tier_id}", response_model=dict)
+def delete_subscription_tier(
+    tier_id: int = Path(..., title="The ID of the subscription tier to delete"),
+    current_user: models.User = Depends(auth.get_admin_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Delete a subscription tier (admin only).
+    
+    This will fail if there are any user subscriptions using this tier.
+    """
+    tier = db.query(models.SubscriptionTier).filter(models.SubscriptionTier.id == tier_id).first()
+    if not tier:
+        raise HTTPException(status_code=404, detail="Subscription tier not found")
+    
+    # Check if there are any subscriptions using this tier
+    subscriptions = db.query(models.UserSubscription).filter(models.UserSubscription.tier_id == tier_id).count()
+    if subscriptions > 0:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Cannot delete tier: {subscriptions} active subscriptions are using this tier"
+        )
+    
+    # Delete the tier
+    db.delete(tier)
+    db.commit()
+    
+    return {"detail": f"Subscription tier {tier.name} deleted successfully"}

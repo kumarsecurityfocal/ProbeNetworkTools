@@ -67,11 +67,21 @@ class SubscriptionTier(Base):
     # Rate limits
     rate_limit_minute = Column(Integer)
     rate_limit_hour = Column(Integer)
+    rate_limit_day = Column(Integer)  # API calls per day limit
+    rate_limit_month = Column(Integer)  # API calls per month limit
     
     # Feature limitations
     max_scheduled_probes = Column(Integer)
     max_api_keys = Column(Integer)
     max_history_days = Column(Integer)
+    
+    # Allowed intervals for scheduled probes (comma-separated values in minutes)
+    # Example: "5,15,60,1440" for 5min, 15min, 1hr, 1day
+    allowed_probe_intervals = Column(String, default="15,60,1440")
+    
+    # Concurrency settings
+    max_concurrent_requests = Column(Integer, default=5)  # Maximum concurrent requests allowed
+    request_priority = Column(Integer, default=1)  # Priority in the request queue (higher = higher priority)
     
     # Feature flags
     allow_scheduled_probes = Column(Boolean, default=False)

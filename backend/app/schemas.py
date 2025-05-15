@@ -90,11 +90,26 @@ class SubscriptionTierBase(BaseModel):
     price_monthly: int
     price_yearly: int
     features: Dict[str, Any]
+    
+    # Rate limits
     rate_limit_minute: int
     rate_limit_hour: int
+    rate_limit_day: Optional[int] = None
+    rate_limit_month: Optional[int] = None
+    
+    # Feature limitations
     max_scheduled_probes: int
     max_api_keys: int
     max_history_days: int
+    
+    # Probe interval settings
+    allowed_probe_intervals: Optional[str] = "15,60,1440"  # Default: 15min, 1hr, 1day
+    
+    # Concurrency settings
+    max_concurrent_requests: Optional[int] = 5
+    request_priority: Optional[int] = 1
+    
+    # Feature flags
     allow_scheduled_probes: bool
     allow_api_access: bool
     allow_export: bool
