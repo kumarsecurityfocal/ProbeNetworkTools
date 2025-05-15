@@ -48,6 +48,11 @@ app.use((req, res, next) => {
   }
   else if (url.startsWith('/api/probe-nodes') || url.startsWith('/probe-nodes')) {
     // Handle probe nodes API requests
+    console.log(`Probe nodes request detected: ${req.method} ${url}`);
+    // Strip /api prefix if present
+    const modifiedUrl = url.replace(/^\/api/, '');
+    req.url = modifiedUrl;  // Update the request URL before forwarding
+    console.log(`Modified URL for probe nodes: ${modifiedUrl}`);
     return handleGenericApi(req, res);
   }
   else if (url.startsWith('/nodes')) {
