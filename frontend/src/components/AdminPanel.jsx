@@ -898,11 +898,10 @@ const AdminPanel = () => {
             onChange={(e) => {
               const searchTerm = e.target.value.toLowerCase();
               if (searchTerm) {
-                const filteredUsers = users.filter(user => 
-                  user.username.toLowerCase().includes(searchTerm) || 
-                  user.email.toLowerCase().includes(searchTerm)
-                );
-                setUsers(filteredUsers);
+                setUsers(prev => prev.filter(user => 
+                  (user.username && user.username.toLowerCase().includes(searchTerm)) || 
+                  (user.email && user.email.toLowerCase().includes(searchTerm))
+                ));
               } else {
                 // If search field is cleared, refresh users list
                 refreshUsersList();
