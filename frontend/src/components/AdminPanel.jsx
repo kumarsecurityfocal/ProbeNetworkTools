@@ -187,6 +187,28 @@ const AdminPanel = () => {
     }
   }, [currentLoggedInUser]);
   
+  // Function to enhance users with their subscription data
+  const enhanceUsersWithSubscriptions = (users, subscriptions) => {
+    if (!users || !subscriptions) return users;
+    
+    return users.map(user => {
+      // Find subscription for this user
+      const userSubscription = subscriptions.find(sub => sub.user_id === user.id);
+      
+      if (userSubscription) {
+        // Return user with subscription data added
+        return {
+          ...user,
+          subscription: userSubscription,
+          subscription_tier_id: userSubscription.tier_id
+        };
+      }
+      
+      // Return user without subscription data
+      return user;
+    });
+  };
+
   // Load user data
   useEffect(() => {
     const fetchUsers = async () => {
@@ -205,7 +227,19 @@ const AdminPanel = () => {
         console.log("DEBUG USERS: Is array:", Array.isArray(usersData));
         console.log("DEBUG USERS: Length:", usersData?.length || 0);
         
-        setUsers(usersData);
+        // Fetch subscriptions if not already loaded
+        let subsData = subscriptions;
+        if (!subscriptions.length) {
+          console.log("Fetching subscriptions for user enhancement...");
+          subsData = await getAllSubscriptions();
+          setSubscriptions(subsData || []);
+        }
+        
+        // Enhance users with their subscription data
+        const enhancedUsers = enhanceUsersWithSubscriptions(usersData, subsData);
+        console.log("Enhanced users with subscription data:", enhancedUsers);
+        
+        setUsers(enhancedUsers);
         setUserError(null);
         setDebugInfo(prev => ({ ...prev, usersLoaded: true }));
         console.log("DEBUG USERS: State updated, usersLoaded set to true");
@@ -221,7 +255,7 @@ const AdminPanel = () => {
     if (currentLoggedInUser && currentLoggedInUser.is_admin && tabValue === 1) {
       fetchUsers();
     }
-  }, [currentLoggedInUser, tabValue]);
+  }, [currentLoggedInUser, tabValue, subscriptions]);
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -906,17 +940,19 @@ const AdminPanel = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        {user.user_subscription?.tier?.name ? (
-                          <Chip 
-                            color="info" 
-                            size="small" 
-                            label={user.user_subscription.tier.name} 
-                          />
+                        {user.subscription ? (
+                          <Tooltip title={`Subscription ID: ${user.subscription.id}`}>
+                            <Chip 
+                              color="info" 
+                              size="small" 
+                              label={getTierName(user.subscription.tier_id)} 
+                            />
+                          </Tooltip>
                         ) : (
                           <Chip 
                             color="default" 
                             size="small" 
-                            label="FREE" 
+                            label="NO SUBSCRIPTION" 
                           />
                         )}
                       </TableCell>
