@@ -14,7 +14,7 @@ const API_URL = '/api';
 export const getProbeNodes = async (filters = {}, page = 0, limit = 10) => {
   try {
     const { region, status, activeOnly } = filters;
-    let url = `${API_URL}/nodes?skip=${page * limit}&limit=${limit}`;
+    let url = `${API_URL}/probe-nodes?skip=${page * limit}&limit=${limit}`;
     
     if (region) url += `&region=${region}`;
     if (status) url += `&status=${status}`;
@@ -35,7 +35,7 @@ export const getProbeNodes = async (filters = {}, page = 0, limit = 10) => {
  */
 export const getProbeNodeDetails = async (nodeUuid) => {
   try {
-    const response = await axios.get(`${API_URL}/nodes/${nodeUuid}`, {
+    const response = await axios.get(`${API_URL}/probe-nodes/${nodeUuid}`, {
       headers: getAuthHeader()
     });
     return response.data;
@@ -54,7 +54,7 @@ export const getProbeNodeDetails = async (nodeUuid) => {
 export const updateProbeNode = async (nodeUuid, updateData) => {
   try {
     const response = await axios.put(
-      `${API_URL}/nodes/${nodeUuid}`,
+      `${API_URL}/probe-nodes/${nodeUuid}`,
       updateData,
       { headers: getAuthHeader() }
     );
@@ -72,7 +72,7 @@ export const updateProbeNode = async (nodeUuid, updateData) => {
  */
 export const deactivateProbeNode = async (nodeUuid) => {
   try {
-    await axios.delete(`${API_URL}/nodes/${nodeUuid}`, {
+    await axios.delete(`${API_URL}/probe-nodes/${nodeUuid}`, {
       headers: getAuthHeader()
     });
     return { success: true };
@@ -90,7 +90,7 @@ export const deactivateProbeNode = async (nodeUuid) => {
 export const createRegistrationToken = async (tokenData) => {
   try {
     const response = await axios.post(
-      `${API_URL}/nodes/registration-token/create`,
+      `${API_URL}/probe-nodes/registration-token/create`,
       {
         description: tokenData.description,
         expiry_hours: tokenData.expiryHours,
@@ -114,7 +114,7 @@ export const createRegistrationToken = async (tokenData) => {
 export const getRegistrationTokens = async (includeExpired = false, includeUsed = false) => {
   try {
     const response = await axios.get(
-      `${API_URL}/nodes/registration-token?include_expired=${includeExpired}&include_used=${includeUsed}`,
+      `${API_URL}/probe-nodes/registration-token?include_expired=${includeExpired}&include_used=${includeUsed}`,
       { headers: getAuthHeader() }
     );
     return response.data;
@@ -132,7 +132,7 @@ export const getRegistrationTokens = async (includeExpired = false, includeUsed 
 export const getRegistrationTokenDetails = async (tokenId) => {
   try {
     const response = await axios.get(
-      `${API_URL}/nodes/registration-token/${tokenId}`,
+      `${API_URL}/probe-nodes/registration-token/${tokenId}`,
       { headers: getAuthHeader() }
     );
     return response.data;
@@ -150,7 +150,7 @@ export const getRegistrationTokenDetails = async (tokenId) => {
 export const revokeRegistrationToken = async (tokenId) => {
   try {
     await axios.delete(
-      `${API_URL}/nodes/registration-token/${tokenId}`,
+      `${API_URL}/probe-nodes/registration-token/${tokenId}`,
       { headers: getAuthHeader() }
     );
     return { success: true };
