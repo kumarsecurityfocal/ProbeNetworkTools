@@ -67,11 +67,22 @@ if [ ! -d "./public" ] || [ ! -f "./public/index.html" ]; then
         log_info "Checking postcss.config.js for proper configuration..."
         cat postcss.config.js
         
+        # Fix postcss.config.js file - replace @tailwindcss/postcss with tailwindcss
         if grep -q "@tailwindcss/postcss" postcss.config.js; then
             log_warning "Found invalid reference to @tailwindcss/postcss in postcss.config.js. Fixing..."
             sed -i 's/@tailwindcss\/postcss/tailwindcss/g' postcss.config.js
             log_success "Fixed postcss.config.js configuration"
             cat postcss.config.js
+        fi
+        
+        # Also ensure the npm package is properly installed
+        log_info "Checking if tailwindcss package is properly installed..."
+        NODE_MODULES=$(npm list tailwindcss)
+        if [[ $NODE_MODULES != *"tailwindcss"* ]]; then
+            log_warning "tailwindcss package not found. Installing explicitly..."
+            npm install tailwindcss --legacy-peer-deps
+        else
+            log_success "tailwindcss package found in node_modules"
         fi
         
         log_info "Running build with detailed output..."
