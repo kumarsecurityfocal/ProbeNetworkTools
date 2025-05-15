@@ -160,8 +160,10 @@ const AdminPanel = () => {
           console.error('Error loading subscriptions:', subErr);
         }
         
-        // If we got this far without any data, show an error
-        if (tiers.length === 0 && subscriptions.length === 0) {
+        // Only show error if we couldn't load any data at all
+        // We're checking the local state variables, which could still be empty from initialization
+        // Instead, we should check if we successfully loaded data (set by the debug flags)
+        if (!debugInfo.tiersLoaded && !debugInfo.subsLoaded) {
           setError('Failed to load subscription data. Please try again later.');
         } else {
           setError(null);
