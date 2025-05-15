@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app import models, schemas, auth
 from app.database import get_db
+from app.middleware.rate_limit import rate_limit_dependency
 
 router = APIRouter()
 
@@ -13,7 +14,8 @@ router = APIRouter()
 async def create_scheduled_probe(
     probe: schemas.ScheduledProbeCreate,
     current_user: models.User = Depends(auth.get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_id: int = Depends(rate_limit_dependency)
 ):
     """
     Create a new scheduled probe.
@@ -60,7 +62,8 @@ async def get_scheduled_probes(
     skip: int = Query(0, description="Number of items to skip"),
     limit: int = Query(100, description="Maximum number of items to return"),
     current_user: models.User = Depends(auth.get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_id: int = Depends(rate_limit_dependency)
 ):
     """
     Get all scheduled probes for the current user.
@@ -81,7 +84,8 @@ async def get_scheduled_probes(
 async def get_scheduled_probe(
     probe_id: int,
     current_user: models.User = Depends(auth.get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_id: int = Depends(rate_limit_dependency)
 ):
     """
     Get a specific scheduled probe by ID.
