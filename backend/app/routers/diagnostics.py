@@ -127,9 +127,9 @@ async def whois_lookup(
     return diagnostic
 
 
-@router.get("/port", response_model=schemas.DiagnosticResponse)
-async def port_check(
-    target: str = Query(..., description="Hostname or IP address to check"),
+@router.get("/nmap", response_model=schemas.DiagnosticResponse)
+async def nmap_scan(
+    target: str = Query(..., description="Hostname or IP address to scan"),
     ports: str = Query(..., description="Port number or comma-separated list of ports"),
     protocol: str = Query("tcp", description="Protocol (tcp or udp)"),
     timeout: int = Query(5, description="Timeout in seconds (1-60)"),
@@ -142,7 +142,7 @@ async def port_check(
     
     # Create diagnostic record
     diagnostic = models.Diagnostic(
-        tool="port_check",
+        tool="nmap",
         target=f"{target} (Ports: {ports}, Protocol: {protocol})",
         result=result,
         status="success" if success else "failure",
@@ -157,8 +157,8 @@ async def port_check(
     return diagnostic
 
 
-@router.post("/http", response_model=schemas.DiagnosticResponse)
-async def http_request(
+@router.post("/curl", response_model=schemas.DiagnosticResponse)
+async def curl_request(
     url: str = Query(..., description="URL to request"),
     method: str = Query("GET", description="HTTP method (GET, POST, PUT, DELETE, etc.)"),
     follow_redirects: bool = Query(True, description="Whether to follow redirects"),
@@ -176,7 +176,7 @@ async def http_request(
     
     # Create diagnostic record
     diagnostic = models.Diagnostic(
-        tool="http_request",
+        tool="curl",
         target=f"{method} {url}",
         result=result,
         status="success" if success else "failure",
