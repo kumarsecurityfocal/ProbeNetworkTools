@@ -188,9 +188,9 @@ export const runDiagnostic = async (tool, params = {}, data = null) => {
     const endpoint = `/diagnostics/${tool}`;
     console.log(`Making request to: ${endpoint}`);
     
-    // For HTTP requests, we need to use POST with a body
+    // For curl (HTTP) requests, we need to use POST with a body
     let response;
-    if (tool === 'http') {
+    if (tool === 'curl') {
       response = await api.post(endpoint, data, { 
         params,
         headers: { 'Authorization': `Bearer ${token}` }
