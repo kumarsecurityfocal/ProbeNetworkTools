@@ -1,23 +1,26 @@
 #!/bin/bash
 
-# ProbeOps Clean Deployment Script
-# This script performs a full deployment of the ProbeOps platform,
+# ProbeOps Clean Deployment Script for Fresh Server
+# This script performs a full first-time deployment of the ProbeOps platform,
 # ensuring proper build and configuration of all components
 # With comprehensive logging to deployment.log
+# Designed for fresh server installations with no existing configuration
 
-# Exit on any error
+# Exit on any error and print each command before execution
 set -e
+set -v
 
-# Setup logging
+# Setup verbose logging
 DEPLOYMENT_DATE=$(date +"%Y%m%d_%H%M%S")
 LOG_FILE="deployment.log"
-# No LATEST_LOG_FILE defined anymore, we'll remove that reference
-cp -f "$LOG_FILE" "${LOG_FILE}.bak" 2>/dev/null || true
 
-# Add header to log file
-echo "===== DEPLOYMENT STARTED: $(date +"%Y-%m-%d %H:%M:%S") =====" > "$LOG_FILE"
+# Create new log file
+echo "===== FRESH DEPLOYMENT STARTED: $(date +"%Y-%m-%d %H:%M:%S") =====" > "$LOG_FILE"
+echo "===== RUNNING ON: $(hostname) =====" >> "$LOG_FILE"
+echo "===== SYSTEM INFO =====" >> "$LOG_FILE"
+uname -a >> "$LOG_FILE" 2>&1
 
-# Output formatting
+# Output formatting with timestamps
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 RED='\033[0;31m'
@@ -26,68 +29,117 @@ NC='\033[0m' # No Color
 
 # Helper functions for logging
 function log_success() {
-    echo -e "${GREEN}✅ $1${NC}" | tee -a "$LOG_FILE"
-    echo "[SUCCESS] $(date +"%Y-%m-%d %H:%M:%S") - $1" >> "$LOG_FILE"
+    local timestamp=$(date +"%Y-%m-%d %H:%M:%S.%3N")
+    echo -e "${GREEN}[${timestamp}] ✅ $1${NC}" | tee -a "$LOG_FILE"
+    echo "[SUCCESS] ${timestamp} - $1" >> "$LOG_FILE"
 }
 
 function log_warning() {
-    echo -e "${YELLOW}⚠️ $1${NC}" | tee -a "$LOG_FILE"
-    echo "[WARNING] $(date +"%Y-%m-%d %H:%M:%S") - $1" >> "$LOG_FILE"
+    local timestamp=$(date +"%Y-%m-%d %H:%M:%S.%3N")
+    echo -e "${YELLOW}[${timestamp}] ⚠️ $1${NC}" | tee -a "$LOG_FILE"
+    echo "[WARNING] ${timestamp} - $1" >> "$LOG_FILE"
 }
 
 function log_error() {
-    echo -e "${RED}❌ $1${NC}" | tee -a "$LOG_FILE"
-    echo "[ERROR] $(date +"%Y-%m-%d %H:%M:%S") - $1" >> "$LOG_FILE"
+    local timestamp=$(date +"%Y-%m-%d %H:%M:%S.%3N")
+    echo -e "${RED}[${timestamp}] ❌ $1${NC}" | tee -a "$LOG_FILE"
+    echo "[ERROR] ${timestamp} - $1" >> "$LOG_FILE"
 }
 
 function log_info() {
-    echo -e "${BLUE}ℹ️ $1${NC}" | tee -a "$LOG_FILE"
-    echo "[INFO] $(date +"%Y-%m-%d %H:%M:%S") - $1" >> "$LOG_FILE"
+    local timestamp=$(date +"%Y-%m-%d %H:%M:%S.%3N")
+    echo -e "${BLUE}[${timestamp}] ℹ️ $1${NC}" | tee -a "$LOG_FILE"
+    echo "[INFO] ${timestamp} - $1" >> "$LOG_FILE"
 }
 
-# Function to capture command output with logging
+# Function to capture command output with very verbose logging
 function run_command() {
     local cmd="$1"
     local desc="$2"
     
-    echo "$ $cmd" >> "$LOG_FILE"
-    echo "[COMMAND] $(date +"%Y-%m-%d %H:%M:%S") - Running: $cmd" >> "$LOG_FILE"
-    echo "[COMMAND] $desc" >> "$LOG_FILE"
+    log_info "Running: $desc"
+    echo "[COMMAND_START] $(date +"%Y-%m-%d %H:%M:%S.%3N") - $cmd" >> "$LOG_FILE"
+    echo "$ $cmd" | tee -a "$LOG_FILE"
     
-    # Run the command and capture output
-    output=$(eval "$cmd" 2>&1)
-    exit_code=$?
+    # Log command start time for performance measurement
+    local start_time=$(date +%s.%N)
     
-    # Log the output
+    # Run the command and capture its output and exit status
+    local output
+    local exit_status=0
+    
+    output=$(eval "$cmd" 2>&1) || exit_status=$?
+    
+    # Calculate command duration
+    local end_time=$(date +%s.%N)
+    local duration=$(echo "$end_time - $start_time" | bc)
+    
+    # Write output to log
+    echo "[COMMAND_OUTPUT_BEGIN] $(date +"%Y-%m-%d %H:%M:%S.%3N")" >> "$LOG_FILE"
     echo "$output" >> "$LOG_FILE"
-    echo "[COMMAND OUTPUT] Exit code: $exit_code" >> "$LOG_FILE"
+    echo "[COMMAND_OUTPUT_END] $(date +"%Y-%m-%d %H:%M:%S.%3N") (Duration: ${duration}s)" >> "$LOG_FILE"
     
-    # Output to console if requested
-    if [ "${3:-}" == "verbose" ]; then
-        echo "$output"
+    # Display output to console
+    echo "$output"
+    
+    # Check the exit status
+    if [ $exit_status -ne 0 ]; then
+        log_error "Command failed with exit status $exit_status: $cmd"
+        echo "[COMMAND_FAILED] $(date +"%Y-%m-%d %H:%M:%S.%3N") - EXIT CODE: $exit_status - DURATION: ${duration}s" >> "$LOG_FILE"
+        return $exit_status
+    else
+        echo "[COMMAND_SUCCESS] $(date +"%Y-%m-%d %H:%M:%S.%3N") - DURATION: ${duration}s" >> "$LOG_FILE"
     fi
     
-    # Return the exit code
-    return $exit_code
+    return 0
 }
 
-# Initialize log file
-timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-echo "===== DEPLOYMENT STARTED: $timestamp =====" | tee -a "$LOG_FILE"
-echo "Deployment script version: 1.0.0" >> "$LOG_FILE"
-echo "System information:" >> "$LOG_FILE"
-uname -a >> "$LOG_FILE"
-echo "Docker version:" >> "$LOG_FILE"
-docker --version >> "$LOG_FILE" 2>&1 || echo "Docker not found" >> "$LOG_FILE"
-echo "Node version:" >> "$LOG_FILE"
-node --version >> "$LOG_FILE" 2>&1 || echo "Node.js not found" >> "$LOG_FILE"
-echo "npm version:" >> "$LOG_FILE"
-npm --version >> "$LOG_FILE" 2>&1 || echo "npm not found" >> "$LOG_FILE"
-echo "Python version:" >> "$LOG_FILE"
-python3 --version >> "$LOG_FILE" 2>&1 || echo "Python3 not found" >> "$LOG_FILE"
-echo "===== ENVIRONMENT INFORMATION LOGGED =====" >> "$LOG_FILE"
+# Function to verify a condition and exit if it fails
+function verify_or_exit() {
+    local condition="$1"
+    local error_message="$2"
+    local suggestion="$3"
+    
+    if ! eval "$condition"; then
+        log_error "$error_message"
+        if [ -n "$suggestion" ]; then
+            log_info "Suggestion: $suggestion"
+        fi
+        exit 1
+    fi
+}
 
-# No symlink needed anymore as we're using a fixed log file path
+# Log detailed system and dependency information
+log_info "Collecting detailed system information..."
+echo "===== DETAILED SYSTEM INFORMATION =====" >> "$LOG_FILE"
+echo "Kernel and OS details:" >> "$LOG_FILE"
+uname -a >> "$LOG_FILE" 2>&1
+echo "CPU information:" >> "$LOG_FILE"
+lscpu >> "$LOG_FILE" 2>&1 || echo "lscpu not available" >> "$LOG_FILE"
+echo "Memory information:" >> "$LOG_FILE"
+free -h >> "$LOG_FILE" 2>&1 || echo "free command not available" >> "$LOG_FILE"
+echo "Disk space:" >> "$LOG_FILE"
+df -h >> "$LOG_FILE" 2>&1 || echo "df command not available" >> "$LOG_FILE"
+
+# Log dependency versions
+echo "===== DEPENDENCY VERSIONS =====" >> "$LOG_FILE"
+echo "Docker version:" >> "$LOG_FILE"
+docker --version >> "$LOG_FILE" 2>&1 || echo "Docker not found - REQUIRED" >> "$LOG_FILE"
+echo "Docker Compose version:" >> "$LOG_FILE"
+docker compose version >> "$LOG_FILE" 2>&1 || echo "Docker Compose not found - REQUIRED" >> "$LOG_FILE"
+echo "Node version:" >> "$LOG_FILE"
+node --version >> "$LOG_FILE" 2>&1 || echo "Node.js not found - REQUIRED" >> "$LOG_FILE"
+echo "npm version:" >> "$LOG_FILE"
+npm --version >> "$LOG_FILE" 2>&1 || echo "npm not found - REQUIRED" >> "$LOG_FILE"
+echo "Python version:" >> "$LOG_FILE"
+python3 --version >> "$LOG_FILE" 2>&1 || echo "Python3 not found - REQUIRED" >> "$LOG_FILE"
+echo "pip version:" >> "$LOG_FILE"
+pip3 --version >> "$LOG_FILE" 2>&1 || echo "pip3 not found - REQUIRED" >> "$LOG_FILE"
+echo "===== END OF ENVIRONMENT INFORMATION =====" >> "$LOG_FILE"
+
+# Check for required dependencies
+verify_or_exit "command -v docker >/dev/null 2>&1" "Docker is not installed" "Install Docker using: curl -fsSL https://get.docker.com | sh"
+verify_or_exit "docker compose version >/dev/null 2>&1" "Docker Compose is not available" "Update Docker or install Docker Compose separately"
 
 log_info "Deployment started. Logging to $LOG_FILE"
 
