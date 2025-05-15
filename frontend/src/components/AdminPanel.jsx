@@ -757,7 +757,8 @@ const AdminPanel = () => {
                   password: '',
                   is_admin: false,
                   is_active: true,
-                  email_verified: true
+                  email_verified: true,
+                  subscription_tier_id: '' // Initialize with empty subscription tier
                 });
                 setEditUserDialog(true);
               }}
