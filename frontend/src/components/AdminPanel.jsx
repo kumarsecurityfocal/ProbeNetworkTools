@@ -1754,7 +1754,18 @@ const AdminPanel = () => {
                 onChange={(e) => setCurrentTier(prev => ({ ...prev, request_priority: parseInt(e.target.value) }))}
                 fullWidth
                 required
-                helperText="Higher value = higher priority"
+                helperText="Higher value = higher priority in queue"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Tier Priority"
+                type="number"
+                value={currentTier?.priority || 1}
+                onChange={(e) => setCurrentTier(prev => ({ ...prev, priority: parseInt(e.target.value) }))}
+                fullWidth
+                required
+                helperText="Higher value = higher priority level for the tier"
               />
             </Grid>
             
