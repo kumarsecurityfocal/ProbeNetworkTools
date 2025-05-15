@@ -35,7 +35,7 @@ if [ ! -f "$SRC_DIR/index.html" ]; then
 fi
 
 # Remove any existing files in the destination directory
-rm -rf "$DEST_DIR"/*
+sudo rm -rf "$DEST_DIR"/*
 
 # Copy the frontend build files to the nginx directory
 echo "🔄 Copying frontend build files to $DEST_DIR..."

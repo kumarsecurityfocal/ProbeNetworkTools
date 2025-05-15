@@ -129,7 +129,7 @@ log_info "Step 3: Copying frontend assets to NGINX..."
 
 # First clear the destination directory
 log_info "Clearing existing assets in NGINX directory..."
-rm -rf nginx/frontend-build/*
+sudo rm -rf nginx/frontend-build/*
 
 # Then copy new assets
 log_info "Copying assets from $asset_location to nginx/frontend-build..."

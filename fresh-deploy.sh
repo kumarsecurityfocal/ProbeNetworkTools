@@ -232,7 +232,7 @@ log_success "Docker Compose configuration is valid"
 
 # Step 6: Clean and rebuild frontend assets
 log_info "Step 6: Cleaning and rebuilding frontend assets..."
-run_command "rm -rf public/*" "Cleaning public directory"
+run_command "sudo rm -rf public/*" "Cleaning public directory"
 run_command "mkdir -p public" "Creating public directory for frontend assets"
 
 # Use Docker for consistent build environment
@@ -271,7 +271,7 @@ fi
 # Step 7: Copy frontend assets to NGINX
 log_info "Step 7: Copying frontend assets to NGINX..."
 run_command "mkdir -p nginx/frontend-build" "Creating nginx/frontend-build directory"
-run_command "rm -rf nginx/frontend-build/*" "Cleaning nginx/frontend-build directory"
+run_command "sudo rm -rf nginx/frontend-build/*" "Cleaning nginx/frontend-build directory"
 run_command "ls -la public/" "Listing public directory contents before copy"
 
 echo "[COPY] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Copying frontend assets to NGINX" >> "$LOG_FILE"
