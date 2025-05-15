@@ -130,36 +130,30 @@ const Dashboard = () => {
         const scheduledProbesResponse = await getScheduledProbes({ active_only: true });
         const scheduledProbes = Array.isArray(scheduledProbesResponse) ? scheduledProbesResponse : [];
         
-        // Try to fetch dashboard metrics - this endpoint might not exist yet
-        let dashboardMetrics = {
+        // Since the metrics endpoint is not working, calculate metrics directly
+        console.log("Calculating dashboard metrics directly");
+        
+        // Calculate simple metrics from the data we have
+        const successfulDiagnostics = diagnostics.filter(d => d.status === 'success');
+        const successRate = diagnostics.length > 0 
+          ? Math.round((successfulDiagnostics.length / diagnostics.length) * 100) 
+          : 0;
+          
+        const executionTimes = diagnostics.map(d => d.execution_time || 0);
+        const avgResponseTime = executionTimes.length > 0
+          ? Math.round(executionTimes.reduce((sum, time) => sum + time, 0) / executionTimes.length)
+          : 0;
+        
+        // Create metrics object with calculated values
+        const dashboardMetrics = {
           diagnostic_count: diagnostics.length,
           api_key_count: apiKeys.length,
           scheduled_probe_count: scheduledProbes.length,
-          success_rate: 0,
-          avg_response_time: 0
+          success_rate: successRate,
+          avg_response_time: avgResponseTime
         };
         
-        try {
-          // Try to get metrics from backend if endpoint exists
-          const metricsResponse = await getDashboardMetrics();
-          if (metricsResponse) {
-            dashboardMetrics = {
-              ...dashboardMetrics,
-              ...metricsResponse
-            };
-          }
-        } catch (metricsError) {
-          // If metrics endpoint doesn't exist, calculate some basic metrics
-          const successfulDiagnostics = diagnostics.filter(d => d.status === 'success');
-          dashboardMetrics.success_rate = diagnostics.length > 0 
-            ? Math.round((successfulDiagnostics.length / diagnostics.length) * 100) 
-            : 0;
-            
-          const executionTimes = diagnostics.map(d => d.execution_time || 0);
-          dashboardMetrics.avg_response_time = executionTimes.length > 0
-            ? Math.round(executionTimes.reduce((sum, time) => sum + time, 0) / executionTimes.length)
-            : 0;
-        }
+        console.log("Calculated dashboard metrics:", dashboardMetrics);
         
         // Update stats with all data
         setStats({
