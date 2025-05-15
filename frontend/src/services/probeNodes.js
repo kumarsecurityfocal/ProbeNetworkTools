@@ -90,7 +90,7 @@ export const deactivateProbeNode = async (nodeUuid) => {
 export const createRegistrationToken = async (tokenData) => {
   try {
     const response = await axios.post(
-      `${API_URL}/nodes/registration-token`,
+      `${API_URL}/nodes/registration-token/create`,
       {
         description: tokenData.description,
         expiry_hours: tokenData.expiryHours,
@@ -114,7 +114,7 @@ export const createRegistrationToken = async (tokenData) => {
 export const getRegistrationTokens = async (includeExpired = false, includeUsed = false) => {
   try {
     const response = await axios.get(
-      `${API_URL}/nodes/registration-tokens?include_expired=${includeExpired}&include_used=${includeUsed}`,
+      `${API_URL}/nodes/registration-token?include_expired=${includeExpired}&include_used=${includeUsed}`,
       { headers: getAuthHeader() }
     );
     return response.data;
@@ -132,7 +132,7 @@ export const getRegistrationTokens = async (includeExpired = false, includeUsed 
 export const getRegistrationTokenDetails = async (tokenId) => {
   try {
     const response = await axios.get(
-      `${API_URL}/nodes/registration-tokens/${tokenId}`,
+      `${API_URL}/nodes/registration-token/${tokenId}`,
       { headers: getAuthHeader() }
     );
     return response.data;
@@ -150,7 +150,7 @@ export const getRegistrationTokenDetails = async (tokenId) => {
 export const revokeRegistrationToken = async (tokenId) => {
   try {
     await axios.delete(
-      `${API_URL}/nodes/registration-tokens/${tokenId}`,
+      `${API_URL}/nodes/registration-token/${tokenId}`,
       { headers: getAuthHeader() }
     );
     return { success: true };
