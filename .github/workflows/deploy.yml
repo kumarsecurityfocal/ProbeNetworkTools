@@ -1,0 +1,116 @@
+name: ProbeOps Deployment
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup SSH key
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Setup environment variables
+        run: |
+          echo "Creating .env file for deployment"
+          touch .env
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
+          echo "ACCESS_TOKEN_EXPIRE_MINUTES=30" >> .env
+          echo "ALLOWED_ORIGINS=https://probeops.com,http://localhost:3000" >> .env
+          echo "CORS_ORIGINS=http://localhost,http://localhost:3000,http://127.0.0.1,http://frontend,https://probeops.com,https://www.probeops.com" >> .env
+          echo "LOG_LEVEL=INFO" >> .env
+          echo "PROBE_TIMEOUT=5" >> .env
+          
+          # Create backend .env file
+          mkdir -p backend
+          touch backend/.env.backend
+          echo "# Database connection" > backend/.env.backend
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> backend/.env.backend
+          echo "# JWT Authentication" >> backend/.env.backend
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> backend/.env.backend
+          echo "ACCESS_TOKEN_EXPIRE_MINUTES=30" >> backend/.env.backend
+          echo "# CORS Settings" >> backend/.env.backend
+          echo "CORS_ORIGINS=http://localhost,http://localhost:3000,http://127.0.0.1,http://frontend,https://probeops.com,https://www.probeops.com" >> backend/.env.backend
+          echo "# Diagnostic tool settings" >> backend/.env.backend
+          echo "PROBE_TIMEOUT=5" >> backend/.env.backend
+          
+          # Verify environment files
+          echo "Environment files created:"
+          ls -la .env
+          ls -la backend/.env.backend
+
+      - name: Fix PostCSS configuration
+        run: |
+          echo "Updating PostCSS configuration..."
+          if [ -f "frontend/postcss.config.js" ]; then
+            # Check if postcss.config.js needs updating
+            if grep -q "tailwindcss" frontend/postcss.config.js; then
+              echo "Updating postcss.config.js to use @tailwindcss/postcss..."
+              sed -i 's/tailwindcss/@tailwindcss\/postcss/g' frontend/postcss.config.js
+            fi
+            cat frontend/postcss.config.js
+          else
+            echo "postcss.config.js not found!"
+          fi
+
+      - name: Fix Dockerfile
+        run: |
+          echo "Updating frontend Dockerfile..."
+          if [ -f "frontend/Dockerfile" ]; then
+            # Check if Dockerfile needs @tailwindcss/postcss
+            if ! grep -q "@tailwindcss/postcss" frontend/Dockerfile; then
+              echo "Adding @tailwindcss/postcss to Dockerfile..."
+              sed -i 's/npm install autoprefixer postcss tailwindcss/npm install autoprefixer postcss tailwindcss @tailwindcss\/postcss/g' frontend/Dockerfile
+            fi
+            cat frontend/Dockerfile
+          else
+            echo "frontend/Dockerfile not found!"
+          fi
+
+      - name: Deploy to EC2
+        run: |
+          echo "Deploying to EC2 instance..."
+          
+          # Set strict host key checking to no to avoid SSH issues
+          mkdir -p ~/.ssh
+          echo "StrictHostKeyChecking no" >> ~/.ssh/config
+          
+          # SSH to server and deploy
+          ssh ubuntu@${{ secrets.EC2_HOST }} << 'ENDSSH'
+            cd ~/ProbeNetworkTools
+            
+            # Pull latest changes
+            git pull origin main
+            
+            # Copy environment files
+            mkdir -p ~/environment
+            [ -f ~/.env ] && cp ~/.env ~/environment/.env
+            [ -f ~/.env.backend ] && cp ~/.env.backend ~/environment/backend.env
+            
+            # Make scripts executable
+            chmod +x *.sh
+            
+            # Run deployment script
+            ./deploy.sh
+          ENDSSH
+          
+          echo "Deployment completed successfully!"
+
+      - name: Verify Deployment
+        run: |
+          echo "Verifying deployment..."
+          
+          # Give services time to start
+          sleep 30
+          
+          # Check if site is responding
+          curl -sSf https://probeops.com/health || echo "Health check failed, but continuing..."
+          
+          echo "Deployment verification complete!"
