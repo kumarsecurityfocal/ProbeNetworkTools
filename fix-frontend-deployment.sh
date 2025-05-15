@@ -83,21 +83,30 @@ if [ "$found_assets" = false ]; then
                 log_error "Frontend build failed to produce dist directory"
             fi
         else
-            log_info "Using Docker to build frontend..."
-            docker compose build frontend-build
-            docker compose up -d frontend-build
+            log_info "Using Docker to build frontend directly..."
             
-            # Wait for build to complete
-            log_info "Waiting for Docker build to complete..."
-            sleep 15
-            docker compose logs frontend-build
-            
-            if [ -d "public" ]; then
-                asset_location="public"
-                found_assets=true
-                log_success "Docker build successful, assets in public directory"
+            # First, verify the Dockerfile exists
+            if [ -f "frontend/Dockerfile" ]; then
+                log_info "Building frontend Docker image directly..."
+                docker build -t probeops-frontend-build ./frontend
+                
+                # Create public directory if it doesn't exist
+                mkdir -p public
+                
+                # Run container to build and extract assets
+                log_info "Running container to build and extract assets..."
+                docker run --rm -v $(pwd)/public:/public probeops-frontend-build cp -r /app/dist/* /public/
+                
+                # Check if build was successful
+                if [ -f "public/index.html" ]; then
+                    asset_location="public"
+                    found_assets=true
+                    log_success "Docker build successful, assets extracted to public directory"
+                else
+                    log_error "Docker build failed to produce assets"
+                fi
             else
-                log_error "Docker build failed to produce assets"
+                log_error "Frontend Dockerfile not found!"
             fi
         fi
     else
