@@ -203,6 +203,63 @@ def run_dns_lookup(target: str, record_type: str = "A") -> Tuple[bool, str]:
         return False, f"DNS Error: {str(e)}"
 
 
+def run_reverse_dns_lookup(ip_address: str) -> Tuple[bool, str]:
+    """
+    Run reverse DNS lookup to find hostnames associated with an IP address.
+    
+    Args:
+        ip_address: The IP address to lookup
+        
+    Returns:
+        Tuple of (success, result)
+    """
+    try:
+        # Validate IP address format
+        try:
+            socket.inet_aton(ip_address)  # Will raise exception if not valid IPv4
+        except socket.error:
+            try:
+                # Try IPv6
+                socket.inet_pton(socket.AF_INET6, ip_address)
+            except (socket.error, AttributeError):
+                return False, f"Error: Invalid IP address format: {ip_address}"
+        
+        # Perform reverse DNS lookup
+        try:
+            host_info = socket.gethostbyaddr(ip_address)
+            hostname = host_info[0]
+            aliases = host_info[1]
+            
+            # Format the result
+            result = f"Reverse DNS lookup for {ip_address}:\n\n"
+            result += f"Hostname: {hostname}\n"
+            
+            if aliases and len(aliases) > 0:
+                result += "\nAliases:\n"
+                for alias in aliases:
+                    result += f"- {alias}\n"
+            
+            # Also try to get PTR records explicitly
+            try:
+                addr = dns.reversename.from_address(ip_address)
+                answers = dns.resolver.resolve(addr, "PTR")
+                
+                if answers:
+                    result += "\nPTR Records:\n"
+                    for rdata in answers:
+                        result += f"- {rdata}\n"
+            except Exception:
+                # PTR lookup is optional, so we don't fail if it errors
+                pass
+            
+            return True, result
+        except socket.herror:
+            return False, f"No reverse DNS records found for IP address: {ip_address}"
+                
+    except Exception as e:
+        return False, f"Reverse DNS Error: {str(e)}"
+
+
 def run_whois_lookup(target: str) -> Tuple[bool, str]:
     """
     Run WHOIS lookup against a domain.

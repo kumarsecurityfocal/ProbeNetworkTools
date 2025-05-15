@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app import models, schemas, auth
 from app.database import get_db
 from app.diagnostics.tools import (
-    run_ping, run_traceroute, run_dns_lookup, 
+    run_ping, run_traceroute, run_dns_lookup, run_reverse_dns_lookup,
     run_whois_lookup, run_port_check, run_http_request
 )
 
