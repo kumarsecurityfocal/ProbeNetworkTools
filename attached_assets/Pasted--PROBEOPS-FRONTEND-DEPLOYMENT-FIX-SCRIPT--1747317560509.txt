@@ -1,0 +1,46 @@
+===========================================
+🚀 PROBEOPS FRONTEND DEPLOYMENT FIX SCRIPT
+===========================================
+ℹ️ Step 1: Checking for frontend assets...
+✅ Found frontend assets in public
+ℹ️ Step 2: Ensuring NGINX frontend directory exists...
+✅ NGINX frontend directory ready
+ℹ️ Step 3: Copying frontend assets to NGINX...
+ℹ️ Clearing existing assets in NGINX directory...
+ℹ️ Copying assets from public to nginx/frontend-build...
+'public/index.html' -> 'nginx/frontend-build/index.html'
+'public/vite.svg' -> 'nginx/frontend-build/vite.svg'
+✅ Frontend assets successfully copied to NGINX directory
+ℹ️ Step 4: Verifying NGINX configuration...
+⚠️ NGINX configuration may not reference frontend-build directory
+ℹ️ Check nginx/nginx.conf to ensure assets are being served from the correct location
+ℹ️ Step 5: Restarting NGINX container...
+WARN[0000] /home/ubuntu/ProbeNetworkTools/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion
+[+] Restarting 1/1
+ ✔ Container probeops-nginx  Started                                                                                                                                                    0.4s
+✅ NGINX container restarted
+ℹ️ Step 6: Final checks...
+
+===========================================
+✅ FRONTEND DEPLOYMENT FIX COMPLETED!
+===========================================
+To ensure you see the latest version:
+1. Clear your browser cache (Ctrl+F5 or Cmd+Shift+R)
+2. Make sure you're accessing the correct URL
+3. If issues persist, check docker logs with: docker compose logs nginx
+===========================================
+WARN[0000] /home/ubuntu/ProbeNetworkTools/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion
+NAME             IMAGE                     COMMAND            SERVICE   CREATED          STATUS                                     PORTS
+probeops-nginx   probenetworktools-nginx   "/entrypoint.sh"   nginx     16 minutes ago   Up Less than a second (health: starting)   0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp
+ubuntu@ip-172-16-0-80:~/ProbeNetworkTools$ docker exec -it probeops-nginx sh -c "ls -la /usr/share/nginx/html"
+total 40
+drwxr-xr-x    3 root     root          4096 May 15 11:38 .
+drwxr-xr-x    1 root     root          4096 Apr 16 17:01 ..
+-rw-rw-r--    1 root     root            66 May 13 13:19 .probeops-build-copied
+-rw-r--r--    1 root     root            59 May 15 13:58 .probeops-build-ok
+-rw-r--r--    1 root     root           497 Apr 16 12:55 50x.html
+drwxrwxr-x    2 root     root          4096 May 15 11:38 assets
+-rw-rw-r--    1 root     root           716 May 13 13:10 index.html
+-rw-r--r--    1 root     root            65 May 14 08:03 nginx-container-info.txt
+-rw-rw-r--    1 root     root           287 May 13 13:10 vite.svg
+ubuntu@ip-172-16-0-80:~/ProbeNetworkTools$
