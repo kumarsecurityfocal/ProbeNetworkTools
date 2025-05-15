@@ -347,7 +347,6 @@ const AdminPanel = () => {
         user_id: currentSubscription.user_id,
         is_active: true
       });
-      
       // Refresh subscriptions
       const updatedSubs = await getAllSubscriptions();
       setSubscriptions(updatedSubs);
@@ -1202,6 +1201,130 @@ const AdminPanel = () => {
         )}
       </TabPanel>
 
+      {/* Tier Management Tab */}
+      <TabPanel value={tabValue} index={2}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+          <Typography variant="h5" component="h2">
+            Subscription Tier Management
+          </Typography>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            startIcon={<AddIcon />}
+            onClick={() => {
+              setCurrentTier(null);
+              setEditTierDialog(true);
+            }}
+          >
+            Add Tier
+          </Button>
+        </Box>
+
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+            <Table sx={{ minWidth: 650 }} aria-label="subscription tiers table">
+              <TableHead>
+                <TableRow>
+                  <TableCell>ID</TableCell>
+                  <TableCell>Name</TableCell>
+                  <TableCell>API Limits</TableCell>
+                  <TableCell>Probe Intervals</TableCell>
+                  <TableCell>Resource Limits</TableCell>
+                  <TableCell>Features</TableCell>
+                  <TableCell>Price</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {tiers.length > 0 ? (
+                  tiers.map((tier) => (
+                    <TableRow key={tier.id}>
+                      <TableCell>{tier.id}</TableCell>
+                      <TableCell>{tier.name}</TableCell>
+                      <TableCell>
+                        <Typography variant="body2">Daily: {tier.rate_limit_day || 'Unlimited'}</Typography>
+                        <Typography variant="body2">Monthly: {tier.rate_limit_month || 'Unlimited'}</Typography>
+                        <Typography variant="body2">Concurrent: {tier.max_concurrent_requests}</Typography>
+                        <Typography variant="body2">Priority: {tier.request_priority}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        {tier.allowed_probe_intervals ? 
+                          tier.allowed_probe_intervals.split(',').map(interval => {
+                            const mins = parseInt(interval);
+                            if (mins === 5) return "5 minutes";
+                            if (mins === 15) return "15 minutes";
+                            if (mins === 60) return "1 hour";
+                            if (mins === 1440) return "1 day";
+                            return `${mins} minutes`;
+                          }).join(', ')
+                          : 'N/A'
+                        }
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">Max Probes: {tier.max_scheduled_probes}</Typography>
+                        <Typography variant="body2">Max API Keys: {tier.max_api_keys}</Typography>
+                        <Typography variant="body2">History: {tier.max_history_days} days</Typography>
+                      </TableCell>
+                      <TableCell>
+                        {tier.allow_scheduled_probes && <Chip label="Scheduled Probes" size="small" sx={{ m: 0.5 }} />}
+                        {tier.allow_api_access && <Chip label="API Access" size="small" sx={{ m: 0.5 }} />}
+                        {tier.allow_export && <Chip label="Data Export" size="small" sx={{ m: 0.5 }} />}
+                        {tier.allow_alerts && <Chip label="Alerts" size="small" sx={{ m: 0.5 }} />}
+                        {tier.allow_custom_intervals && <Chip label="Custom Intervals" size="small" sx={{ m: 0.5 }} />}
+                        {tier.priority_support && <Chip label="Priority Support" size="small" sx={{ m: 0.5 }} />}
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">Monthly: ${(tier.price_monthly / 100).toFixed(2)}</Typography>
+                        <Typography variant="body2">Yearly: ${(tier.price_yearly / 100).toFixed(2)}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Tooltip title="Edit Tier">
+                            <IconButton 
+                              size="small" 
+                              color="primary"
+                              onClick={() => {
+                                setCurrentTier(tier);
+                                setEditTierDialog(true);
+                              }}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete Tier">
+                            <IconButton 
+                              size="small" 
+                              color="error"
+                              onClick={() => {
+                                setTierToDelete(tier);
+                                setDeleteTierDialog(true);
+                              }}
+                              disabled={tier.name === 'FREE'} // Prevent deleting FREE tier
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={8} align="center">
+                      No subscription tiers found
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </TabPanel>
+
       {/* Edit Subscription Dialog */}
       <Dialog open={editSubscriptionDialog} onClose={() => setEditSubscriptionDialog(false)}>
         <DialogTitle>Edit Subscription</DialogTitle>
@@ -1382,6 +1505,287 @@ const AdminPanel = () => {
           <Button onClick={() => setDeleteUserDialog(false)}>Cancel</Button>
           <Button onClick={handleDeleteUser} variant="contained" color="error">
             Delete User
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
+      {/* Edit Tier Dialog */}
+      <Dialog 
+        open={editTierDialog} 
+        onClose={() => setEditTierDialog(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>{currentTier ? 'Edit Subscription Tier' : 'Add Subscription Tier'}</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            {/* Basic Information */}
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom fontWeight="bold">Basic Information</Typography>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Tier Name"
+                value={currentTier?.name || ''}
+                onChange={(e) => setCurrentTier(prev => ({ ...prev, name: e.target.value }))}
+                fullWidth
+                disabled={currentTier?.name === 'FREE'} // Prevent renaming FREE tier
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Description"
+                value={currentTier?.description || ''}
+                onChange={(e) => setCurrentTier(prev => ({ ...prev, description: e.target.value }))}
+                fullWidth
+                required
+              />
+            </Grid>
+            
+            {/* Pricing */}
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom fontWeight="bold">Pricing (in cents)</Typography>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Monthly Price (cents)"
+                type="number"
+                value={currentTier?.price_monthly || 0}
+                onChange={(e) => setCurrentTier(prev => ({ ...prev, price_monthly: parseInt(e.target.value) }))}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Yearly Price (cents)"
+                type="number"
+                value={currentTier?.price_yearly || 0}
+                onChange={(e) => setCurrentTier(prev => ({ ...prev, price_yearly: parseInt(e.target.value) }))}
+                fullWidth
+                required
+              />
+            </Grid>
+            
+            {/* API Rate Limits */}
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom fontWeight="bold">API Rate Limits</Typography>
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <TextField
+                label="Per Minute"
+                type="number"
+                value={currentTier?.rate_limit_minute || 0}
+                onChange={(e) => setCurrentTier(prev => ({ ...prev, rate_limit_minute: parseInt(e.target.value) }))}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <TextField
+                label="Per Hour"
+                type="number"
+                value={currentTier?.rate_limit_hour || 0}
+                onChange={(e) => setCurrentTier(prev => ({ ...prev, rate_limit_hour: parseInt(e.target.value) }))}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <TextField
+                label="Per Day"
+                type="number"
+                value={currentTier?.rate_limit_day || 0}
+                onChange={(e) => setCurrentTier(prev => ({ ...prev, rate_limit_day: parseInt(e.target.value) }))}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <TextField
+                label="Per Month"
+                type="number"
+                value={currentTier?.rate_limit_month || 0}
+                onChange={(e) => setCurrentTier(prev => ({ ...prev, rate_limit_month: parseInt(e.target.value) }))}
+                fullWidth
+              />
+            </Grid>
+            
+            {/* Request Handling */}
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom fontWeight="bold">Request Handling</Typography>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Max Concurrent Requests"
+                type="number"
+                value={currentTier?.max_concurrent_requests || 5}
+                onChange={(e) => setCurrentTier(prev => ({ ...prev, max_concurrent_requests: parseInt(e.target.value) }))}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Request Priority"
+                type="number"
+                value={currentTier?.request_priority || 1}
+                onChange={(e) => setCurrentTier(prev => ({ ...prev, request_priority: parseInt(e.target.value) }))}
+                fullWidth
+                required
+                helperText="Higher value = higher priority"
+              />
+            </Grid>
+            
+            {/* Probe Intervals */}
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom fontWeight="bold">Probe Intervals</Typography>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Allowed Probe Intervals (comma-separated minutes)"
+                value={currentTier?.allowed_probe_intervals || "15,60,1440"}
+                onChange={(e) => setCurrentTier(prev => ({ ...prev, allowed_probe_intervals: e.target.value }))}
+                fullWidth
+                required
+                helperText="Comma-separated values in minutes (e.g. 5,15,60,1440 for 5min, 15min, 1hr, 1day)"
+              />
+            </Grid>
+            
+            {/* Resource Limits */}
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom fontWeight="bold">Resource Limits</Typography>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                label="Max Scheduled Probes"
+                type="number"
+                value={currentTier?.max_scheduled_probes || 0}
+                onChange={(e) => setCurrentTier(prev => ({ ...prev, max_scheduled_probes: parseInt(e.target.value) }))}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                label="Max API Keys"
+                type="number"
+                value={currentTier?.max_api_keys || 0}
+                onChange={(e) => setCurrentTier(prev => ({ ...prev, max_api_keys: parseInt(e.target.value) }))}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                label="History Retention (days)"
+                type="number"
+                value={currentTier?.max_history_days || 0}
+                onChange={(e) => setCurrentTier(prev => ({ ...prev, max_history_days: parseInt(e.target.value) }))}
+                fullWidth
+                required
+              />
+            </Grid>
+            
+            {/* Features */}
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom fontWeight="bold">Features</Typography>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={currentTier?.allow_scheduled_probes || false}
+                    onChange={(e) => setCurrentTier(prev => ({ ...prev, allow_scheduled_probes: e.target.checked }))}
+                  />
+                }
+                label="Allow Scheduled Probes"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={currentTier?.allow_api_access || false}
+                    onChange={(e) => setCurrentTier(prev => ({ ...prev, allow_api_access: e.target.checked }))}
+                  />
+                }
+                label="Allow API Access"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={currentTier?.allow_export || false}
+                    onChange={(e) => setCurrentTier(prev => ({ ...prev, allow_export: e.target.checked }))}
+                  />
+                }
+                label="Allow Data Export"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={currentTier?.allow_alerts || false}
+                    onChange={(e) => setCurrentTier(prev => ({ ...prev, allow_alerts: e.target.checked }))}
+                  />
+                }
+                label="Allow Alerts"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={currentTier?.allow_custom_intervals || false}
+                    onChange={(e) => setCurrentTier(prev => ({ ...prev, allow_custom_intervals: e.target.checked }))}
+                  />
+                }
+                label="Allow Custom Intervals"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={currentTier?.priority_support || false}
+                    onChange={(e) => setCurrentTier(prev => ({ ...prev, priority_support: e.target.checked }))}
+                  />
+                }
+                label="Priority Support"
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditTierDialog(false)}>Cancel</Button>
+          <Button 
+            onClick={handleSaveTier} 
+            variant="contained" 
+            color="primary"
+          >
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
+      {/* Delete Tier Confirmation Dialog */}
+      <Dialog open={deleteTierDialog} onClose={() => setDeleteTierDialog(false)}>
+        <DialogTitle>Confirm Tier Deletion</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1">
+            Are you sure you want to delete the <strong>{tierToDelete?.name}</strong> subscription tier?
+          </Typography>
+          <Typography variant="body2" color="error" sx={{ mt: 2 }}>
+            This action cannot be undone. If users are currently subscribed to this tier, the deletion will fail.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteTierDialog(false)}>Cancel</Button>
+          <Button onClick={handleDeleteTier} variant="contained" color="error">
+            Delete Tier
           </Button>
         </DialogActions>
       </Dialog>
