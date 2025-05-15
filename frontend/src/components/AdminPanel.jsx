@@ -74,7 +74,9 @@ function TabPanel(props) {
 
 const AdminPanel = () => {
   const { user: currentLoggedInUser } = useAuth();
-  const [tabValue, setTabValue] = useState(0);
+  // Force tab value to 1 (Users) to test the user loading
+  // Default was 0 (Subscriptions)
+  const [tabValue, setTabValue] = useState(1); // Set to Users tab by default for testing
   
   // Subscription state
   const [subscriptions, setSubscriptions] = useState([]);
@@ -182,14 +184,26 @@ const AdminPanel = () => {
     const fetchUsers = async () => {
       setUserLoading(true);
       try {
-        console.log("Fetching users in AdminPanel...");
+        console.log("DEBUG USERS: Fetching users in AdminPanel...");
+        console.log("DEBUG USERS: Current user is admin:", currentLoggedInUser?.is_admin || false);
+        console.log("DEBUG USERS: Current tab value:", tabValue);
+        
+        const token = localStorage.getItem('auth_token');
+        console.log("DEBUG USERS: Token available:", token ? `Yes (${token.substring(0, 10)}...)` : 'No');
+        
+        console.log("DEBUG USERS: About to call getAllUsers()");
         const usersData = await getAllUsers();
-        console.log("Users data in AdminPanel:", usersData);
+        console.log("DEBUG USERS: Users data returned:", usersData);
+        console.log("DEBUG USERS: Is array:", Array.isArray(usersData));
+        console.log("DEBUG USERS: Length:", usersData?.length || 0);
+        
         setUsers(usersData);
         setUserError(null);
         setDebugInfo(prev => ({ ...prev, usersLoaded: true }));
+        console.log("DEBUG USERS: State updated, usersLoaded set to true");
       } catch (err) {
-        console.error('Error loading users:', err);
+        console.error('DEBUG USERS: Error loading users:', err);
+        console.error('DEBUG USERS: Error details:', err.message, err.stack);
         setUserError('Failed to load users. Please try again later.');
       } finally {
         setUserLoading(false);

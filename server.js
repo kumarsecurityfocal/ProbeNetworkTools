@@ -179,12 +179,16 @@ function handleLogin(req, res) {
 
 // Handler for all users endpoint - this is used by admin panel
 function handleAllUsers(req, res) {
-  console.log(`All users request: ${req.method} ${req.url}`);
+  console.log(`All users request: ${req.method} ${req.url} - DETAILED LOG`);
+  console.log(`Auth header present: ${Boolean(req.headers.authorization)}`);
   
   const authHeader = req.headers.authorization || '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
   
+  console.log(`Token extracted: ${token ? 'Yes, length=' + token.length : 'No'}`);
+  
   if (!token) {
+    console.log('No token provided for /users endpoint, returning 401');
     return res.status(401).json({ detail: 'Not authenticated' });
   }
   
@@ -213,10 +217,12 @@ function handleAllUsers(req, res) {
       res.setHeader('Content-Type', 'application/json');
       
       console.log(`Users endpoint status: ${backendRes.statusCode}`);
+      console.log(`Response headers:`, JSON.stringify(backendRes.headers));
       
       // Handle error status codes
       if (backendRes.statusCode >= 400) {
         console.error(`Users endpoint returned ${backendRes.statusCode}, sending empty array`);
+        console.error(`Error response body: ${responseData}`);
         return res.status(200).json([]); // Return empty array instead of error to avoid breaking UI
       }
       
@@ -226,11 +232,19 @@ function handleAllUsers(req, res) {
       // Parse and return response data
       if (responseData) {
         try {
+          console.log(`Raw response data: ${responseData}`);
           const jsonData = JSON.parse(responseData);
-          console.log(`Successfully retrieved ${jsonData.length || 0} users`);
+          console.log(`Successfully retrieved ${jsonData.length || 0} users:`, JSON.stringify(jsonData).substring(0, 200) + '...');
+          
+          // Set response headers
+          res.setHeader('Content-Type', 'application/json');
+          
+          // Return the parsed data
+          console.log('Sending user data to frontend');
           res.json(jsonData);
         } catch (e) {
           console.error('Error parsing users response:', e);
+          console.error('Raw data that failed parsing:', responseData);
           res.json([]);
         }
       } else {
