@@ -975,41 +975,27 @@ const AdminPanel = () => {
               defaultValue="all"
               onChange={(e) => {
                 const tierFilter = e.target.value;
-                console.log('Selected tier filter:', tierFilter);
+                alert(`Filtering by tier: ${tierFilter}`);
                 
-                refreshUsersList().then(() => {
-                  // Get fresh data from the state
-                  const allUsers = [...users];
-                  console.log('All users before filtering:', allUsers);
-                  
-                  let filteredUsers = allUsers;
-                  
-                  if (tierFilter === 'all') {
-                    // No filter needed, show all users
-                    console.log('Showing all users (no filter)');
-                  } else if (tierFilter === 'none') {
-                    // Users with no subscription
-                    console.log('Filtering users with no subscription');
-                    filteredUsers = allUsers.filter(user => {
-                      const hasNoSubscription = !user.subscription;
-                      console.log(`User ${user.username} has no subscription:`, hasNoSubscription);
-                      return hasNoSubscription;
-                    });
-                  } else {
-                    // Filter by specific tier ID
-                    console.log('Filtering users with tier ID:', tierFilter);
-                    filteredUsers = allUsers.filter(user => {
-                      const hasTier = user.subscription && 
-                                     user.subscription.tier_id && 
-                                     user.subscription.tier_id.toString() === tierFilter;
-                      console.log(`User ${user.username} has matching tier:`, hasTier);
-                      return hasTier;
-                    });
-                  }
-                  
-                  console.log('Filtered users:', filteredUsers);
-                  setUsers(filteredUsers);
-                });
+                // Directly filter the existing users instead of refreshing
+                if (tierFilter === 'all') {
+                  // Refresh to get all users
+                  refreshUsersList();
+                } else if (tierFilter === 'none') {
+                  // Users with no subscription
+                  const withoutSub = users.filter(user => !user.subscription);
+                  alert(`Found ${withoutSub.length} users without subscriptions`);
+                  setUsers(withoutSub);
+                } else {
+                  // Filter by specific tier ID
+                  const withTier = users.filter(user => 
+                    user.subscription && 
+                    user.subscription.tier_id && 
+                    user.subscription.tier_id.toString() === tierFilter
+                  );
+                  alert(`Found ${withTier.length} users with tier ID ${tierFilter}`);
+                  setUsers(withTier);
+                }
               }}
             >
               <MenuItem value="all">All Tiers</MenuItem>
