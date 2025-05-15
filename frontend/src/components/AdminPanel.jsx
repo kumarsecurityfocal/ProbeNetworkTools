@@ -328,10 +328,52 @@ const AdminPanel = () => {
     }
   };
   
+  const refreshUsersList = async () => {
+    console.log('Refreshing users list...');
+    try {
+      setUserLoading(true);
+      const usersData = await getAllUsers();
+      console.log('Users data after refresh:', usersData);
+      if (Array.isArray(usersData)) {
+        setUsers(usersData);
+        console.log(`User list refreshed, ${usersData.length} users found`);
+      } else {
+        console.error('Invalid users data returned:', usersData);
+      }
+    } catch (err) {
+      console.error('Error refreshing users list:', err);
+    } finally {
+      setUserLoading(false);
+    }
+  };
+
   const handleSaveUser = async () => {
     try {
+      console.log('Saving user with data:', userFormData);
+      
+      // Validate form data before submitting
+      if (!userFormData.username || !userFormData.email) {
+        setSnackbar({
+          open: true,
+          message: 'Username and email are required',
+          severity: 'error'
+        });
+        return;
+      }
+      
+      // If creating a new user, password is required
+      if (!currentUser && !userFormData.password) {
+        setSnackbar({
+          open: true,
+          message: 'Password is required for new users',
+          severity: 'error'
+        });
+        return;
+      }
+      
       if (currentUser) {
         // Update existing user
+        console.log(`Updating user ${currentUser.id} (${currentUser.username})`);
         const updateData = { ...userFormData };
         if (!updateData.password) delete updateData.password; // Don't send password if it's empty
         
@@ -344,7 +386,9 @@ const AdminPanel = () => {
         });
       } else {
         // Create new user
-        await createUser(userFormData);
+        console.log('Creating new user:', userFormData.username);
+        const result = await createUser(userFormData);
+        console.log('User creation result:', result);
         
         setSnackbar({
           open: true,
@@ -353,17 +397,37 @@ const AdminPanel = () => {
         });
       }
       
-      // Refresh users list
-      const usersData = await getAllUsers();
-      setUsers(usersData);
-      
-      // Close dialog
+      // Close dialog first
       setEditUserDialog(false);
+      
+      // Then refresh users list (separate try/catch to handle refresh errors)
+      await refreshUsersList();
+      
     } catch (error) {
       console.error('Error saving user:', error);
+      console.error('Error details:', error.response?.data);
+      
+      // Create detailed error message with backend validation errors if available
+      let errorMessage = 'Failed to save user: ';
+      
+      if (error.response?.data?.detail) {
+        if (typeof error.response.data.detail === 'string') {
+          errorMessage += error.response.data.detail;
+        } else if (Array.isArray(error.response.data.detail)) {
+          // Handle FastAPI validation error format
+          errorMessage += error.response.data.detail.map(err => 
+            `${err.loc.join('.')} - ${err.msg}`
+          ).join('; ');
+        } else {
+          errorMessage += JSON.stringify(error.response.data.detail);
+        }
+      } else {
+        errorMessage += error.message || 'Unknown error';
+      }
+      
       setSnackbar({
         open: true,
-        message: `Failed to save user: ${error.response?.data?.detail || error.message}`,
+        message: errorMessage,
         severity: 'error'
       });
     }
