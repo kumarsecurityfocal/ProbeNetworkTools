@@ -2,6 +2,8 @@
 
 This document provides step-by-step instructions for deploying the ProbeOps application on AWS EC2 with an AWS RDS PostgreSQL database, including the separate deployment of probe nodes using a Zero Trust Network Access (ZTNA) architecture.
 
+> **Important**: Also review the critical safety guidelines in [DEPLOYMENT_GUIDELINES.md](./DEPLOYMENT_GUIDELINES.md) before proceeding with any deployment.
+
 ## Prerequisites
 
 - An AWS account with access to EC2 and RDS services

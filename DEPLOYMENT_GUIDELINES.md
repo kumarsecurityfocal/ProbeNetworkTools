@@ -2,6 +2,8 @@
 
 This document outlines **critical guidelines** for working with the ProbeOps project to ensure production safety and security.
 
+**Note**: For complete deployment instructions, see the comprehensive [DEPLOYMENT.md](./DEPLOYMENT.md) guide.
+
 ## 1. SSL Certificate Safety
 
 ⚠️ **CRITICAL**: Do NOT alter the SSL certificate directory structure.
