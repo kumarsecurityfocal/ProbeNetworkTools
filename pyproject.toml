@@ -20,4 +20,5 @@ dependencies = [
     "email-validator>=2.2.0",
     "requests>=2.32.3",
     "bcrypt>=4.3.0",
+    "websockets>=15.0.1",
 ]
