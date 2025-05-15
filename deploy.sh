@@ -195,13 +195,17 @@ if [ -z "${DATABASE_URL}" ]; then
     
     # Check for backend environment variables
     if [ -f "backend/.env.backend" ]; then
+        # Make a backup first, just to be safe
+        run_command "cp backend/.env.backend backend/.env.backend.bak" "Creating backup of backend/.env.backend"
         run_command "grep -v '^#' backend/.env.backend | grep -v '^$' | wc -l" "Counting active backend environment variables"
-        log_info "Using backend/.env.backend for database configuration"
+        log_info "Using existing backend/.env.backend for database configuration"
+        log_success "IMPORTANT: Preserving your existing database configuration"
     else
         log_warning "backend/.env.backend not found! Creating from template..."
         if [ -f "backend/.env.backend.template" ]; then
             run_command "cp backend/.env.backend.template backend/.env.backend" "Creating backend/.env.backend from template"
             log_success "Created backend/.env.backend from template"
+            log_warning "IMPORTANT: You will need to edit backend/.env.backend to set up your database connection"
         else
             log_error "No backend environment template found. Manual configuration needed."
         fi
