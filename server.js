@@ -563,6 +563,12 @@ function handleSubscription(req, res) {
     }
   };
   
+  // Add Content-Type header for POST and PUT requests
+  if (req.method === 'POST' || req.method === 'PUT') {
+    options.headers['Content-Type'] = 'application/json';
+    console.log(`Setting Content-Type header for ${req.method} request`);
+  }
+  
   // Create backend request
   const backendReq = http.request(options, (backendRes) => {
     // Collect response data
@@ -631,6 +637,12 @@ function handleSubscription(req, res) {
       }
     });
   });
+  
+  // Handle request body if present
+  if ((req.method === 'POST' || req.method === 'PUT') && req.body) {
+    console.log(`Writing request body for ${req.method} subscription request:`, JSON.stringify(req.body));
+    backendReq.write(JSON.stringify(req.body));
+  }
   
   backendReq.on('error', error => {
     console.error('Error with backend request:', error);
