@@ -24,6 +24,50 @@ export const getSubscriptionTiers = async () => {
   }
 };
 
+// Get a specific subscription tier by ID
+export const getSubscriptionTier = async (tierId) => {
+  try {
+    const response = await api.get(`/subscription-tiers/${tierId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching subscription tier ${tierId}:`, error);
+    throw error;
+  }
+};
+
+// Admin: Create a new subscription tier
+export const createSubscriptionTier = async (tierData) => {
+  try {
+    const response = await api.post('/subscription-tiers', tierData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating subscription tier:', error);
+    throw error;
+  }
+};
+
+// Admin: Update an existing subscription tier
+export const updateSubscriptionTier = async (tierId, tierData) => {
+  try {
+    const response = await api.put(`/subscription-tiers/${tierId}`, tierData);
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating subscription tier ${tierId}:`, error);
+    throw error;
+  }
+};
+
+// Admin: Delete a subscription tier
+export const deleteSubscriptionTier = async (tierId) => {
+  try {
+    const response = await api.delete(`/subscription-tiers/${tierId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error deleting subscription tier ${tierId}:`, error);
+    throw error;
+  }
+};
+
 // Admin: Create subscription for a user
 export const createSubscription = async (userId, tierId, paymentDetails = {}) => {
   try {

@@ -41,7 +41,8 @@ import {
   CheckCircle as VerifiedIcon,
   Cancel as CancelIcon,
   DeleteOutline as DeleteIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
+  Settings as SettingsIcon
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -50,7 +51,10 @@ import {
   cancelSubscription, 
   updateSubscription, 
   renewSubscription,
-  createSubscription
+  createSubscription,
+  createSubscriptionTier,
+  updateSubscriptionTier,
+  deleteSubscriptionTier
 } from '../services/subscription';
 import { 
   getAllUsers, 
@@ -96,6 +100,12 @@ const AdminPanel = () => {
   const [currentSubscription, setCurrentSubscription] = useState(null);
   const [selectedTierId, setSelectedTierId] = useState('');
   const [renewMonths, setRenewMonths] = useState(1);
+  
+  // Tier management state
+  const [editTierDialog, setEditTierDialog] = useState(false);
+  const [currentTier, setCurrentTier] = useState(null);
+  const [deleteTierDialog, setDeleteTierDialog] = useState(false);
+  const [tierToDelete, setTierToDelete] = useState(null);
   
   // Debug state
   const [debugInfo, setDebugInfo] = useState({
@@ -769,6 +779,7 @@ const AdminPanel = () => {
         >
           <Tab icon={<SubscriptionIcon />} label="Subscriptions" />
           <Tab icon={<PersonIcon />} label="Users" />
+          <Tab icon={<SettingsIcon />} label="Tier Management" />
         </Tabs>
       </Box>
 
