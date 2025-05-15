@@ -1,6 +1,6 @@
 # ProbeOps Deployment Guide
 
-This document provides step-by-step instructions for deploying the ProbeOps application on AWS EC2 with an AWS RDS PostgreSQL database.
+This document provides step-by-step instructions for deploying the ProbeOps application on AWS EC2 with an AWS RDS PostgreSQL database, including the separate deployment of probe nodes using a Zero Trust Network Access (ZTNA) architecture.
 
 ## Prerequisites
 
@@ -378,28 +378,107 @@ Set up a cron job to run the renewal script twice a day:
 (crontab -l 2>/dev/null; echo "0 3,15 * * * /path/to/probeops/cert-renewal.sh >> /path/to/probeops/ssl-renewal.log 2>&1") | crontab -
 ```
 
-## 5. Automating Deployments
+## 5. Probe Node Deployment
 
-### 5.1 Using the Deployment Script
+The ProbeOps system uses a Zero Trust Network Access (ZTNA) architecture, which allows probe nodes to be deployed on separate servers with outbound-only connections to the main platform.
 
-The repository includes a `deploy.sh` script for automating deployments:
+### 5.1 Preparing for Probe Node Deployment
+
+1. **Generate a Node Registration Token**:
+   - Log into the ProbeOps web interface as an administrator
+   - Navigate to "Probe Nodes" and click "Generate Token"
+   - Save the generated token - it will be needed during probe node deployment
+
+2. **Prepare the Target Server**:
+   - Launch a smaller EC2 instance (t2.micro is sufficient) in your desired region
+   - Install Docker and Docker Compose as described in section 2
+
+3. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/your-username/ProbeNetworkTools.git probeops-node
+   cd probeops-node
+   ```
+
+### 5.2 Configure Probe Node Environment
+
+Create a `.env.probe` file for the probe node:
+
+```bash
+nano .env.probe
+```
+
+Add the following content, replacing placeholders with your actual values:
+
+```
+# Probe node configuration
+PROBEOPS_BACKEND_URL=https://probeops.com
+PROBEOPS_NODE_UUID=unique-identifier-for-this-node
+PROBEOPS_API_KEY=the-token-generated-in-admin-panel
+PROBEOPS_LOG_LEVEL=INFO
+PROBEOPS_HEARTBEAT_INTERVAL=30
+```
+
+### 5.3 Deploy the Probe Node
+
+Use the dedicated probe deployment script:
 
 ```bash
 # Make the script executable
-chmod +x deploy.sh
+chmod +x deploy-probe.sh
 
 # Run the deployment script
-./deploy.sh
+./deploy-probe.sh
 ```
 
-The script will:
-1. Pull the latest code
-2. Stop and remove existing containers
-3. Rebuild and deploy all services
-4. Apply database migrations
-5. Verify the deployment
+The probe node will:
+1. Connect to the main platform using a WebSocket connection
+2. Authenticate using the provided API key
+3. Begin sending heartbeats and responding to diagnostic commands
 
-### 5.1.1 Migration from Replit to Production
+### 5.4 Verify Probe Node Connection
+
+1. In the ProbeOps web interface, navigate to "Probe Nodes"
+2. The newly deployed node should appear with "Connected" status
+3. You can now assign diagnostic tasks to this node
+
+## 6. Automating Deployments
+
+### 6.1 Using the Deployment Scripts
+
+The repository includes two deployment scripts for automating deployments:
+
+1. **Main Platform Deployment**:
+   ```bash
+   # Make the script executable
+   chmod +x deploy.sh
+
+   # Run the deployment script
+   ./deploy.sh
+   ```
+
+   The script will:
+   - Pull the latest code
+   - Stop and remove existing containers
+   - Rebuild and deploy all services
+   - Apply database migrations
+   - Verify the deployment
+
+2. **Probe Node Deployment**:
+   ```bash
+   # Make the script executable
+   chmod +x deploy-probe.sh
+
+   # Run the deployment script
+   ./deploy-probe.sh
+   ```
+
+   The script will:
+   - Pull the latest code
+   - Stop and remove existing probe containers
+   - Rebuild and deploy the probe service
+   - Verify the deployment
+
+### 6.2 Migration from Replit to Production
 
 When migrating from Replit to production, follow these additional steps:
 
@@ -446,9 +525,9 @@ For a more automated workflow, consider setting up a CI/CD pipeline using GitHub
 3. Push images to Amazon ECR
 4. Deploy to EC2 using the deploy script
 
-## 5.3 API Proxy Configuration
+## 6.3 API Proxy Configuration
 
-### 5.3.1 Development vs Production API Routing
+### 6.3 Development vs Production API Routing
 
 The application uses different API routing approaches in development and production:
 
@@ -484,7 +563,7 @@ If routers are mounted with `/api` prefix, they won't be reachable because:
 2. NGINX strips `/api/` and forwards to backend as `/login`
 3. If backend expects `/api/login`, this will result in 404 errors
 
-### 5.3.1.1 Frontend API Path Consistency
+### 6.3.1 Frontend API Path Consistency
 
 ⚠️ **IMPORTANT**: All frontend API requests must use relative paths for cross-environment compatibility.
 
