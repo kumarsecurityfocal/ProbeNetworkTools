@@ -43,7 +43,17 @@ fi
 log_info "Step 1: Checking frontend build assets..."
 if [ ! -d "./public" ] || [ ! -f "./public/index.html" ]; then
     log_warning "Missing frontend build files. Building the frontend..."
-    cd frontend && npm run build
+    cd frontend
+    # Use our improved build process
+    if [ -f "docker-build.sh" ]; then
+        chmod +x docker-build.sh
+        ./docker-build.sh
+    else
+        # Fallback to simpler build if script is not available
+        npm install --legacy-peer-deps
+        npm install autoprefixer postcss tailwindcss --no-save --legacy-peer-deps
+        npm run build
+    fi
     cd ..
     log_success "Frontend built successfully"
 else

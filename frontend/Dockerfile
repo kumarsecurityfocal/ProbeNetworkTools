@@ -7,17 +7,14 @@ WORKDIR /app
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install dependencies - using npm install instead of npm ci for better compatibility
-RUN npm install
-
 # Copy all files
 COPY . .
 
-# Install tailwindcss and postcss plugins explicitly to ensure they're available
-RUN npm install @tailwindcss/postcss autoprefixer postcss tailwindcss --no-save
+# Make the build script executable
+RUN chmod +x docker-build.sh
 
-# Build the app with error handling
-RUN npm run build || (echo "Build failed, checking for missing dependencies..." && npm install && npm run build)
+# Use the build script for more reliable builds
+RUN ./docker-build.sh
 
 # --- Production Stage ---
 FROM nginx:alpine
