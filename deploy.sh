@@ -8,13 +8,13 @@
 # Exit on any error
 set -e
 
-# Create logs directory if it doesn't exist
-mkdir -p logs
-
 # Setup logging
 DEPLOYMENT_DATE=$(date +"%Y%m%d_%H%M%S")
-LOG_FILE="logs/deployment_${DEPLOYMENT_DATE}.log"
-LATEST_LOG_FILE="logs/deployment_latest.log"
+LOG_FILE="deployment.log"
+cp -f "$LOG_FILE" "${LOG_FILE}.bak" 2>/dev/null || true
+
+# Add header to log file
+echo "===== DEPLOYMENT STARTED: $(date +"%Y-%m-%d %H:%M:%S") =====" > "$LOG_FILE"
 
 # Output formatting
 GREEN='\033[0;32m'
@@ -127,8 +127,12 @@ fi
 # Check for essential environment variables
 log_info "Step 4: Testing database connection..."
 
-# Check for external backend environment file
-if [ -f "../.env.backend" ]; then
+# Check for external backend environment file in production location
+if [ -d "../environment" ] && [ -f "../environment/.env.backend" ]; then
+    log_info "Found production environment file at ../environment/.env.backend"
+    run_command "cp ../environment/.env.backend ./backend/.env.backend" "Copying production environment file"
+    log_success "Copied production environment file to ./backend/.env.backend"
+elif [ -f "../.env.backend" ]; then
     log_info "Found external backend environment file at ../.env.backend"
     run_command "cp ../.env.backend ./backend/.env.backend" "Copying external backend environment file"
     log_success "Copied external backend environment file to ./backend/.env.backend"
