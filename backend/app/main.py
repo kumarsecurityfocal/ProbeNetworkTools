@@ -8,6 +8,7 @@ from app.routers import auth, diagnostics, api_keys, subscriptions, scheduled_pr
 from app.database import engine, Base, get_db
 from app.config import settings
 from app.initialize_db import initialize_database
+from app.middleware.rate_limit import rate_limit_dependency, start_background_tasks
 from sqlalchemy.orm import Session
 
 # Configure logging
@@ -96,6 +97,13 @@ async def startup_event():
         logger.info(f"Database initialization completed: {init_result}")
     except Exception as e:
         logger.error(f"Database initialization failed: {str(e)}")
+    
+    # Start background tasks for rate limiting
+    try:
+        start_background_tasks()
+        logger.info("Rate limiting background tasks started")
+    except Exception as e:
+        logger.error(f"Failed to start rate limiting tasks: {str(e)}")
     
     logger.info("ProbeOps API started successfully")
 

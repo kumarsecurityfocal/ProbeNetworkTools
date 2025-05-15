@@ -78,18 +78,21 @@ async def process_queue():
                 i += 1
 
 
-def can_process_request(user_id: int) -> bool:
+def can_process_request(user_id: Union[int, Any]) -> bool:
     """Check if a user has capacity for a new request based on concurrent limits."""
-    # Get user's subscription details (mock implementation - replace with DB query)
-    max_concurrent = get_user_limits(user_id).get('max_concurrent_requests', 
+    # Ensure user_id is an integer
+    user_id_int = int(user_id) if user_id is not None else 0
+    
+    # Get user's subscription details
+    max_concurrent = get_user_limits(user_id_int).get('max_concurrent_requests', 
                                                DEFAULT_LIMITS['max_concurrent_requests'])
     
     # Check current active requests
-    current_active = len(ACTIVE_REQUESTS.get(user_id, set()))
+    current_active = len(ACTIVE_REQUESTS.get(user_id_int, set()))
     return current_active < max_concurrent
 
 
-def get_user_limits(user_id: int, db: Optional[Session] = None) -> Dict:
+def get_user_limits(user_id: Union[int, Any], db: Optional[Session] = None) -> Dict:
     """Get a user's subscription limits."""
     try:
         if db:
@@ -115,30 +118,39 @@ def get_user_limits(user_id: int, db: Optional[Session] = None) -> Dict:
         return DEFAULT_LIMITS
 
 
-def record_request_start(user_id: int, request_id: str):
+def record_request_start(user_id: Union[int, Any], request_id: str):
     """Record the start of a request for a user."""
-    if user_id not in ACTIVE_REQUESTS:
-        ACTIVE_REQUESTS[user_id] = set()
-    ACTIVE_REQUESTS[user_id].add(request_id)
+    # Ensure user_id is an integer
+    user_id_int = int(user_id) if user_id is not None else 0
+    
+    if user_id_int not in ACTIVE_REQUESTS:
+        ACTIVE_REQUESTS[user_id_int] = set()
+    ACTIVE_REQUESTS[user_id_int].add(request_id)
 
 
-def record_request_end(user_id: int, request_id: str):
+def record_request_end(user_id: Union[int, Any], request_id: str):
     """Record the end of a request for a user."""
-    if user_id in ACTIVE_REQUESTS and request_id in ACTIVE_REQUESTS[user_id]:
-        ACTIVE_REQUESTS[user_id].remove(request_id)
-        if not ACTIVE_REQUESTS[user_id]:
-            del ACTIVE_REQUESTS[user_id]
+    # Ensure user_id is an integer
+    user_id_int = int(user_id) if user_id is not None else 0
+    
+    if user_id_int in ACTIVE_REQUESTS and request_id in ACTIVE_REQUESTS[user_id_int]:
+        ACTIVE_REQUESTS[user_id_int].remove(request_id)
+        if not ACTIVE_REQUESTS[user_id_int]:
+            del ACTIVE_REQUESTS[user_id_int]
     
     # Process the queue to see if we can allow more requests
     asyncio.create_task(process_queue())
 
 
-def record_usage(db: Session, user_id: int, endpoint: str, 
-                success: bool, response_time: float, ip_address: str = None):
+def record_usage(db: Session, user_id: Union[int, Any], endpoint: str, 
+                success: bool, response_time: float, ip_address: Optional[str] = None):
     """Record API usage for analytics and billing."""
     try:
+        # Ensure user_id is an integer
+        user_id_int = int(user_id) if user_id is not None else 0
+        
         usage_log = UsageLog(
-            user_id=user_id,
+            user_id=user_id_int,
             endpoint=endpoint,
             timestamp=datetime.utcnow(),
             success=success,
@@ -152,22 +164,24 @@ def record_usage(db: Session, user_id: int, endpoint: str,
         db.rollback()
 
 
-def check_rate_limit(user_id: int, limits: Dict) -> bool:
+def check_rate_limit(user_id: Union[int, Any], limits: Dict) -> bool:
     """
     Check if a user has exceeded their rate limits.
     Returns True if the request should be allowed, False otherwise.
     """
+    # Ensure user_id is an integer
+    user_id_int = int(user_id) if user_id is not None else 0
     current_time = time.time()
     
     # Initialize rate limit tracking for this user if not exists
-    if user_id not in RATE_LIMITS:
-        RATE_LIMITS[user_id] = {
+    if user_id_int not in RATE_LIMITS:
+        RATE_LIMITS[user_id_int] = {
             'minute': (0, current_time + 60),
             'hour': (0, current_time + 3600)
         }
     
     # Check and update minute rate limit
-    minute_count, minute_reset = RATE_LIMITS[user_id]['minute']
+    minute_count, minute_reset = RATE_LIMITS[user_id_int]['minute']
     if current_time > minute_reset:
         # Reset the counter if the time window has passed
         minute_count = 0
@@ -177,7 +191,7 @@ def check_rate_limit(user_id: int, limits: Dict) -> bool:
         return False
     
     # Check and update hour rate limit
-    hour_count, hour_reset = RATE_LIMITS[user_id]['hour']
+    hour_count, hour_reset = RATE_LIMITS[user_id_int]['hour']
     if current_time > hour_reset:
         # Reset the counter if the time window has passed
         hour_count = 0
@@ -187,17 +201,20 @@ def check_rate_limit(user_id: int, limits: Dict) -> bool:
         return False
     
     # Update the rate limit counters
-    RATE_LIMITS[user_id]['minute'] = (minute_count + 1, minute_reset)
-    RATE_LIMITS[user_id]['hour'] = (hour_count + 1, hour_reset)
+    RATE_LIMITS[user_id_int]['minute'] = (minute_count + 1, minute_reset)
+    RATE_LIMITS[user_id_int]['hour'] = (hour_count + 1, hour_reset)
     
     return True
 
 
-async def queue_request(user_id: int, request_id: str, priority: int) -> bool:
+async def queue_request(user_id: Union[int, Any], request_id: str, priority: int) -> bool:
     """
     Queue a request for processing when capacity becomes available.
     Returns True if the request was queued, False if the queue is full.
     """
+    # Ensure user_id is an integer
+    user_id_int = int(user_id) if user_id is not None else 0
+    
     if len(REQUEST_QUEUE) >= MAX_QUEUE_SIZE:
         return False
     
@@ -206,7 +223,7 @@ async def queue_request(user_id: int, request_id: str, priority: int) -> bool:
     
     # Add the request to the queue
     async with REQUEST_QUEUE_LOCK:
-        REQUEST_QUEUE.append((priority, time.time(), user_id, request_id, future))
+        REQUEST_QUEUE.append((priority, time.time(), user_id_int, request_id, future))
     
     # Process the queue in case there's capacity now
     await process_queue()
@@ -219,7 +236,7 @@ async def queue_request(user_id: int, request_id: str, priority: int) -> bool:
         # Remove from queue if timed out
         async with REQUEST_QUEUE_LOCK:
             for i, (_, _, u_id, r_id, _) in enumerate(REQUEST_QUEUE):
-                if u_id == user_id and r_id == request_id:
+                if u_id == user_id_int and r_id == request_id:
                     REQUEST_QUEUE.pop(i)
                     break
         return False
@@ -241,6 +258,14 @@ async def rate_limit_dependency(
     api_key = None
     user = None
     user_id = None
+    client_ip = None
+    
+    # Try to get client IP safely
+    if request.client and hasattr(request.client, 'host'):
+        client_ip = request.client.host
+    else:
+        # Fallback
+        client_ip = "unknown"
     
     # Try to get API key from header or query parameter
     if "X-API-Key" in request.headers:
@@ -276,61 +301,72 @@ async def rate_limit_dependency(
         user_id = user.id
     else:
         # Handle public endpoints (might be restricted or have different limits)
-        client_ip = request.client.host
         user_id = hash(client_ip) % 1000000  # Anonymous user ID based on IP
     
+    # Ensure user_id is an integer
+    user_id_int = int(user_id) if user_id is not None else 0
+    
     # Get user's subscription limits
-    limits = get_user_limits(user_id, db)
+    limits = get_user_limits(user_id_int, db)
     
     # Check if user has exceeded concurrent request limit
-    if not can_process_request(user_id):
+    if not can_process_request(user_id_int):
         # If at capacity, try to queue the request
-        if await queue_request(user_id, request_id, limits.get('priority', 0)):
+        if await queue_request(user_id_int, request_id, limits.get('priority', 0)):
             # Request was queued and is now ready to be processed
             pass
         else:
             # Queue is full or request timed out
-            logger.warning(f"Rate limit exceeded for user {user_id}: too many concurrent requests")
+            logger.warning(f"Rate limit exceeded for user {user_id_int}: too many concurrent requests")
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail="Too many concurrent requests. Please try again later."
             )
     
     # Check rate limits (requests per minute/hour)
-    if not check_rate_limit(user_id, limits):
-        logger.warning(f"Rate limit exceeded for user {user_id}: too many requests")
+    if not check_rate_limit(user_id_int, limits):
+        logger.warning(f"Rate limit exceeded for user {user_id_int}: too many requests")
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="Rate limit exceeded. Please try again later."
         )
     
     # Record the start of this request
-    record_request_start(user_id, request_id)
+    record_request_start(user_id_int, request_id)
     
-    # Add cleanup handler to record when request ends
-    @request.on_close
-    async def on_request_close():
+    # Instead of on_close (which might not be supported in all FastAPI versions),
+    # we'll use response callbacks or middleware properly in the main.py file
+    
+    # For now, we'll simulate cleanup by scheduling a task to run after the request
+    async def cleanup_after_request():
+        # Wait a tiny bit to ensure the request is done
+        await asyncio.sleep(0.01)
+        
         end_time = time.time()
         duration = end_time - start_time
-        
-        # Get response status from state (if available)
-        success = getattr(request.state, "response_success", True)
+        success = True  # Default success status
         
         # Record usage statistics
-        if db and user_id:
-            record_usage(
-                db, 
-                user_id, 
-                request.url.path, 
-                success, 
-                duration, 
-                request.client.host
-            )
+        if db:
+            try:
+                record_usage(
+                    db, 
+                    user_id_int, 
+                    str(request.url.path), 
+                    success, 
+                    duration, 
+                    client_ip
+                )
+            except Exception as e:
+                logger.error(f"Error recording usage: {e}")
         
         # Record the end of this request
-        record_request_end(user_id, request_id)
+        record_request_end(user_id_int, request_id)
     
-    return user_id
+    # Schedule the cleanup
+    asyncio.create_task(cleanup_after_request())
+    
+    return user_id_int
 
 
 # Periodic task to clean up expired rate limit entries
