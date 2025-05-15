@@ -105,7 +105,6 @@ const AdminPanel = () => {
   const [editTierDialog, setEditTierDialog] = useState(false);
   const [currentTier, setCurrentTier] = useState(null);
   const [deleteTierDialog, setDeleteTierDialog] = useState(false);
-  const [tierToDelete, setTierToDelete] = useState(null);
   
   // Debug state
   const [debugInfo, setDebugInfo] = useState({
@@ -127,7 +126,7 @@ const AdminPanel = () => {
   const [deleteUserDialog, setDeleteUserDialog] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
   
-  // Tier management state
+  // Additional state for tier management
   const [tierToDelete, setTierToDelete] = useState(null);
   
   // Form fields for user creation/editing
