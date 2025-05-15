@@ -43,7 +43,7 @@ def get_registration_token(db: Session, token: str) -> models.NodeRegistrationTo
     return token_record
 
 
-@router.post("/nodes/register", response_model=schemas.ProbeNodeRegistrationResponse)
+@router.post("/register", response_model=schemas.ProbeNodeRegistrationResponse)
 async def register_node(
     node_data: schemas.ProbeNodeCreate,
     db: Session = Depends(get_db)
@@ -114,7 +114,7 @@ async def register_node(
         )
 
 
-@router.post("/nodes/heartbeat")
+@router.post("/heartbeat")
 async def node_heartbeat(
     heartbeat: schemas.ProbeNodeHeartbeat,
     db: Session = Depends(get_db),
@@ -156,7 +156,7 @@ async def node_heartbeat(
     }
 
 
-@router.get("/nodes", response_model=List[schemas.ProbeNodeResponse])
+@router.get("", response_model=List[schemas.ProbeNodeResponse])
 async def get_nodes(
     region: Optional[str] = None,
     status: Optional[str] = None,
@@ -188,7 +188,7 @@ async def get_nodes(
     return nodes
 
 
-@router.get("/nodes/{node_uuid}", response_model=schemas.ProbeNodeAdminResponse)
+@router.get("/{node_uuid}", response_model=schemas.ProbeNodeAdminResponse)
 async def get_node(
     node_uuid: str,
     current_user: models.User = Depends(auth.get_admin_user),
@@ -209,7 +209,7 @@ async def get_node(
     return node
 
 
-@router.put("/nodes/{node_uuid}", response_model=schemas.ProbeNodeResponse)
+@router.put("/{node_uuid}", response_model=schemas.ProbeNodeResponse)
 async def update_node(
     node_uuid: str,
     node_update: schemas.ProbeNodeAdminUpdate,
