@@ -95,7 +95,7 @@ if [ "$found_assets" = false ]; then
                 
                 # Run container to build and extract assets
                 log_info "Running container to build and extract assets..."
-                docker run --rm -v $(pwd)/public:/public probeops-frontend-build cp -r /app/dist/* /public/
+                docker run --rm -v $(pwd)/public:/public probeops-frontend-build cp -r /usr/share/nginx/html/* /public/
                 
                 # Check if build was successful
                 if [ -f "public/index.html" ]; then

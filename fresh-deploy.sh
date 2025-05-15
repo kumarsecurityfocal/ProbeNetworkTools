@@ -248,7 +248,7 @@ log_info "Building frontend image with Docker directly..."
 run_command "docker build -t probeops-frontend-build ./frontend" "Building frontend Docker image directly"
 
 # Run the container with proper volume mounting to extract the build
-run_command "docker run --rm -v $(pwd)/public:/public probeops-frontend-build cp -r /app/dist/* /public/" "Building frontend assets and copying to public directory"
+run_command "docker run --rm -v $(pwd)/public:/public probeops-frontend-build cp -r /usr/share/nginx/html/* /public/" "Building frontend assets and copying to public directory"
 
 # Make sure we have the public directory 
 run_command "mkdir -p public" "Ensuring public directory exists"

@@ -6,14 +6,21 @@ This document explains the critical fix applied to the frontend build process in
 
 ## Issue Description
 
-The deployment process was failing with the following error:
+The deployment process was failing with the following errors:
 
+1. First error when using docker-compose to build the frontend:
 ```
 probeops-frontend-build | /docker-entrypoint.sh: exec: line 47: npm: not found
 [BUILD_ERROR] - Frontend build failed, deployment will be incomplete
 ```
 
-Despite using a `node:20-alpine` base image in the Dockerfile, the container could not find the `npm` command when launched via docker-compose.
+2. Second error when trying to extract assets with the fixed approach:
+```
+$ docker run --rm -v /home/ubuntu/ProbeNetworkTools/public:/public probeops-frontend-build cp -r /app/dist/* /public/
+cp: can't stat '/app/dist/*': No such file or directory
+```
+
+Despite using a `node:20-alpine` base image in the Dockerfile, the container could not find the `npm` command when launched via docker-compose. Additionally, the multi-stage build in the Dockerfile placed the final assets in `/usr/share/nginx/html` rather than `/app/dist`.
 
 ## Solution
 
@@ -33,7 +40,7 @@ The following changes were made to all deployment scripts:
 
 2. **Direct Asset Extraction**:
    ```bash
-   docker run --rm -v $(pwd)/public:/public probeops-frontend-build cp -r /app/dist/* /public/
+   docker run --rm -v $(pwd)/public:/public probeops-frontend-build cp -r /usr/share/nginx/html/* /public/
    ```
 
 3. **Enhanced Verification**:
