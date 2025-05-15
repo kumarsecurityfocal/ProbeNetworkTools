@@ -18,7 +18,7 @@ from ..config import settings
 # Set up logging
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/nodes", tags=["probe_nodes"])
+router = APIRouter(prefix="/probe-nodes", tags=["probe_nodes"])
 
 
 def generate_node_api_key() -> str:
@@ -321,7 +321,7 @@ async def revoke_registration_token(
     return None
 
 
-@router.post("/registration-token/create", response_model=Dict[str, Any])
+@router.post("/registration-token", response_model=Dict[str, Any])
 async def create_registration_token(
     description: str = Body(..., embed=True),
     expiry_hours: int = Body(24, embed=True),
