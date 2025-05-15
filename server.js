@@ -1156,9 +1156,18 @@ function handleNodes(req, res) {
   } else if (pathPart.includes('registration-token')) {
     // Handle registration token endpoints
     const pathParts = pathPart.split('/');
-    const tokenPath = pathParts.slice(pathParts.indexOf('nodes')).join('/');
-    console.log(`Mapped ${pathPart} to backend /${tokenPath} (token endpoint)`);
-    backendPath = `/${tokenPath}`;
+    console.log(`Token path parts: ${JSON.stringify(pathParts)}`);
+    const nodesIndex = pathParts.indexOf('nodes');
+    console.log(`Nodes index: ${nodesIndex}`);
+    
+    if (nodesIndex !== -1) {
+      const tokenPath = pathParts.slice(nodesIndex).join('/');
+      console.log(`Mapped ${pathPart} to backend /${tokenPath} (token endpoint)`);
+      backendPath = `/${tokenPath}`;
+    } else {
+      console.log(`Invalid token path: ${pathPart} - nodes segment not found`);
+      backendPath = `/nodes/registration-token`;
+    }
   } else {
     // Extract ID or detail route
     const pathParts = pathPart.split('/').filter(Boolean);
