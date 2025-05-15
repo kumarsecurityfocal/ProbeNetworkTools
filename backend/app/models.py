@@ -240,9 +240,15 @@ class ProbeNode(Base):
     
     # Status information
     is_active = Column(Boolean, default=True)
-    status = Column(String, default="registered")  # registered, active, inactive, error
+    status = Column(String, default="registered")  # registered, active, inactive, error, disconnected
     last_heartbeat = Column(DateTime, nullable=True)
     version = Column(String, nullable=True)
+    
+    # WebSocket connection information
+    connection_type = Column(String, nullable=True)  # websocket, http, null when disconnected
+    last_connected = Column(DateTime, nullable=True)
+    connection_id = Column(String, nullable=True)  # For tracking specific WS connections
+    reconnect_count = Column(Integer, default=0)  # Track connection stability
     
     # Node capabilities
     max_concurrent_probes = Column(Integer, default=10)
