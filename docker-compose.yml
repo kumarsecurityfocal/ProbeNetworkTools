@@ -15,7 +15,6 @@ services:
     environment:
       - SECRET_KEY=${SECRET_KEY:-super-secret-key-change-in-production}
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
-      - DATABASE_URL=${DATABASE_URL}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-https://probeops.com,http://localhost:3000}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost,http://localhost:3000,http://127.0.0.1,http://frontend,https://probeops.com,https://www.probeops.com}
