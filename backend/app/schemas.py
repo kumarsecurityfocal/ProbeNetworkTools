@@ -546,6 +546,11 @@ class ProbeNodeResponse(BaseModel):
     error_count: int
     total_probes_executed: int
     
+    # WebSocket connection information
+    connection_type: Optional[str] = None
+    last_connected: Optional[datetime] = None
+    reconnect_count: Optional[int] = None
+    
     class Config:
         from_attributes = True
 
@@ -571,6 +576,38 @@ class ProbeNodeRegistrationResponse(BaseModel):
     status: str
     config: Dict[str, Any]
     message: str
+    
+    
+class WebSocketNodeAuth(BaseModel):
+    """Authentication data for WebSocket connections from nodes"""
+    node_uuid: str
+    api_key: str
+    
+
+class WebSocketMessage(BaseModel):
+    """Base model for WebSocket messages"""
+    message_type: str
+    data: Dict[str, Any]
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    message_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+
+
+class WebSocketCommandMessage(BaseModel):
+    """Command message to be sent to nodes"""
+    command: str
+    params: Dict[str, Any]
+    target_node: str  # node_uuid
+    priority: int = 1
+    timeout: int = 30  # seconds
+    
+    
+class WebSocketHeartbeatMessage(BaseModel):
+    """Heartbeat message from nodes"""
+    node_uuid: str
+    uptime: int  # seconds
+    current_load: float
+    memory_usage: float  # percentage
+    cpu_usage: float  # percentage
 
 
 class NodeRegistrationTokenCreate(BaseModel):

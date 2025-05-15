@@ -1,10 +1,10 @@
 import logging
-from fastapi import FastAPI, Depends, Request
+from fastapi import FastAPI, Depends, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
-from app.routers import auth, diagnostics, api_keys, subscriptions, scheduled_probes, metrics, probe_nodes
+from app.routers import auth, diagnostics, api_keys, subscriptions, scheduled_probes, metrics, probe_nodes, ws_node
 from app.database import engine, Base, get_db
 from app.config import settings
 from app.initialize_db import initialize_database
@@ -59,6 +59,7 @@ app.include_router(subscriptions.router, prefix="", tags=["Subscriptions"])
 app.include_router(scheduled_probes.router, prefix="", tags=["Scheduled Probes"])
 app.include_router(metrics.router, prefix="", tags=["Metrics"])
 app.include_router(probe_nodes.router, prefix="", tags=["Probe Nodes"])
+app.include_router(ws_node.router, prefix="", tags=["WebSockets"])
 
 @app.get("/", tags=["Root"])
 async def root():
