@@ -10,11 +10,14 @@ COPY package*.json ./
 # Copy all files
 COPY . .
 
-# Make the build script executable
-RUN chmod +x docker-build.sh
+# Install dependencies with legacy peer deps to avoid conflicts
+RUN npm install --legacy-peer-deps
 
-# Use the build script for more reliable builds
-RUN ./docker-build.sh
+# Install PostCSS and Tailwind plugins explicitly
+RUN npm install autoprefixer postcss tailwindcss --no-save --legacy-peer-deps
+
+# Build the frontend with output to ../public directory
+RUN npm run build -- --outDir=../public
 
 # --- Production Stage ---
 FROM nginx:alpine
@@ -23,7 +26,7 @@ FROM nginx:alpine
 RUN mkdir -p /usr/share/nginx/html
 
 # Copy the build output to nginx html directory
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY --from=build /public /usr/share/nginx/html
 # In our Vite setup, the build output is configured to go to ../public
 # This is handled by the copy-frontend-assets.sh script in our deployment
 
