@@ -18,7 +18,7 @@ from ..config import settings
 # Set up logging
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["probe_nodes"])
+router = APIRouter(prefix="/nodes", tags=["probe_nodes"])
 
 
 def generate_node_api_key() -> str:
@@ -270,7 +270,7 @@ async def get_registration_tokens(
     return tokens
 
 
-@router.get("/nodes/registration-token/{token_id}", response_model=schemas.NodeRegistrationTokenResponse)
+@router.get("/registration-token/{token_id}", response_model=schemas.NodeRegistrationTokenResponse)
 async def get_registration_token_details(
     token_id: int,
     current_user: models.User = Depends(auth.get_admin_user),
@@ -291,7 +291,7 @@ async def get_registration_token_details(
     return token
 
 
-@router.delete("/nodes/registration-token/{token_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/registration-token/{token_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def revoke_registration_token(
     token_id: int,
     current_user: models.User = Depends(auth.get_admin_user),
@@ -321,7 +321,7 @@ async def revoke_registration_token(
     return None
 
 
-@router.post("/nodes/registration-token/create", response_model=Dict[str, Any])
+@router.post("/registration-token/create", response_model=Dict[str, Any])
 async def create_registration_token(
     description: str = Body(..., embed=True),
     expiry_hours: int = Body(24, embed=True),
