@@ -127,6 +127,9 @@ const AdminPanel = () => {
   const [deleteUserDialog, setDeleteUserDialog] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
   
+  // Tier management state
+  const [tierToDelete, setTierToDelete] = useState(null);
+  
   // Form fields for user creation/editing
   const [userFormData, setUserFormData] = useState({
     username: '',
@@ -717,6 +720,117 @@ const AdminPanel = () => {
       setSnackbar({
         open: true,
         message: 'Failed to delete user',
+        severity: 'error'
+      });
+    }
+  };
+  
+  // Tier management handlers
+  const handleSaveTier = async () => {
+    try {
+      if (!currentTier) {
+        setSnackbar({
+          open: true,
+          message: 'No tier data to save',
+          severity: 'error'
+        });
+        return;
+      }
+      
+      // Validate required fields
+      if (!currentTier.name || !currentTier.description) {
+        setSnackbar({
+          open: true,
+          message: 'Please fill in all required fields',
+          severity: 'error'
+        });
+        return;
+      }
+      
+      // Prepare features object for backend
+      const tierData = {
+        ...currentTier,
+        features: {} // Initialize empty features object
+      };
+      
+      // Add any custom features that might be needed
+      if (currentTier.allow_custom_intervals) {
+        tierData.features.custom_intervals = true;
+      }
+      
+      if (currentTier.id) {
+        // Update existing tier
+        await updateSubscriptionTier(currentTier.id, tierData);
+        setSnackbar({
+          open: true,
+          message: `${currentTier.name} tier updated successfully`,
+          severity: 'success'
+        });
+      } else {
+        // Create new tier
+        await createSubscriptionTier(tierData);
+        setSnackbar({
+          open: true,
+          message: 'New tier created successfully',
+          severity: 'success'
+        });
+      }
+      
+      // Refetch tiers
+      const updatedTiers = await getSubscriptionTiers();
+      setTiers(updatedTiers);
+      
+      setEditTierDialog(false);
+    } catch (error) {
+      console.error('Error saving tier:', error);
+      setSnackbar({
+        open: true,
+        message: 'Error saving tier: ' + (error.response?.data?.detail || error.message),
+        severity: 'error'
+      });
+    }
+  };
+  
+  const handleDeleteTier = async () => {
+    try {
+      if (!tierToDelete || !tierToDelete.id) {
+        setSnackbar({
+          open: true,
+          message: 'No tier selected for deletion',
+          severity: 'error'
+        });
+        return;
+      }
+      
+      // Prevent deleting FREE tier
+      if (tierToDelete.name === 'FREE') {
+        setSnackbar({
+          open: true,
+          message: 'The FREE tier cannot be deleted',
+          severity: 'error'
+        });
+        setDeleteTierDialog(false);
+        return;
+      }
+      
+      await deleteSubscriptionTier(tierToDelete.id);
+      
+      // Refetch tiers
+      const updatedTiers = await getSubscriptionTiers();
+      setTiers(updatedTiers);
+      
+      setSnackbar({
+        open: true,
+        message: `${tierToDelete.name} tier deleted successfully`,
+        severity: 'success'
+      });
+      
+      setDeleteTierDialog(false);
+    } catch (error) {
+      console.error('Error deleting tier:', error);
+      setSnackbar({
+        open: true,
+        message: 'Error deleting tier: ' + (error.response?.data?.detail || error.message),
         severity: 'error'
       });
     }
@@ -1808,5 +1922,7 @@ const AdminPanel = () => {
     </Box>
   );
 };
+
+
 
 export default AdminPanel;
