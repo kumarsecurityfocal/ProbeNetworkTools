@@ -1,9 +1,12 @@
+version: '3.8'
+
 services:
   # Backend service
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    container_name: probeops-backend
     restart: always
     ports:
       - "8000:8000"
@@ -12,70 +15,82 @@ services:
     environment:
       - SECRET_KEY=${SECRET_KEY:-super-secret-key-change-in-production}
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      - DATABASE_URL=${DATABASE_URL}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-https://probeops.com,http://localhost:3000}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
     volumes:
-      - ./backend:/app
+      - backend-data:/app/data
     networks:
       - probeops-network
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
 
-  # Frontend service
-  frontend:
+  # Frontend service (build service)
+  frontend-build:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    restart: always
+    container_name: probeops-frontend-build
+    volumes:
+      - frontend-build:/app/dist
     environment:
-      - VITE_API_URL=http://backend:8000
+      - VITE_API_URL=https://probeops.com/api
       - NODE_ENV=production
-    # No volumes in production - allow the Dockerfile multi-stage build to work properly
-    # Development-only volumes are commented out to prevent build artifacts from being overridden
-    # volumes:
-    #   - ./frontend:/app
-    #   - /app/node_modules
     networks:
       - probeops-network
+    command: ["npm", "run", "build"]
 
-  # NGINX service (reverse proxy)
+  # NGINX service (reverse proxy and static file server)
   nginx:
     build:
       context: ./nginx
       dockerfile: Dockerfile
+    container_name: probeops-nginx
     restart: always
     ports:
       - "80:80"
       - "443:443"
     depends_on:
       - backend
-      - frontend
+      - frontend-build
     networks:
       - probeops-network
     # Volumes for SSL certificates and webroot for certificate renewal
-    # IMPORTANT: Do not mount frontend/dist here in production!
     volumes:
       - ./nginx/ssl:/etc/letsencrypt
       - ./nginx/ssl/webroot:/var/www/certbot
       - ./nginx/ssl/ssl-dhparams.pem:/etc/letsencrypt/ssl-dhparams.pem
+      - frontend-build:/usr/share/nginx/html
     # The copying of frontend assets is handled by:
-    # 1. For production: Two-stage builds in both frontend's and nginx's Dockerfiles
-    # 2. For development: Volume mounts in docker-compose.dev.yml
+    # 1. frontend-build service builds the assets
+    # 2. volumes share the built assets with nginx
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
-  # Probe service (network diagnostic agent)
-  probe:
-    build:
-      context: ./probe
-      dockerfile: Dockerfile
-    restart: always
-    env_file:
-      - ./backend/.env.backend
-      - ./probe/.env.probe
-    environment:
-      - API_KEY=${PROBE_API_KEY}
+  # Certbot service for SSL certificate renewal
+  certbot:
+    image: certbot/certbot
+    container_name: probeops-certbot
     volumes:
-      - ./probe:/app
-    networks:
-      - probeops-network
+      - ./nginx/ssl:/etc/letsencrypt
+      - ./nginx/ssl/webroot:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
     depends_on:
-      - backend
+      - nginx
 
   # Database service (for local development only)
   # For production with AWS RDS, comment out this entire service block
@@ -86,6 +101,6 @@ networks:
   probeops-network:
     driver: bridge
 
-# Uncomment this section when using local PostgreSQL
-# volumes:
-#   postgres-data:
+volumes:
+  backend-data:
+  frontend-build:

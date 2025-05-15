@@ -239,56 +239,33 @@ else
     log_message "⚠️ Deployment will continue using existing or default environment variables"
 fi
 
-# Step 2: Build the frontend assets
-log_message "🔄 Building frontend assets..."
-if execute_and_log "cd frontend && npm install && npm run build" "Building frontend assets"; then
-    log_message "✅ Frontend assets built successfully"
-    
-    # Copy frontend assets directly (without relying on external script)
-    log_message "🔄 Copying frontend assets to NGINX build directory..."
-    
-    # Create destination directory
-    if execute_and_log "mkdir -p nginx/frontend-build" "Creating NGINX frontend-build directory"; then
-        # Check if we have frontend assets in dist/ directory
-        if [ -d "frontend/dist" ] && [ -f "frontend/dist/index.html" ]; then
-            # Copy from frontend/dist to nginx/frontend-build
-            if execute_and_log "cp -r frontend/dist/* nginx/frontend-build/" "Copying frontend/dist assets"; then
-                log_message "✅ Frontend assets successfully copied from frontend/dist to NGINX container"
-            else
-                log_message "⚠️ Failed to copy from frontend/dist. Trying public/ directory..."
-                # Try public directory as fallback
-                if [ -d "public" ] && [ -f "public/index.html" ]; then
-                    if execute_and_log "cp -r public/* nginx/frontend-build/" "Copying public/ assets"; then
-                        log_message "✅ Frontend assets successfully copied from public/ to NGINX container"
-                    else
-                        log_message "❌ Failed to copy frontend assets. Deployment may have issues."
-                    fi
-                else
-                    log_message "⚠️ No frontend assets found in public/ either. Creating placeholder..."
-                    execute_and_log "echo '<html><head><title>ProbeOps</title></head><body><h1>ProbeOps</h1><p>Frontend assets not found. This is a placeholder.</p></body></html>' > nginx/frontend-build/index.html" "Creating placeholder index.html"
-                fi
-            fi
-        elif [ -d "public" ] && [ -f "public/index.html" ]; then
-            # Try public directory directly
-            if execute_and_log "cp -r public/* nginx/frontend-build/" "Copying public/ assets"; then
-                log_message "✅ Frontend assets successfully copied from public/ to NGINX container"
-            else
-                log_message "❌ Failed to copy frontend assets. Deployment may have issues."
-            fi
-        else
-            log_message "⚠️ No frontend assets found in expected locations. Creating placeholder..."
-            execute_and_log "echo '<html><head><title>ProbeOps</title></head><body><h1>ProbeOps</h1><p>Frontend assets not found. This is a placeholder.</p></body></html>' > nginx/frontend-build/index.html" "Creating placeholder index.html"
-        fi
-        
-        # Create a marker file
-        execute_and_log "echo 'ProbeOps frontend build copied at $(date)' > nginx/frontend-build/.probeops-build-copied" "Creating build marker file"
-        execute_and_log "ls -la nginx/frontend-build/" "Listing copied frontend files"
+# Step 2: Check if we need to update environment files
+log_message "🔄 Checking environment files..."
+if [ -f ".env.template" ]; then
+    if [ ! -f ".env" ]; then
+        log_message "🔄 Creating .env file from template..."
+        execute_and_log "cp .env.template .env" "Creating .env file"
+        log_message "⚠️ .env file created from template. Please update with actual values."
     else
-        log_message "❌ Failed to create nginx/frontend-build directory. Deployment may fail."
+        log_message "✅ .env file already exists."
     fi
 else
-    log_message "❌ Failed to build frontend assets. Aborting deployment."
+    log_message "⚠️ No .env.template file found. Please make sure environment variables are set."
+fi
+
+# Step 3: Validate docker-compose.yml and docker-compose.probe.yml
+log_message "🔄 Validating Docker Compose files..."
+if execute_and_log "docker compose -f docker-compose.yml config" "Validating docker-compose.yml"; then
+    log_message "✅ docker-compose.yml is valid"
+else
+    log_message "❌ docker-compose.yml validation failed. Aborting deployment."
     exit 1
+fi
+
+if execute_and_log "docker compose -f docker-compose.probe.yml config" "Validating docker-compose.probe.yml"; then
+    log_message "✅ docker-compose.probe.yml is valid"
+else
+    log_message "⚠️ docker-compose.probe.yml validation failed. Probe node deployment may fail."
 fi
 
 # Step 3: Stop and remove existing containers
@@ -347,12 +324,13 @@ docker_ps_output=$(docker compose ps)
 echo "$docker_ps_output" >> $LOG_FILE
 
 RUNNING_CONTAINERS=$(echo "$docker_ps_output" | grep "Up" | wc -l)
-EXPECTED_CONTAINERS=4  # backend, frontend, nginx, probe
+EXPECTED_CONTAINERS=4  # backend, frontend-build, nginx, certbot
 
 if [ "$RUNNING_CONTAINERS" -ge "$EXPECTED_CONTAINERS" ]; then
     log_message "✅ All services are running ($RUNNING_CONTAINERS containers)"
 else
     log_message "⚠️ Warning: Only $RUNNING_CONTAINERS of $EXPECTED_CONTAINERS services are running"
+    log_message "ℹ️ Note: Probe nodes are now deployed separately using docker-compose.probe.yml"
 fi
 
 # Check if the backend API is accessible
