@@ -26,22 +26,31 @@ There were two main issues:
 
 ## Solution
 
-The issue was resolved by:
+The issue was resolved through a two-part fix:
 
-1. Bypassing docker-compose for the frontend build process
-2. Using direct Docker commands to build and extract the frontend assets
+1. **Simplified Dockerfile to a single-stage build**
+2. **Bypassing docker-compose in favor of direct Docker commands**
 
 ### Applied Changes
 
-The following changes were made to all deployment scripts:
+The following changes were made:
 
-1. **Explicit Docker Build**: 
-   ```bash
-   docker build -t probeops-frontend-build ./frontend
+1. **Simplified Dockerfile**: 
+   ```dockerfile
+   # Simple single-stage build
+   FROM node:20-alpine
+   WORKDIR /app
+   COPY . .
+   RUN npm install --legacy-peer-deps
+   RUN npm run build -- --outDir=/app/dist
    ```
 
-2. **Direct Asset Extraction**:
+2. **Direct Docker Build and Asset Extraction**:
    ```bash
+   # Build the image directly
+   docker build -t probeops-frontend-build ./frontend
+   
+   # Extract assets from the correct path
    docker run --rm -v $(pwd)/public:/public probeops-frontend-build cp -r /app/dist/* /public/
    ```
 
