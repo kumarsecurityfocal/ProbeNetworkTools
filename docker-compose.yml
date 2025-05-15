@@ -15,9 +15,11 @@ services:
     environment:
       - SECRET_KEY=${SECRET_KEY:-super-secret-key-change-in-production}
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
-      - DATABASE_URL=postgresql://neondb_owner:npg_VDTfGjRwnN87@ep-shy-mud-a5rzreo0.us-east-2.aws.neon.tech/neondb?sslmode=require
+      - DATABASE_URL=${DATABASE_URL}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-https://probeops.com,http://localhost:3000}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost,http://localhost:3000,http://127.0.0.1,http://frontend,https://probeops.com,https://www.probeops.com}
+      - PROBE_TIMEOUT=${PROBE_TIMEOUT:-5}
     volumes:
       - backend-data:/app/data
     networks:
