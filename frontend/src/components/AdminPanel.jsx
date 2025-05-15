@@ -44,7 +44,14 @@ import {
   Refresh as RefreshIcon
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
-import { getAllSubscriptions, getSubscriptionTiers, cancelSubscription, updateSubscription, renewSubscription } from '../services/subscription';
+import { 
+  getAllSubscriptions, 
+  getSubscriptionTiers, 
+  cancelSubscription, 
+  updateSubscription, 
+  renewSubscription,
+  createSubscription
+} from '../services/subscription';
 import { 
   getAllUsers, 
   createUser, 
@@ -303,13 +310,18 @@ const AdminPanel = () => {
   // User management functions
   const handleEditUser = (user) => {
     setCurrentUser(user);
+    
+    // Find the user's current subscription
+    const userSubscription = subscriptions.find(sub => sub.user_id === user.id);
+    
     setUserFormData({
       username: user.username,
       email: user.email,
       password: '', // Don't include password when editing
       is_admin: user.is_admin,
       is_active: user.is_active,
-      email_verified: user.email_verified
+      email_verified: user.email_verified,
+      subscription_tier_id: userSubscription ? userSubscription.tier_id : ''
     });
     setEditUserDialog(true);
   };
@@ -378,7 +390,40 @@ const AdminPanel = () => {
         const updateData = { ...userFormData };
         if (!updateData.password) delete updateData.password; // Don't send password if it's empty
         
+        // Extract subscription tier ID before sending to user update API
+        const subscription_tier_id = updateData.subscription_tier_id;
+        delete updateData.subscription_tier_id; // Remove from user update data
+        
         await updateUser(currentUser.id, updateData);
+        
+        // If subscription tier is selected, update or create subscription
+        if (subscription_tier_id) {
+          try {
+            // Check if user already has a subscription
+            const existingSubscription = subscriptions.find(sub => sub.user_id === currentUser.id);
+            
+            if (existingSubscription) {
+              // Update existing subscription
+              await updateSubscription(existingSubscription.id, {
+                tier_id: subscription_tier_id,
+                user_id: currentUser.id,
+                is_active: true
+              });
+              console.log(`Updated subscription for user ${currentUser.id} to tier ${subscription_tier_id}`);
+            } else {
+              // Create new subscription
+              await createSubscription(currentUser.id, subscription_tier_id);
+              console.log(`Created new subscription for user ${currentUser.id} with tier ${subscription_tier_id}`);
+            }
+            
+            // Refresh subscriptions list
+            const updatedSubs = await getAllSubscriptions();
+            setSubscriptions(updatedSubs);
+          } catch (subError) {
+            console.error('Error updating subscription:', subError);
+            // Continue anyway - user was updated successfully
+          }
+        }
         
         setSnackbar({
           open: true,
@@ -388,8 +433,30 @@ const AdminPanel = () => {
       } else {
         // Create new user
         console.log('Creating new user:', userFormData.username);
-        const result = await createUser(userFormData);
+        
+        // Extract subscription tier ID before sending to user creation API
+        const subscription_tier_id = userFormData.subscription_tier_id;
+        const userData = { ...userFormData };
+        delete userData.subscription_tier_id; // Remove from user creation data
+        
+        const result = await createUser(userData);
         console.log('User creation result:', result);
+        
+        // If subscription tier is selected and user was created successfully
+        if (subscription_tier_id && result && result.id) {
+          try {
+            // Create subscription for the new user
+            await createSubscription(result.id, subscription_tier_id);
+            console.log(`Created subscription for new user ${result.id} with tier ${subscription_tier_id}`);
+            
+            // Refresh subscriptions list
+            const updatedSubs = await getAllSubscriptions();
+            setSubscriptions(updatedSubs);
+          } catch (subError) {
+            console.error('Error creating subscription for new user:', subError);
+            // Continue anyway - user was created successfully
+          }
+        }
         
         setSnackbar({
           open: true,
@@ -1055,6 +1122,26 @@ const AdminPanel = () => {
                 }
                 label="Email Verified"
               />
+            </Grid>
+            
+            {/* Subscription Tier Selection */}
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <InputLabel id="user-subscription-tier-label">Subscription Tier</InputLabel>
+                <Select
+                  labelId="user-subscription-tier-label"
+                  name="subscription_tier_id"
+                  value={userFormData.subscription_tier_id}
+                  onChange={handleUserFormChange}
+                  label="Subscription Tier"
+                >
+                  {tiers.map((tier) => (
+                    <MenuItem key={tier.id} value={tier.id}>
+                      {tier.name} - {(tier.price_monthly/100).toFixed(2)}/month
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
           </Grid>
         </DialogContent>
