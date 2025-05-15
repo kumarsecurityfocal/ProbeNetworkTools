@@ -7,14 +7,17 @@ WORKDIR /app
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --production=false
+# Install dependencies - using npm install instead of npm ci for better compatibility
+RUN npm install
 
 # Copy all files
 COPY . .
 
-# Build the app
-RUN npm run build
+# Install tailwindcss and postcss plugins explicitly to ensure they're available
+RUN npm install @tailwindcss/postcss autoprefixer postcss tailwindcss --no-save
+
+# Build the app with error handling
+RUN npm run build || (echo "Build failed, checking for missing dependencies..." && npm install && npm run build)
 
 # --- Production Stage ---
 FROM nginx:alpine
