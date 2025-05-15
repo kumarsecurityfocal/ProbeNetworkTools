@@ -570,12 +570,24 @@ function handleProbes(req, res) {
   const pathPart = url.pathname;
   const searchParams = url.searchParams.toString();
   
-  // Determine backend path - looking at main.py, there's no prefix for the router
-  // Since the frontend expects /probes, we'll map that directly
-  let backendPath = pathPart;
-  if (backendPath === '/probes') {
-    // Make sure collections have trailing slash
-    backendPath = '/probes/';
+  // Determine backend path - FastAPI route is defined with path "/probes"
+  // Map all probe-related routes correctly to avoid 307 redirects
+  let backendPath;
+  
+  if (pathPart === '/probes' || pathPart === '/probes/') {
+    // For collection endpoints, be consistent with trailing slash
+    backendPath = '/probes';
+    
+    // Log for debugging
+    console.log('Mapped /probes to backend /probes (collection endpoint)');
+  } else if (pathPart.startsWith('/probes/')) {
+    // For specific probe ID endpoints or sub-resources
+    backendPath = pathPart;
+    console.log(`Mapped ${pathPart} to backend ${backendPath} (specific probe endpoint)`);
+  } else {
+    // For any other endpoint, use the path as-is
+    backendPath = pathPart;
+    console.log(`Using path as-is: ${backendPath}`);
   }
   
   // Add query parameters if any
@@ -715,13 +727,19 @@ function handleMetrics(req, res) {
   // Get the query parameters
   const searchParams = url.searchParams.toString();
   
-  // Construct the backend path
+  // Construct the backend path - make sure we use the right format to avoid 307 redirects
+  // In FastAPI, this endpoint is defined without a trailing slash
   let backendPath = `/metrics/${metricType}`;
+  
+  // Add query parameters if any
   if (searchParams) {
     backendPath += `?${searchParams}`;
   }
   
   console.log(`Forwarding metrics request to: ${backendPath}`);
+  
+  // For debugging, log what we expect back
+  console.log(`Expecting ${metricType} metrics data from backend`);
   
   // Forward request to backend
   const options = {
