@@ -700,19 +700,7 @@ const AdminPanel = () => {
             <Button
               variant="outlined"
               startIcon={<RefreshIcon />}
-              onClick={() => {
-                setUserLoading(true);
-                getAllUsers()
-                  .then(data => {
-                    setUsers(data);
-                    setUserLoading(false);
-                  })
-                  .catch(err => {
-                    console.error('Error refreshing users:', err);
-                    setUserError('Failed to refresh users data');
-                    setUserLoading(false);
-                  });
-              }}
+              onClick={refreshUsersList}
             >
               Refresh
             </Button>
@@ -735,8 +723,8 @@ const AdminPanel = () => {
                 );
                 setUsers(filteredUsers);
               } else {
-                // If search field is cleared, fetch all users again
-                getAllUsers().then(setUsers);
+                // If search field is cleared, refresh users list
+                refreshUsersList();
               }
             }}
             sx={{ minWidth: 250 }}
@@ -749,13 +737,13 @@ const AdminPanel = () => {
               defaultValue="all"
               onChange={(e) => {
                 const roleFilter = e.target.value;
-                getAllUsers().then(allUsers => {
+                refreshUsersList().then(() => {
                   if (roleFilter === 'all') {
-                    setUsers(allUsers);
+                    // No filter needed, refreshUsersList already set all users
                   } else if (roleFilter === 'admin') {
-                    setUsers(allUsers.filter(user => user.is_admin));
+                    setUsers(prev => prev.filter(user => user.is_admin));
                   } else {
-                    setUsers(allUsers.filter(user => !user.is_admin));
+                    setUsers(prev => prev.filter(user => !user.is_admin));
                   }
                 });
               }}

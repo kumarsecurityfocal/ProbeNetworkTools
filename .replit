@@ -28,6 +28,10 @@ args = "Build Frontend Fixed"
 task = "workflow.run"
 args = "Build Frontend"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Rebuild Frontend"
+
 [[workflows.workflow]]
 name = "Server"
 author = "agent"
@@ -56,6 +60,14 @@ args = "cd frontend && npx vite build --outDir=../public"
 
 [[workflows.workflow]]
 name = "Build Frontend"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd frontend && npm run build"
+
+[[workflows.workflow]]
+name = "Rebuild Frontend"
 author = "agent"
 
 [[workflows.workflow.tasks]]
