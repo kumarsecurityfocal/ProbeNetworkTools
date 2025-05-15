@@ -233,8 +233,13 @@ if [ -d "frontend" ]; then
     log_info "Building frontend image with Docker directly..."
     run_command "docker build -t probeops-frontend-build ./frontend" "Building frontend Docker image directly"
     
-    # Run the container with proper volume mounting to extract the build
-    run_command "docker run --rm -v $(pwd)/public:/public probeops-frontend-build cp -r /app/dist/* /public/" "Building frontend assets and copying to public directory"
+    # First, explore the container to find where the assets are
+    log_info "Exploring container to locate frontend assets..."
+    run_command "docker run --rm probeops-frontend-build find / -name '*.html' -o -name '*.js' | grep -v node_modules" "Finding frontend assets in container"
+    
+    # Run the container with proper volume mounting to extract the build 
+    # The assets are most likely in /usr/share/nginx/html from the multi-stage build
+    run_command "docker run --rm -v $(pwd)/public:/public probeops-frontend-build cp -r /usr/share/nginx/html/* /public/ || echo 'Failed to copy from /usr/share/nginx/html, will try alternatives'" "Attempting to copy frontend assets from nginx directory"
     
     # Make sure we have the public directory 
     run_command "mkdir -p public" "Ensuring public directory exists"

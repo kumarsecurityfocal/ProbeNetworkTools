@@ -1,5 +1,5 @@
-# --- Build Stage ---
-FROM node:20-alpine AS build
+# Simple single-stage build
+FROM node:20-alpine
 
 # Set working directory
 WORKDIR /app
@@ -16,22 +16,8 @@ RUN npm install --legacy-peer-deps
 # Install PostCSS and Tailwind plugins explicitly
 RUN npm install autoprefixer postcss tailwindcss @tailwindcss/postcss --no-save --legacy-peer-deps
 
-# Build the frontend with output to ../public directory
-RUN npm run build -- --outDir=../public
+# Build the frontend with explicit output to /app/dist directory
+RUN npm run build -- --outDir=/app/dist
 
-# --- Production Stage ---
-FROM nginx:alpine
-
-# Create the directory if it doesn't exist
-RUN mkdir -p /usr/share/nginx/html
-
-# Copy the build output to nginx html directory
-COPY --from=build /public /usr/share/nginx/html
-# In our Vite setup, the build output is configured to go to ../public
-# This is handled by the copy-frontend-assets.sh script in our deployment
-
-# Add a marker file to verify assets were correctly copied
-RUN echo "Frontend assets successfully built and copied at $(date)" > /usr/share/nginx/html/build-info.txt
-
-# We don't need to configure nginx here since the main nginx container will handle it
-# Note: In production, these assets are served by the main nginx container, not this one
+# Add a marker file to verify assets were correctly built
+RUN echo "Frontend assets successfully built at $(date)" > /app/dist/build-info.txt
