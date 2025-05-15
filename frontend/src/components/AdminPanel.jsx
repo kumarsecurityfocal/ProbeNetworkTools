@@ -193,6 +193,11 @@ const AdminPanel = () => {
   const enhanceUsersWithSubscriptions = (users, subscriptions) => {
     if (!users || !subscriptions) return users;
     
+    console.log('Enhancing users with subscription data:');
+    console.log('- Number of users:', users.length);
+    console.log('- Number of subscriptions:', subscriptions.length);
+    console.log('- Available tiers:', tiers);
+    
     return users.map(user => {
       // Find subscription for this user
       const userSubscription = subscriptions.find(sub => sub.user_id === user.id);
@@ -200,6 +205,7 @@ const AdminPanel = () => {
       if (userSubscription) {
         // Find tier information
         const tierInfo = tiers.find(tier => tier.id === userSubscription.tier_id);
+        console.log(`User ${user.username} has subscription with tier_id=${userSubscription.tier_id}, tierInfo found:`, !!tierInfo);
         
         // Return user with full subscription data added
         return {
@@ -211,6 +217,8 @@ const AdminPanel = () => {
           subscription_tier_id: userSubscription.tier_id,
           subscription_tier_name: tierInfo ? tierInfo.name : `TIER ${userSubscription.tier_id}`
         };
+      } else {
+        console.log(`User ${user.username} has no subscription`);
       }
       
       // Return user without subscription data
@@ -967,18 +975,40 @@ const AdminPanel = () => {
               defaultValue="all"
               onChange={(e) => {
                 const tierFilter = e.target.value;
+                console.log('Selected tier filter:', tierFilter);
+                
                 refreshUsersList().then(() => {
+                  // Get fresh data from the state
+                  const allUsers = [...users];
+                  console.log('All users before filtering:', allUsers);
+                  
+                  let filteredUsers = allUsers;
+                  
                   if (tierFilter === 'all') {
-                    // No filter needed, refreshUsersList already set all users
+                    // No filter needed, show all users
+                    console.log('Showing all users (no filter)');
                   } else if (tierFilter === 'none') {
                     // Users with no subscription
-                    setUsers(prev => prev.filter(user => !user.subscription_tier_id));
+                    console.log('Filtering users with no subscription');
+                    filteredUsers = allUsers.filter(user => {
+                      const hasNoSubscription = !user.subscription;
+                      console.log(`User ${user.username} has no subscription:`, hasNoSubscription);
+                      return hasNoSubscription;
+                    });
                   } else {
                     // Filter by specific tier ID
-                    setUsers(prev => prev.filter(user => 
-                      user.subscription_tier_id && user.subscription_tier_id.toString() === tierFilter
-                    ));
+                    console.log('Filtering users with tier ID:', tierFilter);
+                    filteredUsers = allUsers.filter(user => {
+                      const hasTier = user.subscription && 
+                                     user.subscription.tier_id && 
+                                     user.subscription.tier_id.toString() === tierFilter;
+                      console.log(`User ${user.username} has matching tier:`, hasTier);
+                      return hasTier;
+                    });
                   }
+                  
+                  console.log('Filtered users:', filteredUsers);
+                  setUsers(filteredUsers);
                 });
               }}
             >
