@@ -11,6 +11,7 @@ set -e
 # Setup logging
 DEPLOYMENT_DATE=$(date +"%Y%m%d_%H%M%S")
 LOG_FILE="deployment.log"
+# No LATEST_LOG_FILE defined anymore, we'll remove that reference
 cp -f "$LOG_FILE" "${LOG_FILE}.bak" 2>/dev/null || true
 
 # Add header to log file
@@ -86,8 +87,7 @@ echo "Python version:" >> "$LOG_FILE"
 python3 --version >> "$LOG_FILE" 2>&1 || echo "Python3 not found" >> "$LOG_FILE"
 echo "===== ENVIRONMENT INFORMATION LOGGED =====" >> "$LOG_FILE"
 
-# Create symlink to latest log
-ln -sf "$LOG_FILE" "$LATEST_LOG_FILE"
+# No symlink needed anymore as we're using a fixed log file path
 
 log_info "Deployment started. Logging to $LOG_FILE"
 
