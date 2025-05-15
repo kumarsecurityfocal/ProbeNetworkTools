@@ -1064,6 +1064,7 @@ function handleGenericApi(req, res) {
   
   // Strip /api prefix from path
   const backendPath = req.url.replace(/^\/api/, '');
+  console.log(`Generic API backendPath: ${backendPath}`);
   
   // Forward request to backend
   const options = {
