@@ -3,10 +3,23 @@ import api from './api';
 // Get all users (admin only)
 export const getAllUsers = async () => {
   try {
+    console.log('Attempting to fetch all users from /users endpoint');
+    const token = localStorage.getItem('auth_token');
+    console.log('Using auth token (first 10 chars):', token ? token.substring(0, 10) + '...' : 'no token');
+    
     const response = await api.get('/users');
-    return Array.isArray(response.data) ? response.data : [];
+    console.log('getAllUsers response:', response);
+    
+    if (Array.isArray(response.data)) {
+      console.log(`Successfully fetched ${response.data.length} users`);
+      return response.data;
+    } else {
+      console.warn('Response data is not an array:', response.data);
+      return [];
+    }
   } catch (error) {
     console.error('Error fetching all users:', error);
+    console.error('Error details:', error.response?.data || error.message);
     throw error;
   }
 };
