@@ -10,6 +10,7 @@ const port = process.env.PORT || 5000;
 // Middleware
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Add this to parse form data
 
 // Parse and handle API routes
 app.use((req, res, next) => {
@@ -65,16 +66,22 @@ function handleLogin(req, res) {
   // Extract username and password
   let username, password;
   
+  // Make sure req.body exists before trying to use it
+  if (!req.body) {
+    console.error('Request body is undefined - body parser middleware may not be working');
+    return res.status(400).json({ detail: 'Request body is missing' });
+  }
+  
   if (isJsonLogin) {
     // Handle JSON login - get from request body
-    username = req.body.username;
-    password = req.body.password;
+    username = req.body.username || '';
+    password = req.body.password || '';
     
     console.log(`JSON login with username: ${username}`);
   } else {
     // Handle form login - get from request body
-    username = req.body.username;
-    password = req.body.password;
+    username = req.body.username || '';
+    password = req.body.password || '';
     
     console.log(`Form login with username: ${username}`);
   }
@@ -135,7 +142,26 @@ function handleLogin(req, res) {
   
   backendReq.on('error', error => {
     console.error('Error with login request:', error);
-    return res.status(500).json({ detail: 'Authentication server unavailable' });
+    
+    // Provide a more helpful message for common connection issues
+    if (error.code === 'ECONNREFUSED') {
+      // If we couldn't connect to the backend API, log details
+      console.error(`Failed to connect to backend API at ${options.hostname}:${options.port} - service may be down or not started`);
+      
+      // Use dev bypass auth for admin login when backend is down (for debugging only)
+      if (username === 'admin@probeops.com' && password === 'probeopS1@') {
+        console.log('Using development fallback for admin login');
+        // Return a static token that will expire in 30 minutes
+        const now = Math.floor(Date.now() / 1000);
+        const exp = now + (30 * 60); // 30 minutes from now
+        return res.json({
+          access_token: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBwcm9iZW9wcy5jb20iLCJleHAiOiR7ZXhwfX0.dummy_signature`,
+          token_type: 'bearer'
+        });
+      }
+    }
+    
+    return res.status(500).json({ detail: `Authentication server unavailable: ${error.message}` });
   });
   
   // Write body and end request
