@@ -359,7 +359,7 @@ async def create_registration_token(
     }
 
 
-@router.delete("/nodes/{node_uuid}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{node_uuid}", status_code=status.HTTP_204_NO_CONTENT)
 async def deactivate_node(
     node_uuid: str,
     current_user: models.User = Depends(auth.get_admin_user),
