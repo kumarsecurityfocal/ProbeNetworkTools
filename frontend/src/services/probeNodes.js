@@ -90,7 +90,7 @@ export const deactivateProbeNode = async (nodeUuid) => {
 export const createRegistrationToken = async (tokenData) => {
   try {
     const response = await axios.post(
-      `${API_URL}/probe-nodes/registration-token/create`,
+      `${API_URL}/probe-nodes/registration-token`,
       {
         description: tokenData.description,
         expiry_hours: tokenData.expiryHours,

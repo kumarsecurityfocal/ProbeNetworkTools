@@ -46,6 +46,10 @@ app.use((req, res, next) => {
   else if (url.startsWith('/probes')) {
     return handleProbes(req, res);
   }
+  else if (url.startsWith('/api/probe-nodes') || url.startsWith('/probe-nodes')) {
+    // Handle probe nodes API requests
+    return handleGenericApi(req, res);
+  }
   else if (url.startsWith('/nodes')) {
     return handleNodes(req, res);
   }
