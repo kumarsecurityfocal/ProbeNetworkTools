@@ -1,243 +1,183 @@
-# ProbeOps Distributed Probe Node System Documentation
+# ProbeOps Probe Node Documentation
 
-## Overview
+## Introduction
 
-The ProbeOps distributed probe node system enables network diagnostics to be performed from multiple geographic locations around the world. This distributed architecture provides several benefits:
+ProbeOps implements a Zero Trust Network Access (ZTNA) architecture for its probe nodes. This approach provides enhanced security and operational benefits:
 
-1. **Geographic Distribution**: Run network tests from different regions to identify regional connectivity issues
-2. **Horizontal Scalability**: Add more nodes to handle increased diagnostic load
-3. **High Availability**: Maintain service when individual nodes go offline
-4. **Load Balancing**: Distribute workloads based on node capacity and health
+- **Outbound-only connections**: Probe nodes only establish outbound connections to the ProbeOps backend, eliminating the need to expose inbound ports
+- **Real-time bidirectional communication**: WebSockets enable instant command delivery without polling
+- **Works behind firewalls/NAT**: Nodes can operate within private networks
+- **Enhanced resiliency**: Automatic reconnection with exponential backoff
 
-This document provides comprehensive technical details about the node structure, registration process, security model, and end-to-end functionality.
+## Architecture Overview
 
-## System Architecture
+The ProbeOps ZTNA architecture consists of these key components:
 
-### Components
+1. **Backend WebSocket Server** - Provides the WebSocket endpoint at `/ws/node` for probe nodes to connect
+2. **Probe Node WebSocket Client** - Establishes and maintains secure connections to the backend
+3. **Diagnostic Command Execution** - Runs network diagnostics and sends results back to the server
+4. **Authentication & Security** - API key-based authentication and TLS encryption
 
-The distributed probe system consists of these key components:
+## Setting Up a Probe Node
 
-1. **Central API Server**: Manages node registration, configuration, and orchestrates diagnostic requests
-2. **Probe Nodes**: Distributed agents that perform network diagnostics
-3. **Registration System**: Secure onboarding process for new nodes
-4. **Load Balancer**: Intelligent routing of diagnostic requests to appropriate nodes
-5. **Health Monitoring**: Continuous tracking of node health and availability
+### Prerequisites
 
-### Data Flow
+- Python 3.7 or higher
+- Network connectivity to the ProbeOps backend server
+- A valid node UUID and API key from ProbeOps
 
-1. **Registration**: New nodes register using secure registration tokens
-2. **Configuration**: Nodes receive and store their configuration
-3. **Heartbeat**: Nodes regularly report their status to the central server
-4. **Request Routing**: Diagnostic requests are routed to appropriate nodes
-5. **Result Collection**: Diagnostic results are returned to the central server
+### Installation
 
-## Node Registration Process
+1. Clone or download the probe node code from the ProbeOps repository
+2. Install required dependencies:
 
-### Creating Registration Tokens
-
-1. Administrators generate time-limited registration tokens through the admin interface
-2. Each token includes:
-   - Unique identifier
-   - Expiration time (typically 24 hours)
-   - Optional regional designation
-   - Description for administrative tracking
-
-### Node Registration Flow
-
-1. A new probe node requests registration using the token
-2. The server validates the token and creates a node record
-3. The server generates a unique API key for ongoing node authentication
-4. The node stores its configuration including the API key
-5. The registration token is marked as used and linked to the new node
-
-## Security Model
-
-### Authentication
-
-1. **Registration Phase**: One-time registration tokens with expiration
-2. **Operational Phase**: Unique API keys for each node
-3. **Administrative Actions**: JWT-based authentication for admin operations
-
-### Data Protection
-
-1. All node-server communication occurs over HTTPS
-2. API keys are stored securely on nodes using environment variables
-3. Node metadata is encrypted when containing sensitive information
-
-### Access Control
-
-1. Nodes can only access their own configuration
-2. Diagnostic requests are validated against subscription tier limits
-3. Administrative actions on nodes require admin privileges
-
-## Node Implementation
-
-### Hardware Requirements
-
-- Minimum: 1 CPU core, 512MB RAM, 1GB storage
-- Recommended: 2+ CPU cores, 2GB RAM, 10GB storage
-- Network: Stable internet connection with public IP
-
-### Software Components
-
-1. **Core Agent**: Python-based service that handles the main probe functionality
-2. **Diagnostic Tools**: Specialized modules for different diagnostic types
-3. **Configuration Manager**: Handles secure storage and updates of configuration
-4. **Scheduler**: Manages execution of scheduled probes
-5. **Healthcheck**: Reports node status and metrics
-
-### Lifecycle Management
-
-1. **Startup**: Node automatically connects to central server on startup
-2. **Configuration Sync**: Node pulls latest configuration from server
-3. **Operation**: Node executes diagnostic requests as directed
-4. **Updates**: Node handles graceful updates when new versions are available
-5. **Shutdown**: Node reports status before shutdown
-
-## Load Balancing
-
-### Balancing Strategies
-
-The system supports multiple load balancing strategies:
-
-1. **Round-robin**: Evenly distribute requests across all available nodes
-2. **Load-based**: Route requests to nodes with lowest current workload
-3. **Capability-based**: Send requests to nodes supporting the required tools
-4. **Regional**: Route requests to nodes in specific geographic regions
-5. **Hybrid**: Combine multiple strategies for optimal distribution
-
-### Prioritization
-
-1. Nodes have configurable priority levels (1-100)
-2. Higher priority nodes receive requests before lower priority ones
-3. Premium subscription tiers can be assigned to specific high-priority nodes
-
-## Node Monitoring and Management
-
-### Health Metrics
-
-Nodes report the following metrics:
-
-1. **Current Load**: CPU/Memory utilization (0.0-1.0)
-2. **Response Time**: Average time to complete diagnostics
-3. **Error Rate**: Percentage of failed diagnostics
-4. **Connectivity**: Connection quality to key internet services
-5. **Total Probes**: Number of diagnostics executed
-
-### Administrative Controls
-
-Administrators can perform these actions on nodes:
-
-1. **Enable/Disable**: Temporarily remove node from the active pool
-2. **Configure**: Update node settings and capabilities
-3. **Delete**: Permanently remove a node
-4. **View Logs**: Access diagnostic logs for troubleshooting
-5. **Force Sync**: Trigger immediate configuration synchronization
-
-## Offline Operation
-
-Nodes are designed to operate in partially-disconnected scenarios:
-
-1. Local configuration is cached for continued operation if disconnected
-2. Scheduled probes continue to run according to their configuration
-3. Results are stored locally until connectivity is restored
-4. Automatic reconnection is attempted at regular intervals
-5. Gradual backoff prevents overwhelming the server during recovery
-
-## Implementation Guidelines
-
-### Deploying New Nodes
-
-To deploy a new probe node:
-
-1. Generate a registration token in the admin interface
-2. Deploy the probe node software with the token
-3. The node will automatically register and appear in the management console
-4. Verify the node's health status and capabilities
-5. Enable the node to start receiving diagnostic requests
-
-### Configuration Best Practices
-
-1. Deploy nodes in diverse geographic regions
-2. Distribute nodes across different network providers
-3. Configure nodes with appropriate capabilities for their hardware
-4. Set appropriate concurrency limits based on available resources
-5. Use descriptive naming conventions for easier management
-
-## API Reference
-
-### Node Registration
-
-```
-POST /api/nodes/register
-{
-  "registration_token": "token_value",
-  "name": "node_name",
-  "hostname": "node.example.com",
-  "region": "us-east-1",
-  "supported_tools": {
-    "ping": true,
-    "traceroute": true,
-    "dns": true,
-    "http": true
-  }
-}
+```bash
+cd probe
+pip install -r requirements.txt
 ```
 
-### Node Heartbeat
+### Configuration
 
-```
-POST /api/nodes/{node_uuid}/heartbeat
-{
-  "current_load": 0.25,
-  "avg_response_time": 150.5,
-  "error_count": 0,
-  "version": "1.0.5"
-}
+Configure the probe node using environment variables or command-line arguments:
+
+**Environment Variables:**
+```bash
+export PROBEOPS_BACKEND_URL="https://probeops.com"
+export PROBEOPS_NODE_UUID="your-node-uuid"
+export PROBEOPS_API_KEY="your-api-key"
+export PROBEOPS_HEARTBEAT_INTERVAL="15"  # Optional, in seconds
 ```
 
-### Execute Diagnostic on Node
+**Command-line Arguments:**
+```bash
+python run_probe_node.py --backend https://probeops.com --uuid your-node-uuid --key your-api-key
+```
 
+### Running the Probe Node
+
+Start the WebSocket client with:
+
+```bash
+python run_probe_node.py
 ```
-POST /api/nodes/{node_uuid}/execute
-{
-  "tool": "ping",
-  "target": "example.com",
-  "parameters": {
-    "count": 4,
-    "timeout": 5
-  }
-}
-```
+
+For deployment in production environments, use a process manager like systemd, supervisor, or Docker to ensure the client stays running.
+
+## WebSocket Protocol
+
+### Connection Establishment
+
+1. The probe node initiates an outbound WebSocket connection to `wss://probeops.com/ws/node`
+2. The node sends an authentication message containing its UUID and API key
+3. The server validates the credentials and accepts the connection
+4. The server tracks the node's connection status in the database
+
+### Message Types
+
+All messages use JSON format:
+
+#### Client → Server:
+- **Authentication**: `{"node_uuid": "uuid", "api_key": "key", "version": "1.0.0", "hostname": "node01"}`
+- **Heartbeat**: `{"type": "heartbeat", "node_uuid": "uuid", "current_load": 0.25, ...}`
+- **Diagnostic Result**: `{"type": "diagnostic_response", "request_id": "req123", "result": {...}}`
+
+#### Server → Client:
+- **Authentication Response**: `{"status": "connected", "connection_id": "conn123", ...}`
+- **Heartbeat Acknowledgment**: `{"type": "heartbeat_ack", "timestamp": "2025-01-01T12:00:00Z"}`
+- **Diagnostic Job**: `{"type": "diagnostic_job", "request_id": "req123", "tool": "ping", "target": "example.com", ...}`
+
+### Reconnection Strategy
+
+The client implements exponential backoff for reconnection attempts:
+
+1. Initial delay: 1 second
+2. Each subsequent attempt: previous delay * 1.5 (configurable factor)
+3. Maximum delay: 30 seconds (configurable)
+4. Added jitter: ±10% to prevent thundering herd problems
+
+## Security Considerations
+
+- **TLS Encryption**: All WebSocket connections use TLS (wss://)
+- **API Key Authentication**: Each node has a unique API key
+- **Limited Scope**: Probe nodes only have access to diagnostic commands
+- **Secure Registration**: Nodes are registered through a secure process with limited-use registration tokens
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Registration Failures**: Usually due to expired tokens or network issues
-2. **Missing Heartbeats**: May indicate network connectivity problems
-3. **High Error Rates**: Often caused by misconfigured diagnostic tools
-4. **Performance Degradation**: Usually from resource constraints on the node
-5. **Node Disappearance**: Could be network issues or node process termination
+**Connection Failures:**
+- Verify network connectivity to the backend URL
+- Check if the API key and node UUID are correct
+- Ensure the backend server is running and accepting WebSocket connections
 
-### Diagnostic Steps
+**Authentication Failures:**
+- Verify the API key is valid and not expired
+- Check if the node has been deactivated in the management console
 
-1. Verify node connectivity to the central server
-2. Check node logs for specific error messages
-3. Confirm the node's API key is valid and not expired
-4. Verify the node has the required permissions
-5. Ensure the node has sufficient resources for its configuration
+**Intermittent Disconnections:**
+- Check for network stability issues
+- Verify server health and load
+- Review logs for timeout errors
 
-## Future Enhancements
+### Logging
 
-Planned enhancements for the probe node system include:
+The probe client logs detailed connection information:
 
-1. **Auto-scaling**: Automatically deploy new nodes during high demand
-2. **Predictive Routing**: Use historical performance to optimize request routing
-3. **Advanced Analytics**: Deeper insights into node performance patterns
-4. **Custom Tool Support**: Allow nodes to support custom diagnostic tools
-5. **Cross-node Correlation**: Compare results across multiple nodes automatically
+```bash
+# Enable verbose logging
+python run_probe_node.py --verbose
+```
 
-## Conclusion
+## Advanced Configuration
 
-The distributed probe node system is a core component of ProbeOps, enabling highly available, geographically distributed network diagnostics. By following this documentation, administrators can effectively deploy, manage, and troubleshoot their probe node infrastructure.
+### Custom SSL Context
+
+For environments with special SSL requirements:
+
+```python
+import ssl
+
+# Create custom SSL context
+context = ssl.create_default_context()
+context.load_verify_locations('/path/to/custom/ca.pem')
+
+# Initialize client with custom context
+client = ProbeNodeWSClient(
+    backend_url=backend_url,
+    node_uuid=node_uuid,
+    api_key=api_key,
+    ssl_context=context
+)
+```
+
+### Custom Diagnostic Tools
+
+You can implement custom diagnostic tools by providing a custom tools handler:
+
+```python
+async def my_custom_tools_handler(tool, target, parameters, timeout):
+    if tool == "my_custom_tool":
+        # Implement custom diagnostic
+        return {"success": True, "data": "custom results"}
+    else:
+        # Use default implementation for other tools
+        return await execute_diagnostic_tool(tool, target, parameters, timeout)
+
+# Initialize client with custom handler
+client = ProbeNodeWSClient(
+    backend_url=backend_url,
+    node_uuid=node_uuid,
+    api_key=api_key,
+    tools_handler=my_custom_tools_handler
+)
+```
+
+## API Reference
+
+See the code documentation for detailed API references:
+
+- `ws_client.py` - WebSocket client implementation
+- `run_probe_node.py` - Command-line launcher
+- `utils.py` - Diagnostic tool implementations
+- `probe.py` - Standalone agent implementation
