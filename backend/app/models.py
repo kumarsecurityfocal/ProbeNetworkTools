@@ -83,6 +83,7 @@ class SubscriptionTier(Base):
     # Concurrency settings
     max_concurrent_requests = Column(Integer, default=5)  # Maximum concurrent requests allowed
     request_priority = Column(Integer, default=1)  # Priority in the request queue (higher = higher priority)
+    priority = Column(Integer, default=1)  # Priority level for the tier (higher = higher priority)
     
     # Feature flags
     allow_scheduled_probes = Column(Boolean, default=False)
