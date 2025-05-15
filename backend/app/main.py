@@ -23,8 +23,15 @@ logging.getLogger("app").setLevel(logging.DEBUG)
 logging.getLogger("app.auth").setLevel(logging.DEBUG)
 logging.getLogger("uvicorn").setLevel(logging.INFO)
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
+# Check database tables - only create if they don't exist
+from sqlalchemy import inspect
+inspector = inspect(engine)
+# Only create tables that don't exist yet
+if not inspector.has_table("probe_nodes"):
+    logger.info("Creating missing database tables...")
+    Base.metadata.create_all(bind=engine)
+else:
+    logger.info("Database tables already exist, skipping table creation...")
 
 app = FastAPI(
     title="ProbeOps API",
