@@ -239,18 +239,22 @@ run_command "mkdir -p public" "Creating public directory for frontend assets"
 log_info "Building frontend using Docker..."
 echo "[BUILD] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Building frontend with Docker" >> "$LOG_FILE"
 
-# Force rebuild of frontend container
-run_command "docker compose build --no-cache frontend-build" "Rebuilding frontend container with no cache"
+# First, verify the Dockerfile exists and has the correct content
+log_info "Verifying frontend Dockerfile..."
+run_command "cat frontend/Dockerfile" "Displaying frontend Dockerfile content"
 
-# Start the frontend build container and wait for it to complete
-run_command "docker compose up -d frontend-build" "Starting frontend build container"
+# Explicitly build the frontend using docker directly, not via docker-compose
+log_info "Building frontend image with Docker directly..."
+run_command "docker build -t probeops-frontend-build ./frontend" "Building frontend Docker image directly"
 
-# Wait for build to complete
-log_info "Waiting for frontend build to complete..."
-run_command "sleep 20" "Waiting for build to complete"
+# Run the container with proper volume mounting to extract the build
+run_command "docker run --rm -v $(pwd)/public:/public probeops-frontend-build cp -r /app/dist/* /public/" "Building frontend assets and copying to public directory"
 
-# Display build logs
-run_command "docker compose logs frontend-build" "Displaying frontend build logs"
+# Make sure we have the public directory 
+run_command "mkdir -p public" "Ensuring public directory exists"
+
+# Verify the frontend build worked
+run_command "ls -la public/" "Listing public directory contents after build"
 
 # Check if build was successful
 if [ -f "public/index.html" ]; then
