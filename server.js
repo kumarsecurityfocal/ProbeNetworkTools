@@ -219,6 +219,21 @@ function handleAllUsers(req, res) {
       console.log(`Users endpoint status: ${backendRes.statusCode}`);
       console.log(`Response headers:`, JSON.stringify(backendRes.headers));
       
+      // Special handling for POST (create user) responses
+      if (req.method === 'POST') {
+        if (backendRes.statusCode >= 400) {
+          console.error(`User creation failed with status ${backendRes.statusCode}`);
+          console.error(`Error response body: ${responseData}`);
+          return res.status(backendRes.statusCode).json({ 
+            detail: responseData ? JSON.parse(responseData).detail || 'User creation failed' : 'User creation failed' 
+          });
+        }
+        
+        console.log(`User created successfully with status ${backendRes.statusCode}`);
+        return res.status(backendRes.statusCode).json(responseData ? JSON.parse(responseData) : {});
+      }
+      
+      // Regular GET response handling
       // Handle error status codes
       if (backendRes.statusCode >= 400) {
         console.error(`Users endpoint returned ${backendRes.statusCode}, sending empty array`);
@@ -258,6 +273,13 @@ function handleAllUsers(req, res) {
     console.error('Error with users request:', error);
     res.status(200).json([]); // Return empty array on error to avoid breaking UI
   });
+  
+  // For POST requests, we need to write the request body
+  if (req.method === 'POST' || req.method === 'PUT') {
+    console.log(`Writing request body for ${req.method} request to /users:`, JSON.stringify(req.body));
+    // Write request body to backend request
+    backendReq.write(JSON.stringify(req.body));
+  }
   
   backendReq.end();
 }

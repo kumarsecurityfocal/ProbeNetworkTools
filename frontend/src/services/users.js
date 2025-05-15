@@ -27,10 +27,24 @@ export const getAllUsers = async () => {
 // Create new user (admin only)
 export const createUser = async (userData) => {
   try {
+    console.log('Creating new user with data:', userData);
+    // Make sure all required fields are present
+    if (!userData.username || !userData.email || !userData.password) {
+      console.error('Missing required user creation fields!', userData);
+      throw new Error('User creation requires username, email, and password fields');
+    }
+    
     const response = await api.post('/users', userData);
+    console.log('User creation success response:', response);
     return response.data;
   } catch (error) {
     console.error('Error creating user:', error);
+    console.error('Error response data:', error.response?.data);
+    console.error('Request that failed:', { 
+      url: '/users', 
+      method: 'POST',
+      data: userData
+    });
     throw error;
   }
 };
