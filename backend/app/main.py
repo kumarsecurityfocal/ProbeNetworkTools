@@ -58,6 +58,7 @@ app.include_router(api_keys.router, prefix="", tags=["API Keys"])
 app.include_router(subscriptions.router, prefix="", tags=["Subscriptions"])
 app.include_router(scheduled_probes.router, prefix="", tags=["Scheduled Probes"])
 app.include_router(metrics.router, prefix="", tags=["Metrics"])
+app.include_router(probe_nodes.router, prefix="", tags=["Probe Nodes"])
 
 @app.get("/", tags=["Root"])
 async def root():

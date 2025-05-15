@@ -9,6 +9,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 import secrets
 import logging
+import uuid
 
 from .. import models, schemas, auth
 from ..database import get_db
@@ -60,10 +61,12 @@ async def register_node(
     
     # Create the new node
     api_key = generate_node_api_key()
+    node_uuid = str(uuid.uuid4())
     
     new_node = models.ProbeNode(
         name=node_data.name,
         hostname=node_data.hostname,
+        node_uuid=node_uuid,
         region=node_data.region,
         zone=node_data.zone,
         internal_ip=node_data.internal_ip,
@@ -74,7 +77,9 @@ async def register_node(
         supported_tools=node_data.supported_tools or {"ping": True, "traceroute": True, "dns": True, "http": True},
         hardware_info=node_data.hardware_info or {},
         network_info=node_data.network_info or {},
-        config={"initial_registration": datetime.utcnow().isoformat()}
+        config={"initial_registration": datetime.utcnow().isoformat()},
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
     )
     
     # Mark token as used

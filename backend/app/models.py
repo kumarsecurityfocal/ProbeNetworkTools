@@ -229,7 +229,7 @@ class ProbeNode(Base):
     __tablename__ = "probe_nodes"
     
     id = Column(Integer, primary_key=True, index=True)
-    node_uuid = Column(String, unique=True, index=True, default=lambda: str(uuid.uuid4()))
+    node_uuid = Column(String, unique=True, index=True)
     name = Column(String)
     hostname = Column(String)
     internal_ip = Column(String, nullable=True)

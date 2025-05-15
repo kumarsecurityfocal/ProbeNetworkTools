@@ -1,25 +1,37 @@
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, Field, EmailStr, validator, HttpUrl, conint, confloat, root_validator, PositiveInt
 from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
+import re
+import uuid
+from enum import Enum
+from email_validator import validate_email, EmailNotValidError
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    username: Optional[str] = None
+
+
+class TokenPayload(BaseModel):
+    sub: Optional[str] = None
+    exp: Optional[int] = None
 
 
 class UserBase(BaseModel):
-    username: str
-    email: EmailStr
+    email: Optional[EmailStr] = None
+    username: Optional[str] = None
+    is_admin: Optional[bool] = False
+    is_active: Optional[bool] = True
 
 
 class UserCreate(UserBase):
+    email: EmailStr
+    username: str
     password: str
-    is_admin: Optional[bool] = False
-    is_active: Optional[bool] = True
-    email_verified: Optional[bool] = False
-
-
-class UserUpdate(BaseModel):
-    username: Optional[str] = None
-    email: Optional[EmailStr] = None
-    password: Optional[str] = None
-    is_active: Optional[bool] = None
 
 
 class UserLogin(BaseModel):
@@ -27,22 +39,59 @@ class UserLogin(BaseModel):
     password: str
 
 
-class UserResponse(UserBase):
-    id: int
+class PasswordReset(BaseModel):
+    token: str
+    new_password: str
+
+
+class UserCreateAdmin(UserCreate):
+    is_admin: bool = False
+    subscription_tier_id: Optional[int] = None
+
+
+class UserUpdate(BaseModel):
+    email: Optional[EmailStr] = None
+    username: Optional[str] = None
+    password: Optional[str] = None
+    is_admin: Optional[bool] = None
+    is_active: Optional[bool] = None
+
+
+class UserStatusUpdate(BaseModel):
     is_active: bool
-    is_admin: bool
-    email_verified: bool
+
+
+class UserUpdateAdmin(UserUpdate):
+    subscription_tier_id: Optional[int] = None
+
+
+class UserInDB(UserBase):
+    id: int
     created_at: datetime
-    
-    model_config = {
-        "from_attributes": True
-    }
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
 
 
-class UserDetailResponse(UserResponse):
-    user_subscription: Optional["UserSubscriptionResponse"] = None
-    
-    # No need to redefine Config as it's inherited from UserResponse
+class User(UserInDB):
+    pass
+
+
+class ResponseUser(UserInDB):
+    """User model to be returned in responses"""
+    email_verified: Optional[bool] = None
+
+
+class UserResponse(UserInDB):
+    """Alias for ResponseUser to maintain compatibility"""
+    email_verified: Optional[bool] = None
+
+
+class UserDetailResponse(UserInDB):
+    """Used for /me endpoint with detailed user information"""
+    email_verified: Optional[bool] = None
+    subscription: Optional[Dict[str, Any]] = None
 
 
 class ApiKeyBase(BaseModel):
@@ -53,35 +102,68 @@ class ApiKeyCreate(ApiKeyBase):
     pass
 
 
-class ApiKeyResponse(ApiKeyBase):
+class ApiKeyUpdate(BaseModel):
+    name: Optional[str] = None
+    is_active: Optional[bool] = None
+    expires_at: Optional[datetime] = None
+
+
+class ApiKeyInDB(ApiKeyBase):
     id: int
     key: str
     user_id: int
     is_active: bool
     created_at: datetime
     expires_at: Optional[datetime] = None
-    
-    model_config = {
-        "from_attributes": True
-    }
+
+    class Config:
+        from_attributes = True
 
 
-class DiagnosticCreate(BaseModel):
+class ApiKey(ApiKeyInDB):
+    pass
+
+
+class ApiKeyResponse(ApiKeyInDB):
+    """Model for API key responses"""
+    pass
+
+
+class DiagnosticBase(BaseModel):
     tool: str
     target: str
 
 
-class DiagnosticResponse(DiagnosticCreate):
+class DiagnosticCreate(DiagnosticBase):
+    pass
+
+
+class DiagnosticUpdate(BaseModel):
+    tool: Optional[str] = None
+    target: Optional[str] = None
+    result: Optional[str] = None
+    status: Optional[str] = None
+
+
+class DiagnosticInDB(DiagnosticBase):
     id: int
     result: str
     status: str
     user_id: int
     created_at: datetime
     execution_time: int
-    
-    model_config = {
-        "from_attributes": True
-    }
+
+    class Config:
+        from_attributes = True
+
+
+class DiagnosticResponse(DiagnosticInDB):
+    """A model for API responses related to diagnostics"""
+    pass
+
+
+class Diagnostic(DiagnosticInDB):
+    pass
 
 
 class SubscriptionTierBase(BaseModel):
@@ -90,26 +172,16 @@ class SubscriptionTierBase(BaseModel):
     price_monthly: int
     price_yearly: int
     features: Dict[str, Any]
-    
-    # Rate limits
     rate_limit_minute: int
     rate_limit_hour: int
-    rate_limit_day: Optional[int] = None
-    rate_limit_month: Optional[int] = None
-    
-    # Feature limitations
+    rate_limit_day: int
+    rate_limit_month: int
     max_scheduled_probes: int
     max_api_keys: int
     max_history_days: int
-    
-    # Probe interval settings
-    allowed_probe_intervals: Optional[str] = "15,60,1440"  # Default: 15min, 1hr, 1day
-    
-    # Concurrency settings
-    max_concurrent_requests: Optional[int] = 5
-    request_priority: Optional[int] = 1
-    
-    # Feature flags
+    allowed_probe_intervals: str
+    max_concurrent_requests: int
+    request_priority: int
     allow_scheduled_probes: bool
     allow_api_access: bool
     allow_export: bool
@@ -122,17 +194,59 @@ class SubscriptionTierCreate(SubscriptionTierBase):
     pass
 
 
-class SubscriptionTierResponse(SubscriptionTierBase):
+class SubscriptionTierUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    price_monthly: Optional[int] = None
+    price_yearly: Optional[int] = None
+    features: Optional[Dict[str, Any]] = None
+    rate_limit_minute: Optional[int] = None
+    rate_limit_hour: Optional[int] = None
+    rate_limit_day: Optional[int] = None
+    rate_limit_month: Optional[int] = None
+    max_scheduled_probes: Optional[int] = None
+    max_api_keys: Optional[int] = None
+    max_history_days: Optional[int] = None
+    allowed_probe_intervals: Optional[str] = None
+    max_concurrent_requests: Optional[int] = None
+    request_priority: Optional[int] = None
+    allow_scheduled_probes: Optional[bool] = None
+    allow_api_access: Optional[bool] = None
+    allow_export: Optional[bool] = None
+    allow_alerts: Optional[bool] = None
+    allow_custom_intervals: Optional[bool] = None
+    priority_support: Optional[bool] = None
+
+
+class SubscriptionTierInDB(SubscriptionTierBase):
     id: int
     created_at: datetime
     updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class SubscriptionTier(SubscriptionTierInDB):
+    pass
+
+
+class SubscriptionTierResponse(BaseModel):
+    """Simplified subscription tier model for API responses"""
+    id: int
+    name: str
+    description: str
+    price_monthly: int
+    price_yearly: int
+    features: Dict[str, Any]
     
-    model_config = {
-        "from_attributes": True
-    }
+    class Config:
+        from_attributes = True
 
 
 class UserSubscriptionBase(BaseModel):
+    user_id: int
+    tier_id: int
     is_active: bool = True
     expires_at: Optional[datetime] = None
     payment_id: Optional[str] = None
@@ -140,31 +254,44 @@ class UserSubscriptionBase(BaseModel):
 
 
 class UserSubscriptionCreate(UserSubscriptionBase):
-    tier_id: int
-    user_id: int
+    pass
 
 
-class UserSubscriptionResponse(UserSubscriptionBase):
+class UserSubscriptionUpdate(BaseModel):
+    tier_id: Optional[int] = None
+    is_active: Optional[bool] = None
+    expires_at: Optional[datetime] = None
+    payment_id: Optional[str] = None
+    payment_method: Optional[str] = None
+
+
+class UserSubscriptionInDB(UserSubscriptionBase):
     id: int
-    user_id: int
-    tier_id: int
-    tier: Optional["SubscriptionTierResponse"] = None
     starts_at: datetime
     created_at: datetime
-    updated_at: datetime  # ✅ Required for full model conversion
-    
-    model_config = {
-        "from_attributes": True
-    }
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class UserSubscription(UserSubscriptionInDB):
+    pass
+
+
+class UserSubscriptionResponse(BaseModel):
+    """Response model for user subscription endpoint"""
+    subscription: Optional[Dict[str, Any]] = None
+    tier: Optional[Dict[str, Any]] = None
 
 
 class ScheduledProbeBase(BaseModel):
     name: str
-    description: Optional[str] = None
     tool: str
     target: str
     interval_minutes: int
     is_active: bool = True
+    description: Optional[str] = None
     alert_on_failure: bool = False
     alert_on_threshold: bool = False
     threshold_value: Optional[int] = None
@@ -174,35 +301,63 @@ class ScheduledProbeCreate(ScheduledProbeBase):
     pass
 
 
-class ScheduledProbeResponse(ScheduledProbeBase):
+class ScheduledProbeUpdate(BaseModel):
+    name: Optional[str] = None
+    tool: Optional[str] = None
+    target: Optional[str] = None
+    interval_minutes: Optional[int] = None
+    is_active: Optional[bool] = None
+    description: Optional[str] = None
+    alert_on_failure: Optional[bool] = None
+    alert_on_threshold: Optional[bool] = None
+    threshold_value: Optional[int] = None
+
+
+class ScheduledProbeInDB(ScheduledProbeBase):
     id: int
     user_id: int
     created_at: datetime
     updated_at: datetime
-    
-    model_config = {
-        "from_attributes": True
-    }
+
+    class Config:
+        from_attributes = True
+
+
+class ScheduledProbeResponse(ScheduledProbeInDB):
+    """Model for scheduled probe responses"""
+    pass
+
+
+class ScheduledProbe(ScheduledProbeInDB):
+    pass
 
 
 class ProbeResultBase(BaseModel):
+    scheduled_probe_id: int
     result: str
     status: str
     execution_time: int
 
 
 class ProbeResultCreate(ProbeResultBase):
-    scheduled_probe_id: int
+    pass
 
 
-class ProbeResultResponse(ProbeResultBase):
+class ProbeResultInDB(ProbeResultBase):
     id: int
-    scheduled_probe_id: int
     created_at: datetime
-    
-    model_config = {
-        "from_attributes": True
-    }
+
+    class Config:
+        from_attributes = True
+
+
+class ProbeResultResponse(ProbeResultInDB):
+    """Model for probe result API responses"""
+    pass
+
+
+class ProbeResult(ProbeResultInDB):
+    pass
 
 
 class ApiUsageLogBase(BaseModel):
@@ -218,14 +373,17 @@ class ApiUsageLogCreate(ApiUsageLogBase):
     user_id: int
 
 
-class ApiUsageLogResponse(ApiUsageLogBase):
+class ApiUsageLogInDB(ApiUsageLogBase):
     id: int
     user_id: int
     created_at: datetime
-    
-    model_config = {
-        "from_attributes": True
-    }
+
+    class Config:
+        from_attributes = True
+
+
+class ApiUsageLog(ApiUsageLogInDB):
+    pass
 
 
 class SystemMetricBase(BaseModel):
@@ -237,137 +395,186 @@ class SystemMetricCreate(SystemMetricBase):
     pass
 
 
-class SystemMetricResponse(SystemMetricBase):
+class SystemMetricInDB(SystemMetricBase):
     id: int
     created_at: datetime
-    
-    model_config = {
-        "from_attributes": True
-    }
+
+    class Config:
+        from_attributes = True
 
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
+class SystemMetric(SystemMetricInDB):
+    pass
 
 
-class TokenData(BaseModel):
-    username: Optional[str] = None
+class UsageLogBase(BaseModel):
+    endpoint: str
+    success: bool = True
+    response_time: float
+    ip_address: Optional[str] = None
+    tier_id: Optional[int] = None
+    api_key_id: Optional[int] = None
+    was_queued: bool = False
+    queue_time: Optional[float] = None
 
 
-class TokenPayload(BaseModel):
-    """
-    JWT Token payload schema.
-    The 'sub' field is required by FastAPI OAuth2 for token validation.
-    """
-    sub: str = Field(..., description="Subject identifier, must be the user's email")
-    
-    @validator('sub')
-    def validate_sub_not_empty(cls, v):
-        if not v or not isinstance(v, str) or len(v.strip()) == 0:
-            raise ValueError('Subject (sub) must be a non-empty string with the user email')
-        return v
+class UsageLogCreate(UsageLogBase):
+    user_id: int
 
 
-class PasswordReset(BaseModel):
-    password: str
+class UsageLogInDB(UsageLogBase):
+    id: int
+    user_id: int
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        from_attributes = True
 
 
-class UserStatusUpdate(BaseModel):
-    is_active: bool
+class UsageLog(UsageLogInDB):
+    pass
 
 
-# ProbeNode schemas
+# Probe Node Schemas
+
+class ProbeNodeSupportedTools(BaseModel):
+    """Tools supported by a probe node"""
+    ping: bool = True
+    traceroute: bool = True
+    dns: bool = True
+    http: bool = True
+    nmap: Optional[bool] = False
+    curl: Optional[bool] = False
+    reverse_dns: Optional[bool] = False
+    mtr: Optional[bool] = False
+    whois: Optional[bool] = False
+
+
+class ProbeNodeHardwareInfo(BaseModel):
+    """Hardware information for a probe node"""
+    cpu_cores: Optional[int] = None
+    cpu_model: Optional[str] = None
+    memory_total: Optional[int] = None  # Total RAM in MB
+    disk_total: Optional[int] = None    # Total disk space in MB
+    platform: Optional[str] = None      # Linux, Windows, etc.
+    architecture: Optional[str] = None  # x86_64, arm64, etc.
+
+
+class ProbeNodeNetworkInfo(BaseModel):
+    """Network information for a probe node"""
+    provider: Optional[str] = None      # AWS, GCP, Azure, etc.
+    asn: Optional[str] = None           # AS number
+    bandwidth: Optional[str] = None     # Bandwidth in Mbps
+    datacenter: Optional[str] = None    # Datacenter identifier
+    network_type: Optional[str] = None  # Public, private, etc.
+
+
 class ProbeNodeBase(BaseModel):
-    """Base schema for probe node data."""
+    """Base schema for probe nodes"""
     name: str
     hostname: str
     region: str
     zone: Optional[str] = None
     internal_ip: Optional[str] = None
     external_ip: Optional[str] = None
-    version: Optional[str] = None
     supported_tools: Optional[Dict[str, bool]] = None
     hardware_info: Optional[Dict[str, Any]] = None
     network_info: Optional[Dict[str, Any]] = None
+    max_concurrent_probes: Optional[int] = 10
+    priority: Optional[int] = 1
 
 
 class ProbeNodeCreate(ProbeNodeBase):
-    """Schema for creating a new probe node."""
-    registration_token: str  # Required for initial registration
-
-
-class ProbeNodeUpdate(BaseModel):
-    """Schema for updating an existing probe node."""
-    name: Optional[str] = None
-    hostname: Optional[str] = None
-    region: Optional[str] = None
-    zone: Optional[str] = None
-    internal_ip: Optional[str] = None
-    external_ip: Optional[str] = None
+    """Schema for creating a new probe node"""
+    registration_token: str
     version: Optional[str] = None
-    is_active: Optional[bool] = None
-    max_concurrent_probes: Optional[int] = None
-    supported_tools: Optional[Dict[str, bool]] = None
-    hardware_info: Optional[Dict[str, Any]] = None
-    network_info: Optional[Dict[str, Any]] = None
-    priority: Optional[int] = None
-    admin_notes: Optional[str] = None
-    config: Optional[Dict[str, Any]] = None
-
-
-class ProbeNodeAdminUpdate(ProbeNodeUpdate):
-    """Admin-only schema for updating probe node configuration."""
-    status: Optional[str] = None
-    priority: Optional[int] = None
-    max_concurrent_probes: Optional[int] = None
-    config: Optional[Dict[str, Any]] = None
 
 
 class ProbeNodeHeartbeat(BaseModel):
-    """Schema for probe node heartbeat updates."""
+    """Schema for node heartbeat updates"""
     node_uuid: str
-    current_load: float
-    avg_response_time: float
-    error_count: int = 0
+    current_load: float = Field(0.0, ge=0.0, le=1.0)
+    avg_response_time: float = Field(0.0, ge=0.0)
+    error_count: int = Field(0, ge=0)
     version: Optional[str] = None
-    hardware_stats: Optional[Dict[str, Any]] = None  # Current CPU, memory usage, etc.
+    
+    @validator('current_load')
+    def validate_load(cls, v):
+        if v < 0 or v > 1:
+            raise ValueError('Load must be between 0.0 and 1.0')
+        return v
 
 
-class ProbeNodeResponse(ProbeNodeBase):
-    """Schema for returning probe node data."""
+class ProbeNodeUpdate(BaseModel):
+    """Schema for updating a probe node by the node itself"""
+    hardware_info: Optional[Dict[str, Any]] = None
+    network_info: Optional[Dict[str, Any]] = None
+    supported_tools: Optional[Dict[str, bool]] = None
+    max_concurrent_probes: Optional[int] = None
+    internal_ip: Optional[str] = None
+    external_ip: Optional[str] = None
+    version: Optional[str] = None
+
+
+class ProbeNodeAdminUpdate(ProbeNodeUpdate):
+    """Schema for updating a probe node by an admin"""
+    name: Optional[str] = None
+    is_active: Optional[bool] = None
+    status: Optional[str] = None
+    priority: Optional[int] = None
+    admin_notes: Optional[str] = None
+    region: Optional[str] = None
+    zone: Optional[str] = None
+    config: Optional[Dict[str, Any]] = None
+
+
+class ProbeNodeResponse(BaseModel):
+    """Schema for returning a probe node"""
     id: int
     node_uuid: str
+    name: str
+    hostname: str
+    region: str
+    zone: Optional[str] = None
     is_active: bool
     status: str
     last_heartbeat: Optional[datetime] = None
-    max_concurrent_probes: int
-    priority: int
-    current_load: float
-    avg_response_time: float
-    error_count: int
-    total_probes_executed: int
     created_at: datetime
     updated_at: datetime
-    config: Optional[Dict[str, Any]] = None
-
+    supported_tools: Optional[Dict[str, bool]] = None
+    current_load: float
+    error_count: int
+    total_probes_executed: int
+    
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ProbeNodeAdminResponse(ProbeNodeResponse):
-    """Admin-only schema with additional node details."""
-    api_key: str  # Only visible to admins
+    """Extended schema with additional fields for admin users"""
+    internal_ip: Optional[str] = None
+    external_ip: Optional[str] = None
+    hardware_info: Optional[Dict[str, Any]] = None
+    network_info: Optional[Dict[str, Any]] = None
+    max_concurrent_probes: int
+    priority: int
+    admin_notes: Optional[str] = None
+    avg_response_time: float
+    version: Optional[str] = None
+    config: Optional[Dict[str, Any]] = None
 
 
 class ProbeNodeRegistrationResponse(BaseModel):
-    """Response after successful node registration."""
+    """Response after successful node registration"""
     node_uuid: str
     api_key: str
     status: str
     config: Dict[str, Any]
-    message: str = "Node registered successfully"
+    message: str
 
 
-# Fix circular references
-UserDetailResponse.update_forward_refs()
+class NodeRegistrationTokenCreate(BaseModel):
+    """Schema for creating a new node registration token"""
+    description: str
+    expiry_hours: int = Field(24, ge=1, le=168)  # 1 hour to 1 week
+    intended_region: Optional[str] = None
