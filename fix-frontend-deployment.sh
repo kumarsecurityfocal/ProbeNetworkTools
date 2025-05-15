@@ -133,9 +133,9 @@ sudo rm -rf nginx/frontend-build/*
 
 # Then copy new assets
 log_info "Copying assets from $asset_location to nginx/frontend-build..."
-cp -rv "$asset_location"/* nginx/frontend-build/ || {
-    log_error "Failed to copy assets with cp -rv. Trying alternate approach..."
-    find "$asset_location" -type f -exec cp {} nginx/frontend-build/ \;
+sudo cp -rv "$asset_location"/* nginx/frontend-build/ || {
+    log_error "Failed to copy assets with sudo cp -rv. Trying alternate approach with sudo..."
+    find "$asset_location" -type f -exec sudo cp {} nginx/frontend-build/ \;
 }
 
 # Check if the copy was successful

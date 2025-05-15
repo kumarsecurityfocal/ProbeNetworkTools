@@ -41,9 +41,9 @@ sudo rm -rf "$DEST_DIR"/*
 echo "🔄 Copying frontend build files to $DEST_DIR..."
 
 # Use a more explicit cp command
-cp -rv "$SRC_DIR"/* "$DEST_DIR/" || {
-    echo "❌ ERROR: Failed to copy files with cp -rv. Trying different approach..."
-    find "$SRC_DIR" -type f -exec cp {} "$DEST_DIR/" \;
+sudo cp -rv "$SRC_DIR"/* "$DEST_DIR/" || {
+    echo "❌ ERROR: Failed to copy files with sudo cp -rv. Trying different approach with sudo..."
+    find "$SRC_DIR" -type f -exec sudo cp {} "$DEST_DIR/" \;
 }
 
 # Create a marker file

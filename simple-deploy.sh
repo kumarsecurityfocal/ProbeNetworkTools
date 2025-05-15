@@ -103,7 +103,7 @@ if [ -d "frontend/dist" ]; then
     log_success "Frontend assets found in frontend/dist"
     # Copy them to public folder
     mkdir -p public
-    cp -r frontend/dist/* public/
+    sudo cp -r frontend/dist/* public/
     log_success "Copied frontend assets to public folder"
 elif [ -d "public" ]; then
     log_success "Frontend assets found in public folder"
@@ -124,9 +124,9 @@ else
     # Ensure NGINX frontend directory exists
     mkdir -p nginx/frontend-build
     # Copy frontend assets
-    cp -rv public/* nginx/frontend-build/ || {
-        log_error "Failed to copy assets with cp -rv. Trying alternate approach..."
-        find public -type f -exec cp {} nginx/frontend-build/ \;
+    sudo cp -rv public/* nginx/frontend-build/ || {
+        log_error "Failed to copy assets with sudo cp -rv. Trying alternate approach with sudo..."
+        find public -type f -exec sudo cp {} nginx/frontend-build/ \;
     }
     log_success "Frontend assets copied to nginx/frontend-build"
 fi

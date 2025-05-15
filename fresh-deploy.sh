@@ -275,7 +275,7 @@ run_command "sudo rm -rf nginx/frontend-build/*" "Cleaning nginx/frontend-build 
 run_command "ls -la public/" "Listing public directory contents before copy"
 
 echo "[COPY] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Copying frontend assets to NGINX" >> "$LOG_FILE"
-run_command "cp -rv public/* nginx/frontend-build/" "Copying assets to nginx/frontend-build directory"
+run_command "sudo cp -rv public/* nginx/frontend-build/" "Copying assets to nginx/frontend-build directory"
 
 # Verify files were copied successfully
 if [ ! -f "nginx/frontend-build/index.html" ]; then
@@ -299,12 +299,20 @@ run_command "docker volume ls | grep probenetworktools || true" "Listing ProbeOp
 if docker volume ls | grep -q "probenetworktools_frontend-build"; then
     log_info "Found existing frontend-build volume. Removing for clean rebuild..."
     echo "[VOLUME] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Removing frontend-build volume for clean rebuild" >> "$LOG_FILE"
-    run_command "docker volume rm probenetworktools_frontend-build" "Removing frontend-build volume"
+    
+    # Try to remove the volume but don't fail if it's in use
+    docker volume rm probenetworktools_frontend-build &>/dev/null || {
+        log_warning "Could not remove frontend-build volume (it may be in use) - continuing anyway"
+        echo "[VOLUME_WARNING] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Could not remove frontend-build volume (may be in use)" >> "$LOG_FILE"
+    }
 fi
 
-# Create a new volume
+# Create a new volume (if it doesn't already exist)
 log_info "Creating fresh frontend-build volume..."
-run_command "docker volume create probenetworktools_frontend-build" "Creating new frontend-build volume"
+docker volume create probenetworktools_frontend-build &>/dev/null || {
+    log_warning "Volume might already exist or there was an issue creating it - continuing anyway"
+    echo "[VOLUME_WARNING] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Issue with volume creation" >> "$LOG_FILE"
+}
 
 # Create a temporary container to initialize the volume with our assets
 log_info "Copying assets to new volume..."

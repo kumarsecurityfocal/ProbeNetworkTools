@@ -291,12 +291,20 @@ run_command "docker volume ls | grep probenetworktools" "Listing ProbeOps Docker
 if docker volume ls | grep -q "probenetworktools_frontend-build"; then
     log_info "Found existing frontend-build volume. Removing for clean rebuild..."
     echo "[VOLUME] $(date +"%Y-%m-%d %H:%M:%S") - Removing frontend-build volume for clean rebuild" >> "$LOG_FILE"
-    run_command "docker volume rm probenetworktools_frontend-build" "Removing frontend-build volume"
+    
+    # Try to remove the volume but don't fail if it's in use
+    docker volume rm probenetworktools_frontend-build &>/dev/null || {
+        log_warning "Could not remove frontend-build volume (it may be in use) - continuing anyway"
+        echo "[VOLUME_WARNING] $(date +"%Y-%m-%d %H:%M:%S") - Could not remove frontend-build volume (may be in use)" >> "$LOG_FILE"
+    }
 fi
 
-# Create a new volume
+# Create a new volume (if it doesn't already exist)
 log_info "Creating fresh frontend-build volume..."
-run_command "docker volume create probenetworktools_frontend-build" "Creating new frontend-build volume"
+docker volume create probenetworktools_frontend-build &>/dev/null || {
+    log_warning "Volume might already exist or there was an issue creating it - continuing anyway"
+    echo "[VOLUME_WARNING] $(date +"%Y-%m-%d %H:%M:%S") - Issue with volume creation" >> "$LOG_FILE"
+}
 
 # Create a temporary container to initialize the volume with our assets
 log_info "Copying assets to new volume..."
