@@ -1,6 +1,7 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime, Text, JSON, Float
 from sqlalchemy.orm import relationship
 from datetime import datetime
+import uuid
 
 from .database import Base
 
@@ -218,3 +219,62 @@ class UsageLog(Base):
     queue_time = Column(Float, nullable=True)  # How long it waited in queue (in seconds)
     
     # Relationships could be added if needed
+
+
+class ProbeNode(Base):
+    """
+    Represents a probe node in the system, responsible for executing network diagnostics.
+    Each node registers with the system and can be managed by administrators.
+    """
+    __tablename__ = "probe_nodes"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    node_uuid = Column(String, unique=True, index=True, default=lambda: str(uuid.uuid4()))
+    name = Column(String)
+    hostname = Column(String)
+    internal_ip = Column(String, nullable=True)
+    external_ip = Column(String, nullable=True)
+    region = Column(String)  # AWS region or custom region identifier
+    zone = Column(String, nullable=True)  # Availability zone (e.g., us-east-1a)
+    api_key = Column(String, unique=True)  # Node-specific API key
+    
+    # Status information
+    is_active = Column(Boolean, default=True)
+    status = Column(String, default="registered")  # registered, active, inactive, error
+    last_heartbeat = Column(DateTime, nullable=True)
+    version = Column(String, nullable=True)
+    
+    # Node capabilities
+    max_concurrent_probes = Column(Integer, default=10)
+    supported_tools = Column(JSON, default=lambda: {"ping": True, "traceroute": True, "dns": True, "http": True})
+    hardware_info = Column(JSON, nullable=True)  # CPU, memory, etc.
+    network_info = Column(JSON, nullable=True)  # ASN, provider, bandwidth
+    
+    # Administrative settings
+    priority = Column(Integer, default=1)  # Higher number = higher priority
+    admin_notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Performance metrics
+    current_load = Column(Float, default=0.0)  # 0.0 to 1.0 (percentage/100)
+    avg_response_time = Column(Float, default=0.0)  # Average response time in ms
+    error_count = Column(Integer, default=0)
+    total_probes_executed = Column(Integer, default=0)
+    
+    # Node configuration
+    config = Column(JSON, default=dict)  # Flexible configuration object
+    
+    # Relationship to diagnostics executed by this node
+    diagnostics = relationship("Diagnostic", secondary="node_diagnostics", backref="executed_by_nodes")
+
+
+# Association table for many-to-many relationship between diagnostics and nodes
+class NodeDiagnostic(Base):
+    """Association table linking diagnostics to the nodes that executed them."""
+    __tablename__ = "node_diagnostics"
+    
+    node_id = Column(Integer, ForeignKey("probe_nodes.id"), primary_key=True)
+    diagnostic_id = Column(Integer, ForeignKey("diagnostics.id"), primary_key=True)
+    executed_at = Column(DateTime, default=datetime.utcnow)
+    execution_time = Column(Float)  # Time taken to execute in ms
