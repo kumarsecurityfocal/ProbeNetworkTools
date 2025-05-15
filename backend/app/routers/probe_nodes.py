@@ -257,14 +257,6 @@ async def register_node_root(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to register node: {str(e)}"
         )
-    # Validate registration token
-    try:
-        token_record = get_registration_token(db, node_data.registration_token)
-    except HTTPException as e:
-        logger.warning(f"Failed node registration attempt: {e.detail}")
-        raise
-    
-    # Create the new node
     api_key = generate_node_api_key()
     node_uuid = str(uuid.uuid4())
     
