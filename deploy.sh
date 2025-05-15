@@ -235,7 +235,7 @@ if [ -d "frontend" ]; then
     
     # Run the container with proper volume mounting to extract the build
     log_info "Copying frontend assets from /app/dist to public directory..."
-    run_command "docker run --rm -v $(pwd)/public:/public probeops-frontend-build cp -r /app/dist/* /public/" "Copying frontend assets to public directory"
+    run_command "docker run --rm -v $(pwd)/public:/public probeops-frontend-build sh -c 'cp -r /app/dist/* /public/'" "Copying frontend assets to public directory"
     
     # Make sure we have the public directory 
     run_command "mkdir -p public" "Ensuring public directory exists"

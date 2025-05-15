@@ -50,8 +50,8 @@ The following changes were made:
    # Build the image directly
    docker build -t probeops-frontend-build ./frontend
    
-   # Extract assets from the correct path
-   docker run --rm -v $(pwd)/public:/public probeops-frontend-build cp -r /app/dist/* /public/
+   # Extract assets from the correct path - using sh -c to ensure glob expansion
+   docker run --rm -v $(pwd)/public:/public probeops-frontend-build sh -c 'cp -r /app/dist/* /public/'
    ```
 
 3. **Enhanced Verification**:
