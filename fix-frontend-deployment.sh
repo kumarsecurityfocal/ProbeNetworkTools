@@ -50,9 +50,32 @@ if [ ! -d "./public" ] || [ ! -f "./public/index.html" ]; then
         ./docker-build.sh
     else
         # Fallback to simpler build if script is not available
+        log_info "Installing dependencies with --legacy-peer-deps..."
         npm install --legacy-peer-deps
+        if [ $? -ne 0 ]; then
+            log_error "npm install failed with exit code $?"
+            exit 1
+        fi
+        
+        log_info "Installing PostCSS and Tailwind plugins..."
         npm install autoprefixer postcss tailwindcss --no-save --legacy-peer-deps
-        npm run build
+        if [ $? -ne 0 ]; then
+            log_error "Installing PostCSS and Tailwind plugins failed with exit code $?"
+            exit 1
+        fi
+        
+        log_info "Checking postcss.config.js for proper configuration..."
+        cat postcss.config.js
+        
+        if grep -q "@tailwindcss/postcss" postcss.config.js; then
+            log_warning "Found invalid reference to @tailwindcss/postcss in postcss.config.js. Fixing..."
+            sed -i 's/@tailwindcss\/postcss/tailwindcss/g' postcss.config.js
+            log_success "Fixed postcss.config.js configuration"
+            cat postcss.config.js
+        fi
+        
+        log_info "Running build with detailed output..."
+        npm run build -- --outDir=../public
     fi
     cd ..
     log_success "Frontend built successfully"
