@@ -1441,6 +1441,11 @@ const AdminPanel = () => {
         )}
       </TabPanel>
 
+      {/* Probe Nodes Tab */}
+      <TabPanel value={tabValue} index={3}>
+        <ProbeNodesManagement />
+      </TabPanel>
+
       {/* Edit Subscription Dialog */}
       <Dialog open={editSubscriptionDialog} onClose={() => setEditSubscriptionDialog(false)}>
         <DialogTitle>Edit Subscription</DialogTitle>
