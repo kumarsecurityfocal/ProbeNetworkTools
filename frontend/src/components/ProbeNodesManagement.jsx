@@ -87,6 +87,7 @@ const ProbeNodesManagement = () => {
   // Load probe nodes on component mount
   useEffect(() => {
     fetchProbeNodes();
+    fetchRegistrationTokens();
   }, []);
 
   // Fetch probe nodes with optional filters
@@ -258,6 +259,47 @@ const ProbeNodesManagement = () => {
 
   // Initialize dayjs relativeTime plugin
   dayjs.extend(relativeTime);
+
+  // Fetch registration tokens
+  const fetchRegistrationTokens = async () => {
+    setTokensLoading(true);
+    try {
+      const { includeExpired, includeUsed } = tokenFilters;
+      const data = await getRegistrationTokens(includeExpired, includeUsed);
+      setRegistrationTokens(data || []);
+    } catch (err) {
+      showNotification('Failed to load registration tokens. Please try again.', 'error');
+      console.error('Error fetching registration tokens:', err);
+    } finally {
+      setTokensLoading(false);
+    }
+  };
+
+  // Handle token filter changes
+  const handleTokenFilterChange = (filterName) => {
+    setTokenFilters(prev => ({
+      ...prev,
+      [filterName]: !prev[filterName]
+    }));
+  };
+
+  // Apply token filters
+  const applyTokenFilters = () => {
+    fetchRegistrationTokens();
+  };
+
+  // Revoke/delete a token
+  const handleRevokeToken = async (tokenId, description) => {
+    if (window.confirm(`Are you sure you want to revoke the token "${description}"? This cannot be undone.`)) {
+      try {
+        await revokeRegistrationToken(tokenId);
+        showNotification('Token revoked successfully', 'success');
+        fetchRegistrationTokens();
+      } catch (err) {
+        showNotification('Failed to revoke token', 'error');
+      }
+    }
+  };
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -530,6 +572,140 @@ const ProbeNodesManagement = () => {
           </Table>
         </TableContainer>
       )}
+      
+      {/* Registration Tokens Section */}
+      <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
+        <VpnKeyIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+        Registration Tokens
+      </Typography>
+      <Paper sx={{ ...sharedStyles.paper, p: 2, mb: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={tokenFilters.includeExpired}
+                  onChange={() => handleTokenFilterChange('includeExpired')}
+                  size="small"
+                />
+              }
+              label="Show Expired"
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={tokenFilters.includeUsed}
+                  onChange={() => handleTokenFilterChange('includeUsed')}
+                  size="small"
+                />
+              }
+              label="Show Used"
+            />
+          </Box>
+          <Button 
+            variant="outlined" 
+            size="small"
+            onClick={applyTokenFilters}
+            startIcon={<FilterListIcon />}
+          >
+            Apply Filters
+          </Button>
+        </Box>
+        
+        {tokensLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+            <CircularProgress />
+          </Box>
+        ) : registrationTokens.length === 0 ? (
+          <Paper variant="outlined" sx={{ p: 2, textAlign: 'center' }}>
+            <Typography color="textSecondary">
+              No registration tokens found
+            </Typography>
+          </Paper>
+        ) : (
+          <TableContainer component={Paper} variant="outlined">
+            <Table size="small">
+              <TableHead sx={sharedStyles.tableHead}>
+                <TableRow>
+                  <TableCell>Description</TableCell>
+                  <TableCell>Token</TableCell>
+                  <TableCell>Region</TableCell>
+                  <TableCell>Created</TableCell>
+                  <TableCell>Expires</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {registrationTokens.map((token) => (
+                  <TableRow key={token.id}>
+                    <TableCell>{token.description}</TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ 
+                        maxWidth: '150px', 
+                        overflow: 'hidden', 
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        fontFamily: 'monospace' 
+                      }}>
+                        {token.token ? token.token.substring(0, 8) + '...' : 'N/A'}
+                        {token.token && (
+                          <IconButton 
+                            size="small" 
+                            onClick={() => {
+                              navigator.clipboard.writeText(token.token);
+                              showNotification('Token copied to clipboard', 'success');
+                            }}
+                          >
+                            <ContentCopyIcon fontSize="small" />
+                          </IconButton>
+                        )}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>{token.region || 'Global'}</TableCell>
+                    <TableCell>{formatDate(token.created_at)}</TableCell>
+                    <TableCell>{formatDate(token.expires_at)}</TableCell>
+                    <TableCell>
+                      {token.is_used ? (
+                        <Chip 
+                          size="small" 
+                          label="Used" 
+                          color="primary" 
+                          variant="outlined" 
+                        />
+                      ) : dayjs(token.expires_at).isBefore(dayjs()) ? (
+                        <Chip 
+                          size="small" 
+                          label="Expired" 
+                          color="error" 
+                          variant="outlined" 
+                        />
+                      ) : (
+                        <Chip 
+                          size="small" 
+                          label="Active" 
+                          color="success" 
+                          variant="outlined" 
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <IconButton 
+                        size="small" 
+                        color="error"
+                        onClick={() => handleRevokeToken(token.id, token.description)}
+                        disabled={token.is_used || dayjs(token.expires_at).isBefore(dayjs())}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </Paper>
 
       {/* Registration Token Dialog */}
       <Dialog 
