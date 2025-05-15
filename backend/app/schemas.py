@@ -281,8 +281,34 @@ class UserSubscription(UserSubscriptionInDB):
 
 class UserSubscriptionResponse(BaseModel):
     """Response model for user subscription endpoint"""
-    subscription: Optional[Dict[str, Any]] = None
+    id: int
+    user_id: int
+    tier_id: int
+    is_active: bool
+    starts_at: datetime
+    expires_at: Optional[datetime] = None
+    payment_id: Optional[str] = None
+    payment_method: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+    
+    # Convert tier object to dictionary for response
     tier: Optional[Dict[str, Any]] = None
+    
+    class Config:
+        from_attributes = True
+        
+    @validator('tier', pre=True)
+    def validate_tier(cls, v):
+        """Convert the SubscriptionTier object to a dictionary"""
+        if hasattr(v, '__dict__'):
+            # Convert SQLAlchemy model to dict
+            tier_dict = {}
+            for key in ['id', 'name', 'description', 'price_monthly', 'price_yearly', 'features']:
+                if hasattr(v, key):
+                    tier_dict[key] = getattr(v, key)
+            return tier_dict
+        return v
 
 
 class ScheduledProbeBase(BaseModel):

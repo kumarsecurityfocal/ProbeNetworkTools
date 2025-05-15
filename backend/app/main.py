@@ -58,7 +58,10 @@ app.include_router(api_keys.router, prefix="", tags=["API Keys"])
 app.include_router(subscriptions.router, prefix="", tags=["Subscriptions"])
 app.include_router(scheduled_probes.router, prefix="", tags=["Scheduled Probes"])
 app.include_router(metrics.router, prefix="", tags=["Metrics"])
+# Make sure probe nodes router includes the prefix
 app.include_router(probe_nodes.router, prefix="", tags=["Probe Nodes"])
+# Also include the registration token endpoints at the root level for backward compatibility
+app.include_router(probe_nodes.registration_token_router, prefix="", tags=["Probe Node Registration"])
 app.include_router(ws_node.router, prefix="", tags=["WebSockets"])
 
 @app.get("/", tags=["Root"])

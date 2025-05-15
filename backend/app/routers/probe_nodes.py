@@ -20,6 +20,9 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/probe-nodes", tags=["probe_nodes"])
 
+# Create a separate router for registration token endpoints that will be mounted at root level
+registration_token_router = APIRouter(tags=["probe_nodes_registration"])
+
 
 def generate_node_api_key() -> str:
     """Generate a secure random API key for a probe node."""
