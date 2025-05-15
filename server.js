@@ -39,8 +39,8 @@ app.use((req, res, next) => {
   else if (url.startsWith('/probes')) {
     return handleProbes(req, res);
   }
-  else if (url.startsWith('/metrics')) {
-    console.log(`Handling metrics request: ${req.method} ${url}`);
+  else if (url.includes('/metrics') || url.includes('metrics/')) {
+    console.log(`Handling metrics request (ANY format): ${req.method} ${url}`);
     return handleMetrics(req, res);
   }
   else if (url.startsWith('/api/')) {
@@ -695,7 +695,22 @@ function handleMetrics(req, res) {
   // Extract the metrics endpoint from the URL
   const url = new URL(`http://localhost${req.url}`);
   const pathParts = url.pathname.split('/').filter(p => p);
-  const metricType = pathParts.length > 1 ? pathParts[1] : '';
+  
+  console.log(`Path parts for metrics URL: ${JSON.stringify(pathParts)}`);
+  
+  // Figure out which metrics endpoint to call
+  let metricType = 'dashboard'; // Default to dashboard metrics
+  
+  // Check if we have explicit metric type in the URL
+  if (pathParts.length > 1) {
+    if (pathParts[0] === 'metrics') {
+      metricType = pathParts[1];
+    } else if (pathParts.includes('metrics') && pathParts.indexOf('metrics') + 1 < pathParts.length) {
+      metricType = pathParts[pathParts.indexOf('metrics') + 1];
+    }
+  }
+  
+  console.log(`Determined metric type: ${metricType}`);
   
   // Get the query parameters
   const searchParams = url.searchParams.toString();
