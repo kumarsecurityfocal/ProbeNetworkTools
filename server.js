@@ -24,6 +24,9 @@ app.use((req, res, next) => {
   else if (url.startsWith('/users/me')) {
     return handleUserProfile(req, res);
   }
+  else if (url === '/users') {
+    return handleAllUsers(req, res);
+  }
   else if (url.startsWith('/history')) {
     return handleHistory(req, res);
   } 
@@ -171,6 +174,77 @@ function handleLogin(req, res) {
   
   // Write body and end request
   backendReq.write(requestBodyString);
+  backendReq.end();
+}
+
+// Handler for all users endpoint - this is used by admin panel
+function handleAllUsers(req, res) {
+  console.log(`All users request: ${req.method} ${req.url}`);
+  
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
+  
+  if (!token) {
+    return res.status(401).json({ detail: 'Not authenticated' });
+  }
+  
+  // Forward request to backend users endpoint
+  const options = {
+    hostname: 'localhost',
+    port: 8000,
+    path: '/users',
+    method: req.method,
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  };
+  
+  // Create backend request
+  const backendReq = http.request(options, (backendRes) => {
+    // Collect response data
+    let responseData = '';
+    backendRes.on('data', chunk => {
+      responseData += chunk;
+    });
+    
+    backendRes.on('end', () => {
+      res.setHeader('Content-Type', 'application/json');
+      
+      console.log(`Users endpoint status: ${backendRes.statusCode}`);
+      
+      // Handle error status codes
+      if (backendRes.statusCode >= 400) {
+        console.error(`Users endpoint returned ${backendRes.statusCode}, sending empty array`);
+        return res.status(200).json([]); // Return empty array instead of error to avoid breaking UI
+      }
+      
+      // Set success status
+      res.status(backendRes.statusCode);
+      
+      // Parse and return response data
+      if (responseData) {
+        try {
+          const jsonData = JSON.parse(responseData);
+          console.log(`Successfully retrieved ${jsonData.length || 0} users`);
+          res.json(jsonData);
+        } catch (e) {
+          console.error('Error parsing users response:', e);
+          res.json([]);
+        }
+      } else {
+        console.log('Empty users response, returning empty array');
+        res.json([]);
+      }
+    });
+  });
+  
+  backendReq.on('error', error => {
+    console.error('Error with users request:', error);
+    res.status(200).json([]); // Return empty array on error to avoid breaking UI
+  });
+  
   backendReq.end();
 }
 
