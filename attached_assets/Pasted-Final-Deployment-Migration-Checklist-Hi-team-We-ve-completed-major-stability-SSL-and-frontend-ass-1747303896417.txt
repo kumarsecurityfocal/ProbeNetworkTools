@@ -1,0 +1,70 @@
+Final Deployment Migration Checklist
+Hi team,
+We’ve completed major stability, SSL, and frontend asset propagation fixes in our ProbeOps beta and are now ready for the final production-grade deployment. To avoid previous issues (JWT decoding, cert overwrites, NGINX default page, etc.), please review and ensure the following checklist is strictly followed:
+
+✅ Deployment Summary
+Docker Compose with services: backend, frontend, nginx, probe
+
+SSL handled by Certbot, mounted into NGINX via volume at /etc/letsencrypt/live/probeops.com-0001/
+
+Frontend assets built during deploy and injected via copy-frontend-assets.sh
+
+Probe node connects over WebSocket (/ws/node) with auth and reconnection logic
+
+.env files separated per service
+
+🔒 1. SSL Certificate Handling
+DO NOT overwrite: /etc/letsencrypt/live/probeops.com-0001/*.pem
+
+NGINX is using this exact path for:
+
+ssl_certificate → fullchain.pem
+
+ssl_certificate_key → privkey.pem
+
+Cert is valid and confirmed:
+
+mathematica
+Copy
+Edit
+issuer=C = US, O = Let's Encrypt, CN = R10
+subject=CN = probeops.com
+🧱 2. Frontend Asset Management
+DO NOT use a volume for frontend/dist in production Docker Compose
+
+Instead, please ensure:
+
+copy-frontend-assets.sh is executed post-build
+
+Static files land correctly in /usr/share/nginx/html within the NGINX image
+
+Marker file or index.html should be present in built container
+
+⚙️ 3. Deployment Scripts and Permissions
+Ensure the following files are present and executable:
+
+deploy.sh
+
+copy-frontend-assets.sh
+
+verify-frontend.sh
+
+If any were modified locally, please git restore them and chmod +x
+
+🧼 4. Git Working Directory Cleanliness
+Run the following before pulling or redeploying to avoid stash/merge errors:
+
+bash
+Copy
+Edit
+git restore deploy.sh
+git clean -fd
+✅ 5. Post-Deployment Test Plan
+Please validate:
+
+https://probeops.com does NOT show default NGINX page
+
+openssl s_client -connect probeops.com:443 -servername probeops.com returns Let's Encrypt issuer, not self-signed
+
+/api/diagnostics/ping?target=google.com returns valid JSON (not 404)
+

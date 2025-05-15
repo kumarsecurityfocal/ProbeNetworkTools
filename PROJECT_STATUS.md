@@ -168,6 +168,9 @@ Configuration for cloud deployment on AWS EC2 with RDS.
 - Added comprehensive probe node documentation
 - Created separate docker-compose configuration for probe nodes
 - Updated deployment scripts for multi-server architecture
+- Added priority field to subscription tiers for request prioritization
+- Implemented tier-based request queuing and rate limiting system
+- Fixed subscription tier validation issues
 
 ### ✅ 2025-05-13
 - Added DATABASE_URL cleanup in docker-compose.yml

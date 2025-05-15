@@ -8,7 +8,7 @@ set -e
 
 # Variables
 TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
-REPO_URL="https://github.com/yourusername/ProbeNetworkTools.git"  # Replace with your actual repo URL
+REPO_URL="https://github.com/probeops/ProbeNetworkTools.git"
 BRANCH="main"
 LOG_FILE="deployment.log"
 
