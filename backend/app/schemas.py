@@ -578,3 +578,20 @@ class NodeRegistrationTokenCreate(BaseModel):
     description: str
     expiry_hours: int = Field(24, ge=1, le=168)  # 1 hour to 1 week
     intended_region: Optional[str] = None
+
+
+class NodeRegistrationTokenResponse(BaseModel):
+    """Schema for node registration token response"""
+    id: int
+    token: str
+    description: str
+    created_at: datetime
+    expires_at: datetime
+    is_used: bool
+    used_at: Optional[datetime] = None
+    created_by_user_id: int
+    node_id: Optional[int] = None
+    intended_region: Optional[str] = None
+    
+    class Config:
+        from_attributes = True

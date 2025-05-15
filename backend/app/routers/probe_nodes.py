@@ -244,7 +244,84 @@ async def update_node(
     return node
 
 
-@router.post("/nodes/registration-token", response_model=Dict[str, Any])
+@router.get("/nodes/registration-token", response_model=List[schemas.NodeRegistrationTokenResponse])
+async def get_registration_tokens(
+    include_expired: bool = Query(False, description="Include expired tokens"),
+    include_used: bool = Query(False, description="Include already used tokens"),
+    current_user: models.User = Depends(auth.get_admin_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get all registration tokens (admin only).
+    This endpoint returns a list of all registration tokens in the system.
+    """
+    query = db.query(models.NodeRegistrationToken)
+    
+    # Apply filters
+    if not include_expired:
+        query = query.filter(models.NodeRegistrationToken.expires_at > datetime.utcnow())
+    
+    if not include_used:
+        query = query.filter(models.NodeRegistrationToken.is_used == False)
+    
+    # Get results
+    tokens = query.order_by(models.NodeRegistrationToken.created_at.desc()).all()
+    
+    return tokens
+
+
+@router.get("/nodes/registration-token/{token_id}", response_model=schemas.NodeRegistrationTokenResponse)
+async def get_registration_token_details(
+    token_id: int,
+    current_user: models.User = Depends(auth.get_admin_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get a specific registration token by ID (admin only).
+    This endpoint returns detailed information about a single registration token.
+    """
+    token = db.query(models.NodeRegistrationToken).filter(models.NodeRegistrationToken.id == token_id).first()
+    
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Registration token not found"
+        )
+    
+    return token
+
+
+@router.delete("/nodes/registration-token/{token_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def revoke_registration_token(
+    token_id: int,
+    current_user: models.User = Depends(auth.get_admin_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Revoke a registration token (admin only).
+    This endpoint marks a token as used and expired to prevent its future use.
+    """
+    token = db.query(models.NodeRegistrationToken).filter(models.NodeRegistrationToken.id == token_id).first()
+    
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Registration token not found"
+        )
+    
+    # Mark as used and expired
+    token.is_used = True
+    token.used_at = datetime.utcnow()
+    token.expires_at = datetime.utcnow()  # Expire immediately
+    
+    db.commit()
+    
+    logger.info(f"Registration token revoked: {token.description} (ID: {token.id})")
+    
+    return None
+
+
+@router.post("/nodes/registration-token/create", response_model=Dict[str, Any])
 async def create_registration_token(
     description: str = Body(..., embed=True),
     expiry_hours: int = Body(24, embed=True),
