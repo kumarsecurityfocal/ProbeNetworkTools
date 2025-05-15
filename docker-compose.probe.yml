@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  probe:
+    build:
+      context: ./probe
+      dockerfile: Dockerfile
+    container_name: probeops-probe
+    restart: unless-stopped
+    environment:
+      - PROBEOPS_BACKEND_URL=${PROBEOPS_BACKEND_URL:-https://probeops.com}
+      - PROBEOPS_NODE_UUID=${PROBEOPS_NODE_UUID}
+      - PROBEOPS_API_KEY=${PROBEOPS_API_KEY}
+      - PROBEOPS_HEARTBEAT_INTERVAL=${PROBEOPS_HEARTBEAT_INTERVAL:-15}
+      - PROBEOPS_LOG_LEVEL=${PROBEOPS_LOG_LEVEL:-INFO}
+    volumes:
+      - probe-data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os, sys; sys.exit(0 if os.path.exists('/app/data/health.flag') else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  probe-data:
