@@ -74,7 +74,9 @@ class Settings(BaseSettings):
         return [v]
     
     class Config:
-        env_file = ".env.backend"
+        # Look for .env.backend in both the current directory and /app
+        # This ensures it works both in development and in Docker
+        env_file = [".env.backend", "/app/.env.backend", "../.env.backend"]
         env_file_encoding = 'utf-8'
         extra = "ignore"
 
