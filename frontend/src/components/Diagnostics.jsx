@@ -51,8 +51,9 @@ const DiagnosticTool = ({ onRunComplete, prefilledTool }) => {
     traceroute: { maxHops: 30, timeout: 5, protocol: 'tcp' },
     dns: { recordType: 'A', resolver: '', recursive: true },
     whois: {}, // No additional options for WHOIS
-    port: { ports: '80,443', protocol: 'tcp', timeout: 5 },
-    http: { 
+    rdns: {}, // No additional options for Reverse DNS
+    nmap: { ports: '80,443', protocol: 'tcp', timeout: 5 },
+    curl: { 
       method: 'GET', 
       headers: '', 
       body: '', 
