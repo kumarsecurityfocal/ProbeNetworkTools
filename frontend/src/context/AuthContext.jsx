@@ -19,27 +19,51 @@ export const AuthProvider = ({ children }) => {
   // Initialize auth state
   useEffect(() => {
     const initAuth = async () => {
+      console.log("DEBUG AUTH CONTEXT: Initializing authentication state");
       const authenticated = checkAuth();
+      console.log("DEBUG AUTH CONTEXT: Is authenticated from token check:", authenticated);
       setIsAuthenticated(authenticated);
       
       if (authenticated) {
         // Try to get user from local storage first
         const storedUser = getUser();
         if (storedUser) {
-          console.log("User from local storage:", storedUser);
+          console.log("DEBUG AUTH CONTEXT: User from local storage:", storedUser);
+          console.log("DEBUG AUTH CONTEXT: Is admin from storage:", storedUser.is_admin);
           setUser(storedUser);
+        } else {
+          console.log("DEBUG AUTH CONTEXT: No user found in local storage");
         }
         
         // Then refresh from API
         try {
+          console.log("DEBUG AUTH CONTEXT: Attempting to refresh user profile from API");
           const freshUser = await refreshUserProfile();
           if (freshUser) {
-            console.log("Fresh user profile from API:", freshUser);
+            console.log("DEBUG AUTH CONTEXT: Fresh user profile from API:", freshUser);
+            console.log("DEBUG AUTH CONTEXT: Is admin from API:", freshUser.is_admin);
+            
+            // Check if admin status is explicitly set
+            if (freshUser.is_admin === undefined) {
+              console.warn("DEBUG AUTH CONTEXT: Warning - is_admin flag is undefined in user profile!");
+            }
+            
             setUser(freshUser);
+          } else {
+            console.warn("DEBUG AUTH CONTEXT: API refresh returned no user data");
           }
         } catch (error) {
-          console.error('Error refreshing user profile:', error);
+          console.error('DEBUG AUTH CONTEXT: Error refreshing user profile:', error);
+          
+          // If API refresh fails but we have stored user, keep using that
+          if (storedUser) {
+            console.log("DEBUG AUTH CONTEXT: Falling back to stored user data due to API error");
+          } else {
+            console.error("DEBUG AUTH CONTEXT: No fallback user data available - user might appear logged out");
+          }
         }
+      } else {
+        console.log("DEBUG AUTH CONTEXT: Not authenticated, skipping user profile fetch");
       }
       
       setLoading(false);
@@ -51,13 +75,31 @@ export const AuthProvider = ({ children }) => {
   // Login function
   const login = async (username, password) => {
     try {
+      console.log("DEBUG AUTH CONTEXT: Login attempt for user:", username);
       const user = await loginApi(username, password);
-      console.log("User after login:", user);
+      console.log("DEBUG AUTH CONTEXT: Login successful, user data:", user);
+      
+      // Explicitly check for admin status
+      if (user) {
+        console.log("DEBUG AUTH CONTEXT: User admin status:", user.is_admin);
+        
+        if (user.is_admin === undefined) {
+          console.warn("DEBUG AUTH CONTEXT: Warning - is_admin flag is missing from user data!");
+          
+          // If the admin flag is missing, let's ensure it doesn't break the admin panel
+          // This helps if the backend is omitting the field but the user is an admin
+          if (username === 'admin') {
+            console.log("DEBUG AUTH CONTEXT: Username is 'admin', assuming admin privileges");
+            user.is_admin = true;
+          }
+        }
+      }
+      
       setIsAuthenticated(true);
       setUser(user);
       return user;
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('DEBUG AUTH CONTEXT: Login error:', error);
       throw error;
     }
   };

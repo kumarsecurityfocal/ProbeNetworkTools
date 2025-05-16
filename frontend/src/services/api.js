@@ -78,34 +78,80 @@ export const loginUser = async (username, password) => {
     formData.append('username', username);
     formData.append('password', password);
     
-    // Try first with the correct FastAPI auth endpoint
-    try {
-      const response = await api.post('/auth/login', 
-        formData.toString(),
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
+    // DEBUG: Adding additional logging to track authentication issues
+    console.log("DEBUG AUTH: Starting authentication process");
+    
+    // Try multiple endpoint patterns to find the correct one
+    const endpoints = [
+      '/auth/login',      // Standard FastAPI OAuth endpoint
+      '/auth/token',      // Alternative FastAPI OAuth endpoint
+      '/login',           // Custom endpoint that might be used
+      '/token'            // Another common OAuth endpoint name
+    ];
+    
+    let lastError = null;
+    
+    // Try each endpoint in sequence
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`DEBUG AUTH: Trying to authenticate with endpoint: ${endpoint}`);
+        
+        const response = await api.post(endpoint, 
+          formData.toString(),
+          {
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            }
           }
+        );
+        
+        console.log(`DEBUG AUTH: Login successful with endpoint ${endpoint}`);
+        console.log("DEBUG AUTH: Response data:", response.data);
+        
+        // If we have an access_token, verify it's in the expected format
+        if (response.data && response.data.access_token) {
+          console.log(`DEBUG AUTH: Token received (starts with: ${response.data.access_token.substring(0, 10)}...)`);
+          
+          // After login, also log the user data that will be fetched
+          setTimeout(async () => {
+            try {
+              console.log("DEBUG AUTH: Attempting to fetch user profile after login");
+              const userResponse = await api.get('/users/me', {
+                headers: { 'Authorization': `Bearer ${response.data.access_token}` }
+              });
+              console.log("DEBUG AUTH: User profile fetch successful:", userResponse.data);
+              console.log("DEBUG AUTH: Is admin:", userResponse.data.is_admin);
+            } catch (profileError) {
+              console.error("DEBUG AUTH: Failed to fetch user profile:", profileError);
+              
+              // Try alternative endpoints for user profile
+              try {
+                console.log("DEBUG AUTH: Trying alternative user profile endpoint");
+                const altUserResponse = await api.get('/auth/users/me', {
+                  headers: { 'Authorization': `Bearer ${response.data.access_token}` }
+                });
+                console.log("DEBUG AUTH: Alternative user profile fetch successful:", altUserResponse.data);
+              } catch (altProfileError) {
+                console.error("DEBUG AUTH: Alternative profile fetch also failed:", altProfileError);
+              }
+            }
+          }, 500);
         }
-      );
-      
-      console.log("Login response:", response.data);
-      return response.data;
-    } catch (error) {
-      // If the auth prefix fails, fall back to the standard login endpoint
-      console.log("Auth prefix failed, trying standard login endpoint");
-      const response = await api.post('/login', 
-        formData.toString(),
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          }
+        
+        return response.data;
+      } catch (error) {
+        lastError = error;
+        console.log(`DEBUG AUTH: Endpoint ${endpoint} failed:`, error.message);
+        if (error.response) {
+          console.log(`DEBUG AUTH: Status: ${error.response.status}, Data:`, error.response.data);
         }
-      );
-      
-      console.log("Login response from fallback endpoint:", response.data);
-      return response.data;
+        // Continue to the next endpoint
+      }
     }
+    
+    // If we've tried all endpoints and none worked, throw the last error
+    console.error("DEBUG AUTH: All authentication endpoints failed");
+    throw lastError;
   } catch (error) {
     console.log("Login error:", error);
     console.log("Auth error:", error);

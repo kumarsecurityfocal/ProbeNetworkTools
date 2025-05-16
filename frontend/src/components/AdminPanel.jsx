@@ -151,8 +151,17 @@ const AdminPanel = () => {
 
   // Check if user is admin
   useEffect(() => {
-    if (currentLoggedInUser && !currentLoggedInUser.is_admin) {
+    console.log("DEBUG ADMIN: AdminPanel component mounted");
+    console.log("DEBUG ADMIN: Current user:", currentLoggedInUser);
+    
+    if (!currentLoggedInUser) {
+      console.log("DEBUG ADMIN: No user is logged in or user data not loaded yet");
+      setError('No user detected. Please log in again.');
+    } else if (!currentLoggedInUser.is_admin) {
+      console.log(`DEBUG ADMIN: User ${currentLoggedInUser.username} is not an admin (is_admin=${currentLoggedInUser.is_admin})`);
       setError('Access denied. Admin privileges required.');
+    } else {
+      console.log(`DEBUG ADMIN: User ${currentLoggedInUser.username} has admin privileges`);
     }
   }, [currentLoggedInUser]);
 
