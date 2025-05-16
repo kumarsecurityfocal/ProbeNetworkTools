@@ -7,7 +7,7 @@
 set -e
 
 # Variables
-DOMAINS="probeops.com www.probeops.com"
+DOMAINS=(-d probeops.com -d www.probeops.com)  # Array of domain flags
 EMAIL="kumar@securityfocal.com"  # Using the email from your command
 LOG_FILE="ssl-verification.log"
 
@@ -127,11 +127,14 @@ issue_certificate() {
     
     # Run certbot in standalone mode with more detailed output
     echo "Starting certificate issuance process..."
-    echo "Domain(s): $DOMAINS"
+    echo "Domain(s): ${DOMAINS[*]}"
     echo "Email: $EMAIL"
     
-    # Use --verbose flag for more detailed output
-    execute_and_log "docker run --rm -v $(pwd)/nginx/ssl:/etc/letsencrypt -v $(pwd)/nginx/ssl/webroot:/var/www/certbot -p 80:80 certbot/certbot certonly --standalone --preferred-challenges http --email $EMAIL --agree-tos --no-eff-email --verbose -d $DOMAINS" "Issuing certificate with Certbot"
+    # Build the command with proper domain arguments
+    CERTBOT_CMD="docker run --rm -v $(pwd)/nginx/ssl:/etc/letsencrypt -v $(pwd)/nginx/ssl/webroot:/var/www/certbot -p 80:80 certbot/certbot certonly --standalone --preferred-challenges http --email $EMAIL --agree-tos --no-eff-email --verbose ${DOMAINS[*]}"
+    
+    # Execute the command with proper domain array handling
+    execute_and_log "$CERTBOT_CMD" "Issuing certificate with Certbot"
     
     # Check if certificate issuance was successful
     CERT_SUCCESS=$?
