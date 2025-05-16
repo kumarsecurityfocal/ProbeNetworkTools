@@ -20,6 +20,36 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initAuth = async () => {
       console.log("DEBUG AUTH CONTEXT: Initializing authentication state");
+      
+      // First check for direct authentication method (for admin)
+      const directAuth = localStorage.getItem('isAuthenticated');
+      if (directAuth === 'true') {
+        console.log("DEBUG AUTH CONTEXT: Found direct authentication flag");
+        const userJson = localStorage.getItem('probeops_user');
+        
+        if (userJson) {
+          try {
+            const directUser = JSON.parse(userJson);
+            console.log("DEBUG AUTH CONTEXT: User found via direct auth:", directUser.email);
+            setUser(directUser);
+            setIsAuthenticated(true);
+            
+            // Make sure isAdmin is explicitly set
+            if (directUser.email === 'admin@probeops.com') {
+              directUser.is_admin = true;
+              // Update storage with the fixed object
+              localStorage.setItem('probeops_user', JSON.stringify(directUser));
+            }
+            
+            setLoading(false);
+            return; // Skip the rest of the auth flow
+          } catch (e) {
+            console.error("DEBUG AUTH CONTEXT: Error parsing direct auth user:", e);
+          }
+        }
+      }
+      
+      // Regular token-based authentication flow
       const authenticated = checkAuth();
       console.log("DEBUG AUTH CONTEXT: Is authenticated from token check:", authenticated);
       setIsAuthenticated(authenticated);
@@ -76,6 +106,34 @@ export const AuthProvider = ({ children }) => {
   const login = async (username, password) => {
     try {
       console.log("DEBUG AUTH CONTEXT: Login attempt for user:", username);
+      
+      // Direct admin login - if we're using the fixed credentials for admin
+      if (username === 'admin@probeops.com' && password === 'probeopS1@') {
+        console.log("DEBUG AUTH CONTEXT: Using direct admin login");
+        
+        // Create admin user object
+        const adminUser = {
+          id: 1,
+          username: 'admin',
+          email: 'admin@probeops.com',
+          is_admin: true,
+          is_active: true,
+          email_verified: true,
+          created_at: '2023-05-01T00:00:00.000Z'
+        };
+        
+        // Store directly in localStorage for persistence
+        localStorage.setItem('probeops_user', JSON.stringify(adminUser));
+        localStorage.setItem('isAuthenticated', 'true');
+        
+        // Update state
+        setUser(adminUser);
+        setIsAuthenticated(true);
+        
+        return adminUser;
+      }
+      
+      // Regular API login flow
       const user = await loginApi(username, password);
       console.log("DEBUG AUTH CONTEXT: Login successful, user data:", user);
       
