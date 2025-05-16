@@ -70,6 +70,11 @@ app.use((req, res, next) => {
     console.log(`Handling metrics request (ANY format): ${req.method} ${url}`);
     return handleMetrics(req, res);
   }
+  else if (url.startsWith('/api/admin/database') || url.startsWith('/admin/database')) {
+    // Admin database management requests
+    console.log(`Admin database request: ${req.method} ${url}`);
+    return handleGenericApi(req, res);
+  }
   else if (url.startsWith('/api/')) {
     // Generic API handler for other endpoints
     return handleGenericApi(req, res);
