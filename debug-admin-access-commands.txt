@@ -1,0 +1,43 @@
+# ProbeOps API Debug Commands
+# Run these commands directly on your ProbeOps server to diagnose admin panel issues
+
+# 1. First, test if the backend API is healthy
+curl -s http://localhost:8000/health
+
+# 2. Try to log in as admin (replace the password)
+curl -s -X POST http://localhost:8000/auth/login \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "username=admin@probeops.com&password=YOUR_PASSWORD" > login_response.txt
+
+# 3. Extract the token from the response
+TOKEN=$(grep -o '"access_token":"[^"]*"' login_response.txt | cut -d'"' -f4)
+echo "Token: ${TOKEN:0:15}..."
+
+# 4. Test the user profile endpoint
+curl -s -X GET http://localhost:8000/users/me \
+  -H "Authorization: Bearer $TOKEN" > user_profile.txt
+
+# 5. Check if the user has admin privileges
+cat user_profile.txt | grep is_admin
+
+# 6. Test the NGINX configuration by calling the external endpoint
+curl -s -X GET https://probeops.com/users/me \
+  -H "Authorization: Bearer $TOKEN" > external_user_profile.txt
+
+# 7. Compare responses to see if there's a routing issue
+echo "Internal API response:"
+cat user_profile.txt
+echo ""
+echo "External API response through NGINX:"
+cat external_user_profile.txt
+echo ""
+
+# 8. Check if admin panel component exists in the frontend code
+cd /home/ubuntu/ProbeNetworkTools/frontend/src
+grep -r "AdminPanel" --include="*.jsx" --include="*.js" .
+
+# 9. Check if admin panel is conditionally rendered based on isAdmin
+grep -A 5 -B 5 "isAdmin" --include="*.jsx" --include="*.js" .
+
+# 10. Check if there are any console.log statements related to admin status
+grep -r "console.log" --include="*.jsx" --include="*.js" . | grep -i "admin"
