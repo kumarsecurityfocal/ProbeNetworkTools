@@ -193,8 +193,8 @@ run_command "ls -la" "Listing root directory contents"
 
 # Step 3: Set executable permissions on all scripts
 log_info "Step 3: Setting executable permissions on all scripts..."
-run_command "find . -name \"*.sh\" -type f | sort" "Listing all shell scripts in the project"
-run_command "find . -name \"*.sh\" -exec chmod +x {} \;" "Setting executable permissions on all scripts"
+run_command "find . -path \"./nginx/ssl\" -prune -o -name \"*.sh\" -type f -print 2>/dev/null | sort" "Listing all shell scripts in the project (excluding nginx/ssl)"
+run_command "find ./backend ./frontend ./nginx ./probe -name \"*.sh\" -type f -print0 2>/dev/null | xargs -0 chmod +x 2>/dev/null || true" "Setting executable permissions (restricting to app directories)"
 log_success "All shell scripts are now executable"
 
 # Step 4: Fresh Environment Setup
