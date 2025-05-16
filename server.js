@@ -59,6 +59,153 @@ app.get('/database', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Admin endpoints for troubleshooting and database management
+app.get('/api/admin/system-logs', async (req, res) => {
+  try {
+    const logs = await debugUtils.collectSystemLogs();
+    res.json({ logs });
+  } catch (error) {
+    console.error('Error collecting system logs:', error);
+    res.status(500).json({ 
+      error: 'Failed to collect system logs', 
+      detail: error.message 
+    });
+  }
+});
+
+app.get('/api/admin/db-status', async (req, res) => {
+  try {
+    const status = await debugUtils.checkDatabaseConnection();
+    res.json(status);
+  } catch (error) {
+    console.error('Error checking database status:', error);
+    res.status(500).json({ 
+      error: 'Failed to check database status', 
+      detail: error.message 
+    });
+  }
+});
+
+app.get('/api/admin/auth-config', (req, res) => {
+  try {
+    const authConfig = debugUtils.checkAuthConfig();
+    const jwtConfig = debugUtils.checkJwtConfig();
+    res.json({ ...authConfig, ...jwtConfig });
+  } catch (error) {
+    console.error('Error checking auth config:', error);
+    res.status(500).json({ 
+      error: 'Failed to check auth configuration', 
+      detail: error.message 
+    });
+  }
+});
+
+app.post('/api/admin/toggle-debug', (req, res) => {
+  try {
+    const { enabled } = req.body;
+    const result = debugUtils.toggleDebugMode(enabled);
+    res.json(result);
+  } catch (error) {
+    console.error('Error toggling debug mode:', error);
+    res.status(500).json({ 
+      error: 'Failed to toggle debug mode', 
+      detail: error.message 
+    });
+  }
+});
+
+app.get('/api/admin/debug-status', (req, res) => {
+  try {
+    const status = debugUtils.getDebugStatus();
+    res.json(status);
+  } catch (error) {
+    console.error('Error getting debug status:', error);
+    res.status(500).json({ 
+      error: 'Failed to get debug status', 
+      detail: error.message 
+    });
+  }
+});
+
+// Database admin endpoints
+app.get('/api/admin/db-tables', async (req, res) => {
+  try {
+    const tables = await dbAdmin.getTables();
+    res.json({ tables });
+  } catch (error) {
+    console.error('Error fetching tables:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch database tables', 
+      detail: error.message 
+    });
+  }
+});
+
+app.get('/api/admin/db-table/:tableName', async (req, res) => {
+  try {
+    const { tableName } = req.params;
+    const data = await dbAdmin.getTableData(tableName);
+    res.json(data);
+  } catch (error) {
+    console.error(`Error fetching data for table ${req.params.tableName}:`, error);
+    res.status(500).json({ 
+      error: `Failed to fetch data for table ${req.params.tableName}`, 
+      detail: error.message 
+    });
+  }
+});
+
+app.put('/api/admin/db-row/:tableName', async (req, res) => {
+  try {
+    const { tableName } = req.params;
+    const { original, updated } = req.body;
+    
+    const row = await dbAdmin.updateRow(tableName, original, updated);
+    res.json({ success: true, row });
+  } catch (error) {
+    console.error(`Error updating row in table ${req.params.tableName}:`, error);
+    res.status(500).json({ 
+      error: `Failed to update row in table ${req.params.tableName}`, 
+      detail: error.message 
+    });
+  }
+});
+
+app.delete('/api/admin/db-row/:tableName', async (req, res) => {
+  try {
+    const { tableName } = req.params;
+    const { row } = req.body;
+    
+    const result = await dbAdmin.deleteRow(tableName, row);
+    res.json(result);
+  } catch (error) {
+    console.error(`Error deleting row from table ${req.params.tableName}:`, error);
+    res.status(500).json({ 
+      error: `Failed to delete row from table ${req.params.tableName}`, 
+      detail: error.message 
+    });
+  }
+});
+
+app.post('/api/admin/execute-query', async (req, res) => {
+  try {
+    const { query } = req.body;
+    
+    if (!query) {
+      return res.status(400).json({ error: 'Query is required' });
+    }
+    
+    const result = await dbAdmin.executeQuery(query);
+    res.json(result);
+  } catch (error) {
+    console.error('Error executing query:', error);
+    res.status(500).json({ 
+      error: 'Failed to execute query', 
+      detail: error.message 
+    });
+  }
+});
+
 // Parse and handle API routes
 app.use((req, res, next) => {
   const url = req.url;

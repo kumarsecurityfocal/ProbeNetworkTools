@@ -16,6 +16,8 @@ import ScheduledProbes from './components/ScheduledProbes';
 import UserProfile from './components/UserProfile';
 import Reports from './components/Reports';
 import Footer from './components/Footer';
+import TroubleshootingPanel from './components/TroubleshootingPanel';
+import DatabaseAdminPanel from './components/DatabaseAdminPanel';
 
 // Direct Access Pages
 import DatabasePage from './pages/DatabasePage';
@@ -139,7 +141,8 @@ function App() {
               <Route path="/scheduled-probes" element={<ScheduledProbes />} />
               <Route path="/profile" element={<UserProfile />} />
               <Route path="/reports" element={<Reports />} />
-              <Route path="/database" element={<DatabasePage />} />
+              <Route path="/troubleshooting" element={<TroubleshootingPanel />} />
+              <Route path="/database" element={<DatabaseAdminPanel />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </Box>

@@ -93,6 +93,8 @@ const Navbar = ({ darkMode, toggleDarkMode, sidebarCollapsed, toggleSidebar }) =
   // Admin-only navigation items
   const adminNavItems = [
     { name: 'Admin Panel', path: '/admin', icon: <AdminIcon fontSize="small" /> },
+    { name: 'Troubleshooting', path: '/troubleshooting', icon: <HelpIcon fontSize="small" /> },
+    { name: 'Database Admin', path: '/database', icon: <SettingsIcon fontSize="small" /> },
   ];
   
   // Combine navigation items based on user role
