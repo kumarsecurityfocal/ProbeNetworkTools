@@ -1,0 +1,90 @@
+Authentication Debug
+Check authentication status and debug token issues:
+
+Backend connection successful!
+
+{
+  "connected": true,
+  "tables": [
+    {
+      "name": "alembic_version",
+      "rows": 1,
+      "description": "1 columns"
+    },
+    {
+      "name": "api_keys",
+      "rows": 6,
+      "description": "7 columns"
+    },
+    {
+      "name": "api_usage_logs",
+      "rows": 0,
+      "description": "9 columns"
+    },
+    {
+      "name": "diagnostics",
+      "rows": 43,
+      "description": "8 columns"
+    },
+    {
+      "name": "node_diagnostics",
+      "rows": 0,
+      "description": "4 columns"
+    },
+    {
+      "name": "node_registration_tokens",
+      "rows": 6,
+      "description": "10 columns"
+    },
+    {
+      "name": "probe_nodes",
+      "rows": 0,
+      "description": "30 columns"
+    },
+    {
+      "name": "probe_results",
+      "rows": 0,
+      "description": "6 columns"
+    },
+    {
+      "name": "scheduled_probes",
+      "rows": 4,
+      "description": "13 columns"
+    },
+    {
+      "name": "subscription_tiers",
+      "rows": 3,
+      "description": "25 columns"
+    },
+    {
+      "name": "system_metrics",
+      "rows": 0,
+      "description": "4 columns"
+    },
+    {
+      "name": "usage_logs",
+      "rows": 59,
+      "description": "11 columns"
+    },
+    {
+      "name": "user_subscriptions",
+      "rows": 4,
+      "description": "10 columns"
+    },
+    {
+      "name": "users",
+      "rows": 4,
+      "description": "9 columns"
+    }
+  ],
+  "status": "Connected to PostgreSQL database",
+  "version": "PostgreSQL",
+  "uptime": "2025-05-16T16:41:12.428Z"
+}
+Test Backend Connection Check JWT Token
+Environment Information
+Item	Value
+Current URL	https://9ad464cb-631d-4dcb-91d6-15f6005e46db-00-g0g0d52nl5q7.worf.replit.dev/admin-direct.html
+Authentication Status	Authenticated via token (Direct auth enabled)
+User Data	{ "id": 1, "username": "admin", "email": "admin@probeops.com", "is_admin": true, "is_active": true, "email_verified": true, "created_at": "2023-05-01T00:00:00.000Z" }
+JWT Token	eyJhbGciOiJIUzI1NiIs...

@@ -25,6 +25,7 @@
     "dayjs": "^1.11.13",
     "express": "^5.1.0",
     "http-proxy-middleware": "^3.0.5",
+    "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.510.0",
     "memoizee": "^0.4.17",
     "openid-client": "^6.5.0",
