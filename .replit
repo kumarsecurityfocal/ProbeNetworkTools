@@ -2,7 +2,7 @@ modules = ["python-3.11", "nodejs-20", "python3", "postgresql-16"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["cacert", "cargo", "jq", "libiconv", "libxcrypt", "rustc", "whois"]
+packages = ["cacert", "cargo", "jq", "libiconv", "libxcrypt", "rustc", "whois", "pgadmin4"]
 
 [workflows]
 runButton = "Project"
