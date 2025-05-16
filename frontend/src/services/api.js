@@ -78,17 +78,34 @@ export const loginUser = async (username, password) => {
     formData.append('username', username);
     formData.append('password', password);
     
-    const response = await api.post('/login', 
-      formData.toString(),
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
+    // Try first with the correct FastAPI auth endpoint
+    try {
+      const response = await api.post('/auth/login', 
+        formData.toString(),
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
         }
-      }
-    );
-    
-    console.log("Login response:", response.data);
-    return response.data;
+      );
+      
+      console.log("Login response:", response.data);
+      return response.data;
+    } catch (error) {
+      // If the auth prefix fails, fall back to the standard login endpoint
+      console.log("Auth prefix failed, trying standard login endpoint");
+      const response = await api.post('/login', 
+        formData.toString(),
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
+        }
+      );
+      
+      console.log("Login response from fallback endpoint:", response.data);
+      return response.data;
+    }
   } catch (error) {
     console.log("Login error:", error);
     console.log("Auth error:", error);
