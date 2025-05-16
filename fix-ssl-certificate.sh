@@ -130,8 +130,30 @@ issue_certificate() {
     echo "Domain(s): ${DOMAINS[*]}"
     echo "Email: $EMAIL"
     
+    # Check if certificate directory already exists
+    if [ -d "./nginx/ssl/live/probeops.com" ]; then
+        echo "⚠️ Certificate directory already exists. Would you like to force renewal?"
+        echo "   This will replace your existing certificate."
+        read -p "Force certificate renewal? (y/n): " force_renewal
+        
+        if [[ "$force_renewal" == "y" || "$force_renewal" == "Y" ]]; then
+            log_message "🔄 Forcing certificate renewal"
+            FORCE_FLAG="--force-renewal"
+        else
+            echo "To manually remove the existing certificate directory, run:"
+            echo "   rm -rf ./nginx/ssl/live/probeops.com"
+            echo "   rm -rf ./nginx/ssl/archive/probeops.com"
+            echo "   rm -rf ./nginx/ssl/renewal/probeops.com.conf"
+            log_message "⚠️ Certificate issuance cancelled by user"
+            echo "Certificate issuance cancelled."
+            return 1
+        fi
+    else
+        FORCE_FLAG=""
+    fi
+    
     # Build the command with proper domain arguments
-    CERTBOT_CMD="docker run --rm -v $(pwd)/nginx/ssl:/etc/letsencrypt -v $(pwd)/nginx/ssl/webroot:/var/www/certbot -p 80:80 certbot/certbot certonly --standalone --preferred-challenges http --email $EMAIL --agree-tos --no-eff-email --verbose ${DOMAINS[*]}"
+    CERTBOT_CMD="docker run --rm -v $(pwd)/nginx/ssl:/etc/letsencrypt -v $(pwd)/nginx/ssl/webroot:/var/www/certbot -p 80:80 certbot/certbot certonly --standalone --preferred-challenges http --email $EMAIL --agree-tos --no-eff-email --verbose $FORCE_FLAG ${DOMAINS[*]}"
     
     # Execute the command with proper domain array handling
     execute_and_log "$CERTBOT_CMD" "Issuing certificate with Certbot"
