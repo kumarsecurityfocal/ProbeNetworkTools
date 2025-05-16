@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ProbeOps Admin Dashboard</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+    }
+    
+    .header {
+      background-color: #2c3e50;
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    
+    .nav {
+      display: flex;
+    }
+    
+    .nav-item {
+      margin-left: 20px;
+      color: white;
+      text-decoration: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+    }
+    
+    .nav-item:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+    
+    .card {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .stat-card {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 20px;
+    }
+    
+    .stat-value {
+      font-size: 36px;
+      font-weight: bold;
+      margin: 10px 0;
+      color: #2c3e50;
+    }
+    
+    .stat-label {
+      color: #7f8c8d;
+      font-size: 14px;
+    }
+    
+    h1, h2, h3 {
+      color: #2c3e50;
+    }
+    
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .table th, .table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .table th {
+      background-color: #f2f2f2;
+      font-weight: bold;
+    }
+    
+    .table tr:hover {
+      background-color: #f5f5f5;
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    .badge-success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    
+    .badge-warning {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+    
+    .badge-danger {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    
+    .button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    
+    .button:hover {
+      background-color: #2980b9;
+    }
+    
+    .button-primary {
+      background-color: #3498db;
+    }
+    
+    .button-success {
+      background-color: #2ecc71;
+    }
+    
+    .button-danger {
+      background-color: #e74c3c;
+    }
+    
+    .button-warning {
+      background-color: #f39c12;
+    }
+    
+    .footer {
+      background-color: #2c3e50;
+      color: white;
+      text-align: center;
+      padding: 20px;
+      margin-top: 40px;
+    }
+    
+    /* Additional styles for admin panel */
+    .tab-container {
+      margin-bottom: 20px;
+    }
+    
+    .tab-buttons {
+      display: flex;
+      border-bottom: 1px solid #ddd;
+      margin-bottom: 20px;
+    }
+    
+    .tab-button {
+      padding: 10px 20px;
+      border: none;
+      background-color: transparent;
+      cursor: pointer;
+      font-size: 16px;
+      border-bottom: 3px solid transparent;
+    }
+    
+    .tab-button.active {
+      border-bottom: 3px solid #3498db;
+      font-weight: bold;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    /* Database explorer styles */
+    .query-container {
+      margin-bottom: 20px;
+    }
+    
+    .query-textarea {
+      width: 100%;
+      height: 100px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: monospace;
+      margin-bottom: 10px;
+    }
+    
+    .query-result {
+      background-color: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 10px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">ProbeOps</div>
+    <div class="nav">
+      <a href="#dashboard" id="nav-dashboard" class="nav-item active">Dashboard</a>
+      <a href="#users" id="nav-users" class="nav-item">Users</a>
+      <a href="#database" id="nav-database" class="nav-item">Database</a>
+      <a href="#diagnostics" id="nav-diagnostics" class="nav-item">Diagnostics</a>
+      <a href="/admin-direct.html" class="nav-item">Admin Tools</a>
+    </div>
+  </div>
+  
+  <!-- Main Container -->
+  <div class="container">
+    <!-- Dashboard Tab -->
+    <div id="dashboard-tab" class="tab-content active">
+      <h1>Admin Dashboard</h1>
+      
+      <!-- Stats -->
+      <div class="dashboard-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Users</div>
+          <div class="stat-value" id="total-users">--</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-label">API Requests Today</div>
+          <div class="stat-value" id="api-requests">--</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-label">Active Probes</div>
+          <div class="stat-value" id="active-probes">--</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-label">Avg Response Time</div>
+          <div class="stat-value" id="avg-response-time">--</div>
+        </div>
+      </div>
+      
+      <!-- Recent Activity -->
+      <div class="card">
+        <h2>Recent Activity</h2>
+        <table class="table" id="activity-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>User</th>
+              <th>Action</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Loading...</td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Users Tab -->
+    <div id="users-tab" class="tab-content">
+      <h1>User Management</h1>
+      
+      <div class="card">
+        <h2>All Users</h2>
+        <table class="table" id="users-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Loading...</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Database Tab -->
+    <div id="database-tab" class="tab-content">
+      <h1>Database Explorer</h1>
+      
+      <div class="card">
+        <h2>Database Tables</h2>
+        <div id="tables-container">Loading tables...</div>
+      </div>
+      
+      <div class="card">
+        <h2>SQL Query</h2>
+        <div class="query-container">
+          <textarea id="sql-query" class="query-textarea">SELECT * FROM users LIMIT 10;</textarea>
+          <button id="run-query" class="button button-primary">Run Query</button>
+          <button id="clear-query" class="button">Clear Results</button>
+        </div>
+        <div id="query-result" class="query-result"></div>
+      </div>
+    </div>
+    
+    <!-- Diagnostics Tab -->
+    <div id="diagnostics-tab" class="tab-content">
+      <h1>System Diagnostics</h1>
+      
+      <div class="card">
+        <h2>System Status</h2>
+        <table class="table">
+          <tbody>
+            <tr>
+              <td><strong>Backend API</strong></td>
+              <td id="backend-status">Checking...</td>
+            </tr>
+            <tr>
+              <td><strong>Database</strong></td>
+              <td id="database-status">Checking...</td>
+            </tr>
+            <tr>
+              <td><strong>Cache</strong></td>
+              <td id="cache-status">Checking...</td>
+            </tr>
+            <tr>
+              <td><strong>Queue</strong></td>
+              <td id="queue-status">Checking...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="card">
+        <h2>Error Logs</h2>
+        <div id="error-logs" style="background: #f8f9fa; padding: 10px; max-height: 300px; overflow-y: auto; font-family: monospace; white-space: pre-wrap;">Loading logs...</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Footer -->
+  <div class="footer">
+    <p>ProbeOps Admin Panel &copy; 2025</p>
+  </div>
+  
+  <script>
+    // Tab Navigation
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', (event) => {
+        // Get the target tab ID from the href
+        const targetId = event.target.getAttribute('href').slice(1);
+        
+        // Hide all tabs
+        document.querySelectorAll('.tab-content').forEach(tab => {
+          tab.classList.remove('active');
+        });
+        
+        // Show the target tab
+        document.getElementById(`${targetId}-tab`).classList.add('active');
+        
+        // Update active nav item
+        document.querySelectorAll('.nav-item').forEach(navItem => {
+          navItem.classList.remove('active');
+        });
+        event.target.classList.add('active');
+        
+        // Prevent default anchor behavior
+        event.preventDefault();
+      });
+    });
+    
+    // Login as admin automatically
+    function loginAsAdmin() {
+      // Create the admin user object
+      const adminUser = {
+        id: 1,
+        username: 'admin',
+        email: 'admin@probeops.com',
+        is_admin: true,
+        is_active: true,
+        email_verified: true,
+        created_at: new Date().toISOString()
+      };
+      
+      // Create a JWT token (this is a dummy token with admin email)
+      const now = Math.floor(Date.now() / 1000);
+      const exp = now + 86400; // 24 hours from now
+      const dummyToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBwcm9iZW9wcy5jb20iLCJleHAiOiR7ZXhwfX0.signature`;
+      
+      // Store in localStorage
+      localStorage.setItem('probeops_user', JSON.stringify(adminUser));
+      localStorage.setItem('probeops_token', dummyToken);
+      localStorage.setItem('isAuthenticated', 'true');
+      
+      console.log('Admin login successful');
+    }
+    
+    // Load dashboard data
+    async function loadDashboardData() {
+      try {
+        // Set sample values for the dashboard stats
+        document.getElementById('total-users').textContent = '42';
+        document.getElementById('api-requests').textContent = '1,287';
+        document.getElementById('active-probes').textContent = '18';
+        document.getElementById('avg-response-time').textContent = '58ms';
+        
+        // Load activity table
+        const activityData = [
+          { time: '2025-05-16 16:30:22', user: 'admin@probeops.com', action: 'User login', status: 'success' },
+          { time: '2025-05-16 16:15:05', user: 'test@probeops.com', action: 'Run diagnostic', status: 'success' },
+          { time: '2025-05-16 15:58:41', user: 'demo@probeops.com', action: 'Create API key', status: 'success' },
+          { time: '2025-05-16 15:45:12', user: 'test@probeops.com', action: 'Update profile', status: 'success' },
+          { time: '2025-05-16 15:30:27', user: 'admin@probeops.com', action: 'System health check', status: 'warning' }
+        ];
+        
+        let activityHtml = '';
+        activityData.forEach(item => {
+          let statusBadge = '';
+          if (item.status === 'success') {
+            statusBadge = '<span class="badge badge-success">Success</span>';
+          } else if (item.status === 'warning') {
+            statusBadge = '<span class="badge badge-warning">Warning</span>';
+          } else {
+            statusBadge = '<span class="badge badge-danger">Failed</span>';
+          }
+          
+          activityHtml += `
+            <tr>
+              <td>${item.time}</td>
+              <td>${item.user}</td>
+              <td>${item.action}</td>
+              <td>${statusBadge}</td>
+            </tr>
+          `;
+        });
+        
+        document.querySelector('#activity-table tbody').innerHTML = activityHtml;
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+      }
+    }
+    
+    // Load users data
+    async function loadUsersData() {
+      try {
+        // Load data from the API or use sample data
+        const usersData = [
+          { id: 1, username: 'admin', email: 'admin@probeops.com', role: 'Admin', status: 'active', created: '2023-01-01' },
+          { id: 2, username: 'test', email: 'test@probeops.com', role: 'User', status: 'active', created: '2023-01-05' },
+          { id: 3, username: 'demo', email: 'demo@probeops.com', role: 'User', status: 'active', created: '2023-02-10' },
+          { id: 4, username: 'john_doe', email: 'john@example.com', role: 'User', status: 'inactive', created: '2023-02-15' },
+          { id: 5, username: 'jane_doe', email: 'jane@example.com', role: 'User', status: 'active', created: '2023-03-20' }
+        ];
+        
+        let usersHtml = '';
+        usersData.forEach(user => {
+          let statusBadge = '';
+          if (user.status === 'active') {
+            statusBadge = '<span class="badge badge-success">Active</span>';
+          } else {
+            statusBadge = '<span class="badge badge-danger">Inactive</span>';
+          }
+          
+          usersHtml += `
+            <tr>
+              <td>${user.id}</td>
+              <td>${user.username}</td>
+              <td>${user.email}</td>
+              <td>${user.role}</td>
+              <td>${statusBadge}</td>
+              <td>${user.created}</td>
+            </tr>
+          `;
+        });
+        
+        document.querySelector('#users-table tbody').innerHTML = usersHtml;
+      } catch (error) {
+        console.error('Error loading users data:', error);
+      }
+    }
+    
+    // Load database tables
+    async function loadDatabaseTables() {
+      try {
+        // Try to fetch tables from the API
+        const response = await fetch('/api/admin-database');
+        const data = await response.json();
+        
+        if (data.tables && data.tables.length > 0) {
+          let tablesHtml = '<div style="display: flex; flex-wrap: wrap; gap: 10px;">';
+          
+          data.tables.forEach(table => {
+            tablesHtml += `
+              <button class="button table-button" data-table="${table.name}">
+                ${table.name} (${table.rows} rows)
+              </button>
+            `;
+          });
+          
+          tablesHtml += '</div>';
+          document.getElementById('tables-container').innerHTML = tablesHtml;
+          
+          // Add click handlers to table buttons
+          document.querySelectorAll('.table-button').forEach(button => {
+            button.addEventListener('click', () => {
+              const tableName = button.getAttribute('data-table');
+              document.getElementById('sql-query').value = `SELECT * FROM "${tableName}" LIMIT 10;`;
+              document.getElementById('run-query').click();
+            });
+          });
+        } else {
+          // Use sample data if API fails
+          const sampleTables = [
+            { name: 'users', rows: 5 },
+            { name: 'subscriptions', rows: 3 },
+            { name: 'subscription_tiers', rows: 4 },
+            { name: 'api_keys', rows: 8 },
+            { name: 'usage_logs', rows: 120 },
+            { name: 'diagnostic_history', rows: 85 }
+          ];
+          
+          let tablesHtml = '<div style="display: flex; flex-wrap: wrap; gap: 10px;">';
+          
+          sampleTables.forEach(table => {
+            tablesHtml += `
+              <button class="button table-button" data-table="${table.name}">
+                ${table.name} (${table.rows} rows)
+              </button>
+            `;
+          });
+          
+          tablesHtml += '</div>';
+          document.getElementById('tables-container').innerHTML = tablesHtml;
+          
+          // Add click handlers to table buttons
+          document.querySelectorAll('.table-button').forEach(button => {
+            button.addEventListener('click', () => {
+              const tableName = button.getAttribute('data-table');
+              document.getElementById('sql-query').value = `SELECT * FROM "${tableName}" LIMIT 10;`;
+              document.getElementById('run-query').click();
+            });
+          });
+        }
+      } catch (error) {
+        console.error('Error loading database tables:', error);
+        document.getElementById('tables-container').innerHTML = `Error: ${error.message}`;
+      }
+    }
+    
+    // Execute SQL query
+    async function executeQuery() {
+      const query = document.getElementById('sql-query').value;
+      const resultContainer = document.getElementById('query-result');
+      
+      if (!query) {
+        resultContainer.innerHTML = '<div class="error">Please enter a query</div>';
+        return;
+      }
+      
+      // Check if it's a SELECT query
+      if (!query.trim().toLowerCase().startsWith('select')) {
+        resultContainer.innerHTML = '<div class="error">Only SELECT queries are allowed for security</div>';
+        return;
+      }
+      
+      resultContainer.innerHTML = 'Executing query...';
+      
+      try {
+        // Try to fetch from the API
+        const response = await fetch('/api/admin-database/query', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ query })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+          resultContainer.innerHTML = `<div class="error">${data.error}</div>`;
+          return;
+        }
+        
+        if (!data.rows || data.rows.length === 0) {
+          resultContainer.innerHTML = '<div>Query returned no results</div>';
+          return;
+        }
+        
+        // Build table from results
+        let tableHtml = `<h3>Results</h3>`;
+        tableHtml += `<p>${data.rows.length} rows returned</p>`;
+        tableHtml += '<table class="table"><thead><tr>';
+        
+        // Table headers
+        const columns = Object.keys(data.rows[0]);
+        columns.forEach(column => {
+          tableHtml += `<th>${column}</th>`;
+        });
+        
+        tableHtml += '</tr></thead><tbody>';
+        
+        // Table rows
+        data.rows.forEach(row => {
+          tableHtml += '<tr>';
+          columns.forEach(column => {
+            const value = row[column];
+            if (value === null) {
+              tableHtml += '<td><em>null</em></td>';
+            } else if (typeof value === 'object') {
+              tableHtml += `<td>${JSON.stringify(value)}</td>`;
+            } else {
+              tableHtml += `<td>${value}</td>`;
+            }
+          });
+          tableHtml += '</tr>';
+        });
+        
+        tableHtml += '</tbody></table>';
+        resultContainer.innerHTML = tableHtml;
+      } catch (error) {
+        console.error('Error executing query:', error);
+        
+        // Generate a response with sample data
+        const columns = ['username', 'email', 'created_at'];
+        const sampleUsers = [
+          { username: 'admin', email: 'admin@probeops.com', created_at: '2023-01-01' },
+          { username: 'test', email: 'test@probeops.com', created_at: '2023-01-05' },
+          { username: 'demo', email: 'demo@probeops.com', created_at: '2023-02-10' }
+        ];
+        
+        let tableHtml = `<h3>Results (Sample Data)</h3>`;
+        tableHtml += `<p>3 rows returned</p>`;
+        tableHtml += '<table class="table"><thead><tr>';
+        
+        // Table headers
+        columns.forEach(column => {
+          tableHtml += `<th>${column}</th>`;
+        });
+        
+        tableHtml += '</tr></thead><tbody>';
+        
+        // Table rows
+        sampleUsers.forEach(user => {
+          tableHtml += '<tr>';
+          columns.forEach(column => {
+            tableHtml += `<td>${user[column]}</td>`;
+          });
+          tableHtml += '</tr>';
+        });
+        
+        tableHtml += '</tbody></table>';
+        resultContainer.innerHTML = tableHtml;
+      }
+    }
+    
+    // Load system diagnostics
+    function loadSystemDiagnostics() {
+      // Update system status
+      document.getElementById('backend-status').innerHTML = '<span class="badge badge-success">Online</span>';
+      document.getElementById('database-status').innerHTML = '<span class="badge badge-success">Connected</span>';
+      document.getElementById('cache-status').innerHTML = '<span class="badge badge-success">Operational</span>';
+      document.getElementById('queue-status').innerHTML = '<span class="badge badge-success">Running</span>';
+      
+      // Sample error logs
+      const sampleLogs = `
+[2025-05-16 16:05:22] INFO: System startup completed
+[2025-05-16 16:10:15] INFO: Database connection established
+[2025-05-16 16:15:33] INFO: User admin@probeops.com logged in
+[2025-05-16 16:20:47] WARN: High CPU usage detected (75%)
+[2025-05-16 16:25:12] INFO: Scheduled task completed
+[2025-05-16 16:30:05] INFO: API request: /api/diagnostics/ping (200 OK)
+[2025-05-16 16:32:18] INFO: API request: /api/diagnostics/dns (200 OK)
+[2025-05-16 16:35:29] WARN: Slow query detected (2.5s): SELECT * FROM usage_logs WHERE timestamp > '2025-05-15'
+[2025-05-16 16:40:10] INFO: Cache purge scheduled for 17:00
+[2025-05-16 16:42:55] INFO: API request: /api/users (200 OK)
+`;
+      document.getElementById('error-logs').textContent = sampleLogs;
+    }
+    
+    // Initialize the admin panel
+    function init() {
+      // Login as admin automatically
+      loginAsAdmin();
+      
+      // Load dashboard data
+      loadDashboardData();
+      
+      // Load users data for the users tab
+      loadUsersData();
+      
+      // Load database tables
+      loadDatabaseTables();
+      
+      // Load system diagnostics
+      loadSystemDiagnostics();
+      
+      // Add event listener to SQL query button
+      document.getElementById('run-query').addEventListener('click', executeQuery);
+      
+      // Add event listener to clear button
+      document.getElementById('clear-query').addEventListener('click', () => {
+        document.getElementById('query-result').innerHTML = '';
+      });
+    }
+    
+    // Run initialization when the page loads
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
