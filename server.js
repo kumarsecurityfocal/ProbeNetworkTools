@@ -12,13 +12,27 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Add this to parse form data
 
+// Debug middleware to log requests
+app.use((req, res, next) => {
+  if (req.url.includes('/login') || req.url.includes('/auth')) {
+    console.log('DEBUG AUTH REQUEST:', {
+      method: req.method,
+      url: req.url,
+      headers: req.headers,
+      body: req.body || 'no body'
+    });
+  }
+  next();
+});
+
 // Parse and handle API routes
 app.use((req, res, next) => {
   const url = req.url;
   console.log(`Incoming request: ${req.method} ${url}`);
   
   // Handle specific routes directly
-  if (url.startsWith('/login') || url.startsWith('/token')) {
+  if (url.startsWith('/login') || url.startsWith('/token') || 
+      url.startsWith('/api/login') || url.startsWith('/api/token')) {
     return handleLogin(req, res);
   } 
   else if (url.startsWith('/users/me')) {
@@ -97,8 +111,10 @@ function handleLogin(req, res) {
   // Determine if this is JSON or form login
   const isJsonLogin = req.url.includes('/login/json');
   
-  // FastAPI expects requests at /login (not /token)
+  // FastAPI expects requests at /login - check auth.py router for exact endpoint
   const loginPath = '/login';
+  
+  console.log('Request body:', req.body);
   
   // Extract username and password
   let username, password;
@@ -136,6 +152,7 @@ function handleLogin(req, res) {
   const requestBodyString = requestBody.toString();
   
   console.log(`Forwarding authentication to: ${loginPath}`);
+  console.log(`Credentials: username=${username}, password-length=${password.length}`);
   
   // Forward request to backend
   const options = {
