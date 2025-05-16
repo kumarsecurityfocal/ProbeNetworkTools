@@ -25,6 +25,19 @@ app.use((req, res, next) => {
   next();
 });
 
+// Handle direct access to certain pages by returning the main app
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/troubleshooting', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // Parse and handle API routes
 app.use((req, res, next) => {
   const url = req.url;
