@@ -85,9 +85,9 @@ export const loginUser = async (username, password) => {
     
     // Try multiple endpoint patterns to find the correct one
     const endpoints = [
-      '/auth/login',      // Standard FastAPI OAuth endpoint
-      '/auth/token',      // Alternative FastAPI OAuth endpoint
-      '/login',           // Custom endpoint that might be used
+      '/login',           // This is the correct endpoint based on backend/app/routers/auth.py
+      '/login/json',      // Alternative JSON-based login endpoint
+      '/auth/login',      // Fallback endpoint
       '/token'            // Another common OAuth endpoint name
     ];
     
