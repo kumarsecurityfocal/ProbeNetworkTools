@@ -410,14 +410,25 @@ run_command "docker volume ls | grep probenetworktools || true" "Listing ProbeOp
 
 # Remove existing frontend volume to ensure clean state
 if docker volume ls | grep -q "probenetworktools_frontend-build"; then
-    log_info "Found existing frontend-build volume. Removing for clean rebuild..."
-    echo "[VOLUME] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Removing frontend-build volume for clean rebuild" >> "$LOG_FILE"
+    # Check if the volume is in use by checking if containers are using it
+    volume_in_use=$(docker ps -a --filter volume=probenetworktools_frontend-build -q)
     
-    # Try to remove the volume but don't fail if it's in use
-    docker volume rm probenetworktools_frontend-build &>/dev/null || {
-        log_warning "Could not remove frontend-build volume (it may be in use) - continuing anyway"
-        echo "[VOLUME_WARNING] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Could not remove frontend-build volume (may be in use)" >> "$LOG_FILE"
-    }
+    if [ -z "$volume_in_use" ]; then
+        # No containers are using this volume, safe to remove
+        log_info "Found existing frontend-build volume. Removing for clean rebuild..."
+        echo "[VOLUME] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Removing frontend-build volume for clean rebuild" >> "$LOG_FILE"
+        
+        run_command "docker volume rm probenetworktools_frontend-build" "Removing frontend-build volume"
+        log_success "Frontend volume removed successfully"
+    else
+        # Volume is in use by containers
+        log_info "Found existing frontend-build volume that is currently in use. Skipping removal."
+        echo "[VOLUME_INFO] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Frontend volume is in use by containers, skipping removal" >> "$LOG_FILE"
+        
+        # List containers using the volume for debugging
+        container_names=$(docker ps -a --filter volume=probenetworktools_frontend-build --format "{{.Names}}")
+        log_info "Volume in use by containers: $container_names"
+    fi
 fi
 
 # Create a new volume (if it doesn't already exist)
