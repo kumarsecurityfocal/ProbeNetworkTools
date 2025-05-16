@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ProbeOps Database Explorer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    h1, h2 {
+      color: #333;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .card {
+      background: white;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .info {
+      color: #31708f;
+      background-color: #d9edf7;
+      border-color: #bce8f1;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+    .error {
+      color: #a94442;
+      background-color: #f2dede;
+      border-color: #ebccd1;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+    .success {
+      color: #3c763d;
+      background-color: #dff0d8;
+      border-color: #d6e9c6;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+    .table-list {
+      list-style: none;
+      padding: 0;
+    }
+    .table-list li {
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+    }
+    .table-list li:hover {
+      background-color: #f5f5f5;
+    }
+    .tabs {
+      display: flex;
+      margin-bottom: 20px;
+    }
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      border: 1px solid #ddd;
+      background: #f9f9f9;
+      margin-right: 5px;
+    }
+    .tab.active {
+      background: #fff;
+      border-bottom: 2px solid #4CAF50;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>ProbeOps Database Explorer</h1>
+    <div class="info">
+      This tool provides direct access to view the PostgreSQL database.
+      For security reasons, only SELECT queries are allowed.
+    </div>
+    
+    <div class="card">
+      <h2>SQL Query</h2>
+      <div class="form-group">
+        <label for="sql-query">Enter SQL Query:</label>
+        <textarea id="sql-query">SELECT * FROM users LIMIT 10;</textarea>
+      </div>
+      <div class="form-group">
+        <button id="run-query">Run Query</button>
+        <button id="sample-queries">Sample Queries</button>
+        <div id="sample-menu" style="display:none; position:absolute; background:white; border:1px solid #ddd; padding:10px; z-index:100;">
+          <ul class="table-list">
+            <li data-query="SELECT * FROM users LIMIT 10;">Show Users</li>
+            <li data-query="SELECT * FROM subscription_tiers LIMIT 10;">Show Subscription Tiers</li>
+            <li data-query="SELECT * FROM subscriptions LIMIT 10;">Show Subscriptions</li>
+            <li data-query="SELECT * FROM api_keys LIMIT 10;">Show API Keys</li>
+            <li data-query="SELECT * FROM probe_nodes LIMIT 10;">Show Probe Nodes</li>
+            <li data-query="SELECT u.username, u.email, st.name as tier_name, s.expires_at 
+FROM users u 
+JOIN subscriptions s ON u.id = s.user_id 
+JOIN subscription_tiers st ON s.tier_id = st.id 
+LIMIT 10;">Users with Subscriptions</li>
+            <li data-query="SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';">Show All Tables</li>
+          </ul>
+        </div>
+      </div>
+      <div id="query-result"></div>
+    </div>
+    
+    <div class="card">
+      <h2>Database Tables</h2>
+      <button id="load-tables">Load Tables</button>
+      <div id="tables-list"></div>
+    </div>
+  </div>
+  
+  <script>
+    // Run query
+    document.getElementById('run-query').addEventListener('click', async function() {
+      const queryResult = document.getElementById('query-result');
+      queryResult.innerHTML = '<div class="info">Running query...</div>';
+      
+      const query = document.getElementById('sql-query').value;
+      
+      try {
+        const response = await fetch('/api/admin-database/query', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ query })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+          queryResult.innerHTML = '<div class="error">' + data.error + '</div>';
+          return;
+        }
+        
+        if (!data.rows || data.rows.length === 0) {
+          queryResult.innerHTML = '<div class="info">Query returned no results</div>';
+          return;
+        }
+        
+        // Create table with results
+        let tableHtml = '<table><thead><tr>';
+        
+        // Table headers
+        const columns = Object.keys(data.rows[0]);
+        columns.forEach(column => {
+          tableHtml += '<th>' + column + '</th>';
+        });
+        
+        tableHtml += '</tr></thead><tbody>';
+        
+        // Table rows
+        data.rows.forEach(row => {
+          tableHtml += '<tr>';
+          columns.forEach(column => {
+            if (row[column] === null) {
+              tableHtml += '<td><em>null</em></td>';
+            } else {
+              tableHtml += '<td>' + row[column] + '</td>';
+            }
+          });
+          tableHtml += '</tr>';
+        });
+        
+        tableHtml += '</tbody></table>';
+        
+        queryResult.innerHTML = '<div class="success">Query returned ' + data.rows.length + ' rows</div>' + tableHtml;
+      } catch (error) {
+        queryResult.innerHTML = '<div class="error">Error: ' + error.message + '</div>';
+      }
+    });
+    
+    // Sample queries dropdown
+    document.getElementById('sample-queries').addEventListener('click', function(e) {
+      const menu = document.getElementById('sample-menu');
+      menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+      menu.style.top = (e.target.offsetTop + e.target.offsetHeight) + 'px';
+      menu.style.left = e.target.offsetLeft + 'px';
+      e.stopPropagation();
+    });
+    
+    document.addEventListener('click', function() {
+      document.getElementById('sample-menu').style.display = 'none';
+    });
+    
+    document.querySelectorAll('#sample-menu li').forEach(item => {
+      item.addEventListener('click', function() {
+        document.getElementById('sql-query').value = this.dataset.query;
+        document.getElementById('sample-menu').style.display = 'none';
+      });
+    });
+    
+    // Load tables
+    document.getElementById('load-tables').addEventListener('click', async function() {
+      const tablesList = document.getElementById('tables-list');
+      tablesList.innerHTML = '<div class="info">Loading tables...</div>';
+      
+      try {
+        const response = await fetch('/api/admin-database');
+        const data = await response.json();
+        
+        if (!data.tables || data.tables.length === 0) {
+          tablesList.innerHTML = '<div class="info">No tables found in database</div>';
+          return;
+        }
+        
+        let html = '<ul class="table-list">';
+        
+        data.tables.forEach(table => {
+          html += '<li data-table="' + table.name + '">' + table.name + ' (' + table.rows + ' rows)</li>';
+        });
+        
+        html += '</ul>';
+        
+        tablesList.innerHTML = html;
+        
+        // Add click event to tables
+        document.querySelectorAll('#tables-list li').forEach(item => {
+          item.addEventListener('click', function() {
+            document.getElementById('sql-query').value = 'SELECT * FROM ' + this.dataset.table + ' LIMIT 10;';
+            document.getElementById('run-query').click();
+          });
+        });
+      } catch (error) {
+        tablesList.innerHTML = '<div class="error">Error: ' + error.message + '</div>';
+      }
+    });
+    
+    // Run initial query when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('run-query').click();
+      document.getElementById('load-tables').click();
+    });
+  </script>
+</body>
+</html>

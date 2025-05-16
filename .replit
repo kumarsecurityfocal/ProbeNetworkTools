@@ -36,6 +36,14 @@ args = "Rebuild Frontend"
 task = "workflow.run"
 args = "Rebuild Frontend Fixed"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Auth Fixer"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "DB Explorer"
+
 [[workflows.workflow]]
 name = "Server"
 author = "agent"
@@ -86,12 +94,34 @@ author = "agent"
 task = "shell.exec"
 args = "cd frontend && npx vite build --outDir=../public"
 
+[[workflows.workflow]]
+name = "Auth Fixer"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node auth-fix.js"
+waitForPort = 6000
+
+[[workflows.workflow]]
+name = "DB Explorer"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node simple-db-explorer.js"
+waitForPort = 7777
+
 [deployment]
 run = ["sh", "-c", "cd frontend && npm install && npm run dev"]
 
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 7777
+externalPort = 3000
 
 [[ports]]
 localPort = 8000
