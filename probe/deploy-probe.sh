@@ -1,184 +1,282 @@
 #!/bin/bash
-
 # ProbeOps Probe Node Deployment Script
-# This script automates the deployment of a ProbeOps probe node on the target system
-# It can accept either individual environment variables or a configuration token
-
-set -e
-
-# Colors for prettier output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+# This script deploys a ProbeOps probe node with token-based configuration
 
 # Default values
-REPO_URL="https://github.com/yourusername/probeops-probe.git"
-PROBE_DIR="$HOME/probeops-probe"
-BACKEND_URL="https://probeops.com"
-AUTH_TYPE="token"
-LOG_LEVEL="info"
-TOKEN=""
-
-# Function to print usage information
-function print_usage {
-  echo -e "${BLUE}ProbeOps Probe Node Deployment Script${NC}"
-  echo
-  echo "Usage:"
-  echo "  $0 [options]"
-  echo
-  echo "Options:"
-  echo "  --token TOKEN           Configuration token that contains all necessary settings"
-  echo "  --uuid UUID             Node UUID assigned by the ProbeOps server"
-  echo "  --key KEY               API key for authentication with the ProbeOps server"
-  echo "  --backend URL           URL of the ProbeOps backend (default: https://probeops.com)"
-  echo "  --repo URL              URL of the probe repository (default: uses public repo)"
-  echo "  --dir PATH              Directory to install probe (default: ~/probeops-probe)"
-  echo "  --help                  Show this help message"
-  echo
-  echo "Examples:"
-  echo "  $0 --token \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\""
-  echo "  $0 --uuid \"probe-123\" --key \"api-key-456\" --backend \"https://probeops.com\""
-}
+PROBE_REPO="https://github.com/probeops/probe-node.git"
+INSTALL_DIR="/opt/probeops/probe"
+PYTHON_VERSION="3.9"
 
 # Parse command line arguments
-while [[ "$#" -gt 0 ]]; do
-  case $1 in
-    --token) TOKEN="$2"; shift ;;
-    --uuid) NODE_UUID="$2"; shift ;;
-    --key) API_KEY="$2"; shift ;;
-    --backend) BACKEND_URL="$2"; shift ;;
-    --repo) REPO_URL="$2"; shift ;;
-    --dir) PROBE_DIR="$2"; shift ;;
-    --help) print_usage; exit 0 ;;
-    *) echo "Unknown parameter: $1"; print_usage; exit 1 ;;
+while [[ $# -gt 0 ]]; do
+  key="$1"
+  case $key in
+    --token)
+      TOKEN="$2"
+      shift
+      shift
+      ;;
+    --node-uuid)
+      NODE_UUID="$2"
+      shift
+      shift
+      ;;
+    --api-key)
+      API_KEY="$2"
+      shift
+      shift
+      ;;
+    --backend-url)
+      BACKEND_URL="$2"
+      shift
+      shift
+      ;;
+    --install-dir)
+      INSTALL_DIR="$2"
+      shift
+      shift
+      ;;
+    --help)
+      echo "ProbeOps Probe Node Deployment Script"
+      echo ""
+      echo "Usage:"
+      echo "  ./deploy-probe.sh --token TOKEN"
+      echo "  OR"
+      echo "  ./deploy-probe.sh --node-uuid UUID --api-key KEY --backend-url URL"
+      echo ""
+      echo "Options:"
+      echo "  --token TOKEN        Use token-based configuration (recommended)"
+      echo "  --node-uuid UUID     Node UUID for registration (if not using token)"
+      echo "  --api-key KEY        API key for authentication (if not using token)"
+      echo "  --backend-url URL    Backend URL (if not using token)"
+      echo "  --install-dir DIR    Installation directory (default: /opt/probeops/probe)"
+      echo "  --help               Show this help message"
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $key"
+      echo "Use --help for usage information"
+      exit 1
+      ;;
   esac
-  shift
 done
 
-# If token is provided, we'll use it instead of individual settings
-if [ ! -z "$TOKEN" ]; then
-  echo -e "${GREEN}Token provided. Using token-based configuration...${NC}"
-else
-  # Check for required parameters
-  if [ -z "$NODE_UUID" ] || [ -z "$API_KEY" ]; then
-    echo -e "${RED}Error: Node UUID and API Key are required.${NC}"
-    echo "Please provide either a configuration token or both NODE_UUID and API_KEY."
-    print_usage
-    exit 1
-  fi
+# Check for token OR individual parameters
+if [ -z "$TOKEN" ] && ([ -z "$NODE_UUID" ] || [ -z "$API_KEY" ] || [ -z "$BACKEND_URL" ]); then
+  echo "Error: You must provide either a token OR all of: node-uuid, api-key, and backend-url"
+  echo "Use --help for usage information"
+  exit 1
 fi
 
-echo -e "${BLUE}=== ProbeOps Probe Node Deployment ===${NC}"
-echo -e "${BLUE}Starting deployment process...${NC}"
+# Create installation directory
+echo "Creating installation directory: $INSTALL_DIR"
+mkdir -p "$INSTALL_DIR"
+cd "$INSTALL_DIR" || exit 1
 
-# Create or update the probe directory
-if [ -d "$PROBE_DIR" ]; then
-  echo -e "${YELLOW}Probe directory already exists. Updating...${NC}"
-  cd "$PROBE_DIR"
+# Install dependencies
+echo "Installing system dependencies..."
+if command -v apt-get >/dev/null; then
+  # Debian/Ubuntu
+  apt-get update
+  apt-get install -y python3 python3-pip python3-venv git
+elif command -v yum >/dev/null; then
+  # CentOS/RHEL
+  yum install -y python3 python3-pip git
+elif command -v apk >/dev/null; then
+  # Alpine
+  apk add --no-cache python3 py3-pip git
+else
+  echo "Unsupported package manager. Please install Python 3, pip, and git manually."
+  exit 1
+fi
+
+# Clone repository (public access, no credentials needed)
+echo "Cloning probe repository..."
+if [ -d ".git" ]; then
+  echo "Repository already exists, updating..."
   git pull
 else
-  echo -e "${GREEN}Cloning probe repository...${NC}"
-  git clone "$REPO_URL" "$PROBE_DIR" --depth 1
-  cd "$PROBE_DIR"
-fi
-
-# Check if Python is installed
-if ! command -v python3 &> /dev/null; then
-  echo -e "${RED}Python 3 is not installed. Installing...${NC}"
-  if command -v apt-get &> /dev/null; then
-    sudo apt-get update
-    sudo apt-get install -y python3 python3-pip python3-venv
-  elif command -v yum &> /dev/null; then
-    sudo yum install -y python3 python3-pip
-  else
-    echo -e "${RED}Could not install Python 3. Please install it manually.${NC}"
-    exit 1
-  fi
+  git clone --depth 1 "$PROBE_REPO" .
 fi
 
 # Set up Python virtual environment
-echo -e "${GREEN}Setting up Python virtual environment...${NC}"
+echo "Setting up Python virtual environment..."
 python3 -m venv venv
+# shellcheck disable=SC1091
 source venv/bin/activate
 
-# Install requirements
-echo -e "${GREEN}Installing dependencies...${NC}"
+# Install Python dependencies
+echo "Installing Python dependencies..."
+pip install -U pip
 pip install -r requirements.txt
+pip install websockets pyjwt requests
 
-# Create or update the environment file
-ENV_FILE="$PROBE_DIR/.env"
-echo -e "${GREEN}Creating environment configuration...${NC}"
-
-if [ ! -z "$TOKEN" ]; then
+# Create service configuration file
+echo "Creating service configuration..."
+if [ -n "$TOKEN" ]; then
   # Token-based configuration
-  echo "PROBEOPS_TOKEN=$TOKEN" > "$ENV_FILE"
-  echo "AUTH_TYPE=token" >> "$ENV_FILE"
+  cat > config.env << EOF
+PROBEOPS_TOKEN=$TOKEN
+EOF
+  RUN_COMMAND="python run_probe_node_token.py --token \"\$PROBEOPS_TOKEN\""
 else
-  # Individual environment variables
-  cat > "$ENV_FILE" << EOF
+  # Individual parameter configuration
+  cat > config.env << EOF
 PROBEOPS_NODE_UUID=$NODE_UUID
 PROBEOPS_API_KEY=$API_KEY
 PROBEOPS_BACKEND_URL=$BACKEND_URL
-AUTH_TYPE=$AUTH_TYPE
-LOG_LEVEL=$LOG_LEVEL
 EOF
+  RUN_COMMAND="python run_probe_node.py --uuid \"\$PROBEOPS_NODE_UUID\" --key \"\$PROBEOPS_API_KEY\" --backend \"\$PROBEOPS_BACKEND_URL\""
 fi
 
-# Create a systemd service file if running as root or sudo
-if [ "$EUID" -eq 0 ] || [ $(id -u) -eq 0 ]; then
-  echo -e "${GREEN}Creating systemd service...${NC}"
-  
-  cat > /etc/systemd/system/probeops.service << EOF
+# Create systemd service file
+if command -v systemctl >/dev/null; then
+  echo "Creating systemd service..."
+  cat > /etc/systemd/system/probeops-node.service << EOF
 [Unit]
 Description=ProbeOps Probe Node
 After=network.target
 
 [Service]
-ExecStart=$PROBE_DIR/venv/bin/python $PROBE_DIR/run_probe_node.py
-WorkingDirectory=$PROBE_DIR
+Type=simple
+User=root
+WorkingDirectory=$INSTALL_DIR
+EnvironmentFile=$INSTALL_DIR/config.env
+ExecStart=$INSTALL_DIR/venv/bin/python $INSTALL_DIR/run_probe_node_token.py --token "\${PROBEOPS_TOKEN}"
 Restart=always
-User=$(logname)
-Environment=PYTHONUNBUFFERED=1
-EnvironmentFile=$ENV_FILE
+RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-  # Reload systemd and enable/start the service
+  # Enable and start the service
+  echo "Enabling and starting service..."
   systemctl daemon-reload
-  systemctl enable probeops.service
-  systemctl start probeops.service
+  systemctl enable probeops-node
+  systemctl start probeops-node
   
-  echo -e "${GREEN}ProbeOps service is now running.${NC}"
-  systemctl status probeops.service
+  echo "Service status:"
+  systemctl status probeops-node
 else
-  # Create a startup script for non-root users
-  echo -e "${YELLOW}Not running as root, creating user-level startup script...${NC}"
-  
-  STARTUP_SCRIPT="$PROBE_DIR/start-probe.sh"
-  cat > "$STARTUP_SCRIPT" << EOF
+  # Create a simple init script for systems without systemd
+  echo "Creating init script..."
+  cat > /etc/init.d/probeops-node << EOF
 #!/bin/bash
-cd "$PROBE_DIR"
-source venv/bin/activate
-source "$ENV_FILE"
-python run_probe_node.py
+### BEGIN INIT INFO
+# Provides:          probeops-node
+# Required-Start:    \$network \$remote_fs \$syslog
+# Required-Stop:     \$network \$remote_fs \$syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: ProbeOps Probe Node
+# Description:       ProbeOps network diagnostics probe
+### END INIT INFO
+
+INSTALL_DIR=$INSTALL_DIR
+PIDFILE=/var/run/probeops-node.pid
+LOGFILE=/var/log/probeops-node.log
+
+start() {
+    echo "Starting ProbeOps Probe Node"
+    if [ -f \$PIDFILE ]; then
+        echo "Already running (PID: \$(cat \$PIDFILE))"
+        return 1
+    fi
+    
+    cd \$INSTALL_DIR || exit 1
+    source venv/bin/activate
+    source config.env
+    
+    nohup $RUN_COMMAND > \$LOGFILE 2>&1 &
+    echo \$! > \$PIDFILE
+    echo "Started with PID: \$(cat \$PIDFILE)"
+}
+
+stop() {
+    echo "Stopping ProbeOps Probe Node"
+    if [ -f \$PIDFILE ]; then
+        PID=\$(cat \$PIDFILE)
+        kill \$PID
+        rm \$PIDFILE
+        echo "Stopped (PID: \$PID)"
+    else
+        echo "Not running"
+    fi
+}
+
+status() {
+    if [ -f \$PIDFILE ]; then
+        PID=\$(cat \$PIDFILE)
+        if ps -p \$PID > /dev/null; then
+            echo "Running (PID: \$PID)"
+            return 0
+        else
+            echo "Not running (stale PID file)"
+            return 1
+        fi
+    else
+        echo "Not running"
+        return 1
+    fi
+}
+
+case "\$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart)
+        stop
+        start
+        ;;
+    status)
+        status
+        ;;
+    *)
+        echo "Usage: \$0 {start|stop|restart|status}"
+        exit 1
+        ;;
+esac
+
+exit 0
 EOF
 
-  chmod +x "$STARTUP_SCRIPT"
+  chmod +x /etc/init.d/probeops-node
   
-  # Add to user's crontab for autostart
-  echo -e "${GREEN}Adding to user crontab for autostart on reboot...${NC}"
-  (crontab -l 2>/dev/null | grep -v "$STARTUP_SCRIPT"; echo "@reboot $STARTUP_SCRIPT") | crontab -
+  # Try to enable with update-rc.d if available
+  if command -v update-rc.d >/dev/null; then
+    update-rc.d probeops-node defaults
+  elif command -v chkconfig >/dev/null; then
+    chkconfig --add probeops-node
+  fi
   
-  echo -e "${GREEN}Starting the probe node...${NC}"
-  nohup "$STARTUP_SCRIPT" > "$PROBE_DIR/probe.log" 2>&1 &
-  
-  echo -e "${GREEN}ProbeOps probe node is now running in the background.${NC}"
-  echo -e "${YELLOW}You can check the logs at: $PROBE_DIR/probe.log${NC}"
+  # Start the service
+  /etc/init.d/probeops-node start
 fi
 
-echo -e "${GREEN}Deployment completed successfully!${NC}"
-echo -e "${BLUE}=== ProbeOps Probe Node is now connected to $BACKEND_URL ===${NC}"
+echo ""
+echo "ProbeOps Probe Node deployed successfully!"
+echo "Installation directory: $INSTALL_DIR"
+if [ -n "$TOKEN" ]; then
+  echo "Using token-based configuration"
+else
+  echo "Using parameter-based configuration"
+  echo "Node UUID: $NODE_UUID"
+  echo "Backend URL: $BACKEND_URL"
+fi
+echo ""
+echo "To check the status of the service:"
+if command -v systemctl >/dev/null; then
+  echo "  systemctl status probeops-node"
+  echo "To view logs:"
+  echo "  journalctl -u probeops-node -f"
+else
+  echo "  /etc/init.d/probeops-node status"
+  echo "To view logs:"
+  echo "  cat /var/log/probeops-node.log"
+fi
+echo ""
+echo "The probe node will automatically connect to the backend and register."

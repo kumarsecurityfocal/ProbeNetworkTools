@@ -1,165 +1,162 @@
 #!/usr/bin/env python3
-
 """
-ProbeOps Probe Node Launcher with Token Support
-===============================================
+ProbeOps Probe Node with Token-Based Configuration
+==================================================
 
-This script configures and launches a probe node that connects to the ProbeOps
-backend using WebSocket for Zero Trust Network Access (ZTNA).
+This script runs a probe node that connects to the ProbeOps backend using
+token-based configuration. Instead of setting multiple environment variables,
+you only need to provide a single token that contains all necessary configuration.
 
 Usage:
-    python run_probe_node_token.py --token "TOKEN"
-    OR
-    python run_probe_node_token.py --backend https://probeops.com --uuid NODE_UUID --key API_KEY
+    python run_probe_node_token.py --token "YOUR_TOKEN_HERE"
 
-Environment variables can also be used:
-    PROBEOPS_TOKEN - JWT token containing all configuration
-    PROBEOPS_BACKEND_URL - Backend URL (default: http://localhost:8000)
-    PROBEOPS_NODE_UUID - Node UUID (required unless using token)
-    PROBEOPS_API_KEY - API Key (required unless using token)
+The token will be decoded to extract all required configuration parameters.
 """
 
+import argparse
 import os
 import sys
-import jwt
 import json
 import logging
+import time
 import asyncio
-import argparse
-import websockets
+import jwt
 import requests
 from datetime import datetime
-from urllib.parse import urljoin
 
-# Configure logging
+# Setup basic logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler('probe_node.log')
-    ]
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger('probeops_node')
-
-# JWT secret for token verification
-JWT_SECRET = os.environ.get("JWT_SECRET", "super-secret-key-change-in-production")
-
-def parse_token(token):
-    """Parse and validate the configuration token."""
-    try:
-        # Decode the token
-        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
-        
-        # Extract the environment variables from the payload
-        env_vars = {}
-        for key, value in payload.items():
-            if key not in ['iat', 'exp']:  # Skip JWT metadata
-                env_vars[key] = value
-        
-        return env_vars
-    except jwt.ExpiredSignatureError:
-        logger.error("Token has expired. Please generate a new token.")
-        sys.exit(1)
-    except jwt.InvalidTokenError as e:
-        logger.error(f"Invalid token: {e}")
-        sys.exit(1)
+logger = logging.getLogger('probe-node')
 
 def parse_args():
     """Parse command line arguments."""
-    parser = argparse.ArgumentParser(description='ProbeOps Node with Token Support')
-    
-    # Token-based configuration
+    parser = argparse.ArgumentParser(description='ProbeOps Probe Node with Token Configuration')
     parser.add_argument('--token', help='JWT token containing all configuration')
-    
-    # Traditional configuration options
-    parser.add_argument('--backend', help='Backend URL')
-    parser.add_argument('--uuid', help='Node UUID')
-    parser.add_argument('--key', help='API Key')
+    parser.add_argument('--backend', help='Backend URL (only needed if not using token)')
+    parser.add_argument('--uuid', help='Node UUID (only needed if not using token)')
+    parser.add_argument('--key', help='API Key (only needed if not using token)')
     
     return parser.parse_args()
 
+def decode_token(token):
+    """
+    Decode the JWT token to extract configuration.
+    
+    The token is expected to contain:
+    - NODE_UUID: The unique identifier for this probe node
+    - API_KEY: The API key for authentication
+    - BACKEND_URL: The URL of the backend API
+    - Additional optional configuration
+    """
+    try:
+        # Decode the token without verification (the server will verify it)
+        payload = jwt.decode(token, options={"verify_signature": False})
+        
+        logger.info(f"Token successfully decoded, expires: {payload.get('exp', 'never')}")
+        
+        # Extract required configuration
+        config = {
+            'node_uuid': payload.get('NODE_UUID'),
+            'api_key': payload.get('API_KEY'),
+            'backend_url': payload.get('BACKEND_URL'),
+            'node_name': payload.get('NODE_NAME', f"Node-{payload.get('NODE_UUID', 'unknown')[:8]}"),
+            'log_level': payload.get('LOG_LEVEL', 'info').upper(),
+        }
+        
+        # Validate required fields
+        if not config['node_uuid']:
+            raise ValueError("Token is missing NODE_UUID")
+        if not config['api_key']:
+            raise ValueError("Token is missing API_KEY")
+        if not config['backend_url']:
+            raise ValueError("Token is missing BACKEND_URL")
+            
+        # Set up log level from token
+        logging.getLogger().setLevel(getattr(logging, config['log_level']))
+            
+        return config
+        
+    except jwt.PyJWTError as e:
+        logger.error(f"Failed to decode token: {e}")
+        raise ValueError(f"Invalid token format: {e}")
+
 class ProbeNode:
+    """Probe node that connects to the ProbeOps backend using WebSocket."""
+    
     def __init__(self, config):
         """Initialize the probe node with configuration."""
-        self.backend_url = config.get('BACKEND_URL', os.environ.get('PROBEOPS_BACKEND_URL', 'http://localhost:8000'))
-        self.node_uuid = config.get('NODE_UUID', os.environ.get('PROBEOPS_NODE_UUID'))
-        self.api_key = config.get('API_KEY', os.environ.get('PROBEOPS_API_KEY'))
-        self.log_level = config.get('LOG_LEVEL', os.environ.get('LOG_LEVEL', 'INFO')).upper()
+        self.node_uuid = config['node_uuid']
+        self.api_key = config['api_key']
+        self.backend_url = config['backend_url'].rstrip('/')
+        self.node_name = config['node_name']
         
-        # Set log level based on configuration
-        logger.setLevel(getattr(logging, self.log_level))
+        # Authorization header
+        self.headers = {
+            'Authorization': f'Bearer {self.api_key}',
+            'Content-Type': 'application/json'
+        }
         
-        # Validate essential configuration
-        if not self.node_uuid or not self.api_key:
-            logger.error("Node UUID and API Key are required.")
-            sys.exit(1)
-        
-        # Calculate WebSocket URL
-        if self.backend_url.startswith('https://'):
-            self.ws_url = f"wss://{self.backend_url.split('://')[1]}/ws/node/{self.node_uuid}"
-        else:
-            self.ws_url = f"ws://{self.backend_url.split('://')[1]}/ws/node/{self.node_uuid}"
-        
-        logger.info(f"Probe Node initialized with UUID: {self.node_uuid}")
+        logger.info(f"Probe node initialized for {self.node_name} ({self.node_uuid})")
         logger.info(f"Backend URL: {self.backend_url}")
-        logger.info(f"WebSocket URL: {self.ws_url}")
-    
+
     async def register_node(self):
         """Register the node with the backend if not already registered."""
-        registration_url = urljoin(self.backend_url, '/api/nodes/register')
-        
         try:
-            headers = {'Authorization': f'Bearer {self.api_key}'}
-            data = {
-                'node_uuid': self.node_uuid,
-                'name': f"Node-{self.node_uuid[:8]}",
-                'metadata': {
-                    'hostname': os.uname().nodename,
-                    'ip': requests.get('https://api.ipify.org').text,
-                    'os': f"{os.uname().sysname} {os.uname().release}",
-                    'registered_at': datetime.now().isoformat()
-                }
-            }
+            logger.info(f"Registering node {self.node_uuid} with backend...")
             
+            register_url = f"{self.backend_url}/api/nodes/register"
             response = requests.post(
-                registration_url,
-                headers=headers,
-                json=data
+                register_url,
+                headers=self.headers,
+                json={
+                    'node_uuid': self.node_uuid,
+                    'name': self.node_name,
+                    'metadata': {
+                        'started_at': datetime.now().isoformat(),
+                        'version': '1.0.0',
+                        'platform': sys.platform
+                    }
+                },
+                timeout=10
             )
             
             if response.status_code == 200:
-                logger.info("Node successfully registered with backend")
-                return True
-            elif response.status_code == 409:
-                logger.info("Node already registered")
+                logger.info(f"Node {self.node_uuid} registered successfully")
                 return True
             else:
                 logger.error(f"Failed to register node: {response.status_code} - {response.text}")
                 return False
                 
         except Exception as e:
-            logger.error(f"Error registering node: {str(e)}")
+            logger.error(f"Error registering node: {e}")
             return False
-    
+
     async def connect_websocket(self):
         """Establish and maintain WebSocket connection to the backend."""
-        headers = {'Authorization': f'Bearer {self.api_key}'}
+        import websockets
+        
+        ws_url = f"{self.backend_url.replace('http://', 'ws://').replace('https://', 'wss://')}/api/ws/node/{self.node_uuid}"
         
         while True:
             try:
-                logger.info(f"Connecting to WebSocket at {self.ws_url}")
-                async with websockets.connect(self.ws_url, extra_headers=headers) as websocket:
+                logger.info(f"Connecting to WebSocket: {ws_url}")
+                async with websockets.connect(
+                    ws_url, 
+                    extra_headers={'Authorization': f'Bearer {self.api_key}'}
+                ) as websocket:
                     logger.info("WebSocket connection established")
                     
-                    # Send initial heartbeat
+                    # Send initial hello message
                     await websocket.send(json.dumps({
-                        'type': 'heartbeat',
+                        'type': 'hello',
                         'node_uuid': self.node_uuid,
                         'timestamp': datetime.now().isoformat()
                     }))
                     
-                    # Listen for commands
+                    # Main connection loop
                     while True:
                         try:
                             message = await websocket.recv()
@@ -167,99 +164,95 @@ class ProbeNode:
                         except websockets.exceptions.ConnectionClosed:
                             logger.warning("WebSocket connection closed, reconnecting...")
                             break
-            
+                            
             except Exception as e:
-                logger.error(f"WebSocket error: {str(e)}")
-            
-            # Wait before reconnecting
-            logger.info("Waiting 5 seconds before reconnecting...")
-            await asyncio.sleep(5)
+                logger.error(f"WebSocket error: {e}")
+                logger.info("Reconnecting in 5 seconds...")
+                await asyncio.sleep(5)
     
     async def handle_message(self, websocket, message):
         """Handle incoming WebSocket messages."""
         try:
             data = json.loads(message)
-            msg_type = data.get('type')
+            logger.debug(f"Received message: {data}")
             
-            logger.debug(f"Received message of type: {msg_type}")
-            
-            if msg_type == 'ping':
+            if data.get('type') == 'ping':
                 # Respond to ping with pong
                 await websocket.send(json.dumps({
                     'type': 'pong',
-                    'node_uuid': self.node_uuid,
                     'timestamp': datetime.now().isoformat()
                 }))
-            
-            elif msg_type == 'run_diagnostic':
-                # Handle diagnostic command
-                tool = data.get('tool')
-                target = data.get('target')
-                task_id = data.get('task_id')
                 
-                logger.info(f"Running diagnostic: {tool} on {target} (Task ID: {task_id})")
+            elif data.get('type') == 'diagnostic_request':
+                # Handle diagnostic request
+                logger.info(f"Received diagnostic request: {data.get('tool')} for {data.get('target')}")
                 
-                # TODO: Implement actual diagnostic tools
-                # For now, send a mock result
+                # TODO: Implement diagnostic tools
+                result = {
+                    'success': True,
+                    'message': f"Diagnostic {data.get('tool')} completed for {data.get('target')}",
+                    'data': {
+                        'timestamp': datetime.now().isoformat(),
+                        'result': 'Sample diagnostic result'
+                    }
+                }
+                
+                # Send back result
                 await websocket.send(json.dumps({
-                    'type': 'diagnostic_result',
-                    'node_uuid': self.node_uuid,
-                    'task_id': task_id,
-                    'tool': tool,
-                    'target': target,
-                    'status': 'success',
-                    'result': f"Mock {tool} result for {target}",
-                    'timestamp': datetime.now().isoformat()
+                    'type': 'diagnostic_response',
+                    'request_id': data.get('request_id'),
+                    'result': result
                 }))
-            
-            else:
-                logger.warning(f"Unknown message type: {msg_type}")
-        
+                
         except json.JSONDecodeError:
-            logger.error(f"Invalid JSON message: {message}")
-        
+            logger.error(f"Failed to parse message: {message}")
         except Exception as e:
-            logger.error(f"Error handling message: {str(e)}")
+            logger.error(f"Error handling message: {e}")
     
     async def start(self):
         """Start the probe node."""
-        logger.info("Starting ProbeOps Probe Node")
-        
-        # Register the node with the backend
+        # First register the node
         if await self.register_node():
-            # Connect to WebSocket and handle messages
+            # Then connect to WebSocket
             await self.connect_websocket()
         else:
-            logger.error("Failed to register node, exiting.")
+            logger.error("Failed to register node, cannot continue")
             sys.exit(1)
 
 async def main():
-    """Main entry point for the launcher."""
+    """Main entry point for the probe node."""
     args = parse_args()
     
-    # Determine configuration source
-    if args.token or os.environ.get('PROBEOPS_TOKEN'):
-        # Use token-based configuration
-        token = args.token or os.environ.get('PROBEOPS_TOKEN')
-        logger.info("Using token-based configuration")
-        config = parse_token(token)
+    if args.token:
+        # If token is provided, use it for configuration
+        logger.info("Token provided, decoding configuration...")
+        config = decode_token(args.token)
     else:
-        # Use traditional configuration
+        # Otherwise, use individual parameters
+        logger.info("Using individual configuration parameters...")
+        
+        # Check for required parameters
+        if not args.uuid or not args.key or not args.backend:
+            logger.error("Missing required parameters. Either provide --token or all of: --uuid, --key, --backend")
+            sys.exit(1)
+            
         config = {
-            'BACKEND_URL': args.backend,
-            'NODE_UUID': args.uuid,
-            'API_KEY': args.key
+            'node_uuid': args.uuid,
+            'api_key': args.key,
+            'backend_url': args.backend,
+            'node_name': f"Node-{args.uuid[:8]}",
+            'log_level': os.environ.get('LOG_LEVEL', 'INFO').upper()
         }
     
-    # Initialize and start the probe node
-    probe_node = ProbeNode(config)
-    await probe_node.start()
+    # Create and start probe node
+    probe = ProbeNode(config)
+    await probe.start()
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        logger.info("Probe node shutdown requested")
+        logger.info("Probe node stopped by user")
     except Exception as e:
-        logger.critical(f"Unhandled exception: {str(e)}")
+        logger.error(f"Fatal error: {e}")
         sys.exit(1)

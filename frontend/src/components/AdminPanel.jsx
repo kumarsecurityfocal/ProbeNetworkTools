@@ -48,6 +48,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import ProbeNodesManagement from './ProbeNodesManagement';
+import ProbeNodeTokenGenerator from './ProbeNodeTokenGenerator';
 import { 
   getAllSubscriptions, 
   getSubscriptionTiers, 
@@ -913,6 +914,7 @@ const AdminPanel = () => {
           <Tab icon={<PersonIcon />} label="Users" />
           <Tab icon={<SettingsIcon />} label="Tier Management" />
           <Tab icon={<SettingsRemoteIcon />} label="Probe Nodes" />
+          <Tab icon={<AddIcon />} label="Generate Node Tokens" />
         </Tabs>
       </Box>
 
@@ -1462,6 +1464,11 @@ const AdminPanel = () => {
       {/* Probe Nodes Tab */}
       <TabPanel value={tabValue} index={3}>
         <ProbeNodesManagement />
+      </TabPanel>
+
+      {/* Probe Token Generator Tab */}
+      <TabPanel value={tabValue} index={4}>
+        <ProbeNodeTokenGenerator />
       </TabPanel>
 
       {/* Edit Subscription Dialog */}

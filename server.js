@@ -59,6 +59,62 @@ app.get('/database', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Endpoint for generating probe node tokens
+app.post('/api/admin/generate-probe-token', (req, res) => {
+  try {
+    const { node_uuid, api_key, name, description, expiry_days } = req.body;
+    
+    // Validate required parameters
+    if (!node_uuid || !api_key) {
+      return res.status(400).json({ error: 'Node UUID and API Key are required' });
+    }
+    
+    // Calculate expiration timestamp if expiry_days is provided
+    const now = Math.floor(Date.now() / 1000);
+    const exp = expiry_days > 0 ? now + (expiry_days * 24 * 60 * 60) : undefined;
+    
+    // Create the payload with all necessary environment variables
+    const payload = {
+      // Probe identification
+      NODE_UUID: node_uuid,
+      API_KEY: api_key,
+      
+      // Connection details - use the current server's hostname or a configured backend URL
+      BACKEND_URL: process.env.BACKEND_URL || `https://${req.hostname}`,
+      
+      // Node details
+      NODE_NAME: name,
+      NODE_DESCRIPTION: description || '',
+      
+      // Additional configuration
+      LOG_LEVEL: 'info',
+      AUTH_TYPE: 'token',
+      
+      // Standard JWT claims
+      iat: now,
+      ...(exp ? { exp } : {})
+    };
+    
+    // Sign the token
+    const token = jwt.sign(payload, JWT_SECRET);
+    
+    // Return the token
+    res.json({ 
+      token,
+      node_uuid,
+      name,
+      created_at: new Date().toISOString(),
+      expires_at: exp ? new Date(exp * 1000).toISOString() : null
+    });
+  } catch (error) {
+    console.error('Error generating probe token:', error);
+    res.status(500).json({ 
+      error: 'Failed to generate probe token', 
+      detail: error.message 
+    });
+  }
+});
+
 // Admin endpoints for troubleshooting and database management
 app.get('/api/admin/system-logs', async (req, res) => {
   try {
