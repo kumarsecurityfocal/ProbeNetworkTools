@@ -1,10 +1,12 @@
 import axios from 'axios';
 import { getToken, clearToken } from './auth';
 
-// Create axios instance with absolute URL
+// Create axios instance with backend API URL
 const api = axios.create({
-  // Use a hardcoded absolute URL to ensure consistency
-  baseURL: window.location.origin,
+  // Point directly to the backend API
+  baseURL: process.env.NODE_ENV === 'production' 
+    ? `${window.location.origin}/api` // For production
+    : 'http://localhost:8000', // For development
   timeout: 60000 // 60 second timeout for slower network conditions
 });
 

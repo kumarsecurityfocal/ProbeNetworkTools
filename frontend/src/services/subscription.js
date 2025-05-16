@@ -93,7 +93,16 @@ export const getAllSubscriptions = async () => {
     return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
     console.error('Error fetching all subscriptions:', error);
-    return []; // Return empty array instead of throwing
+    // Try alternative endpoint
+    try {
+      console.log("Trying alternative endpoint for subscriptions...");
+      const altResponse = await api.get('/api/subscriptions');
+      console.log("Alternative subscriptions response:", altResponse);
+      return Array.isArray(altResponse.data) ? altResponse.data : [];
+    } catch (altError) {
+      console.error('Alternative endpoint also failed:', altError);
+      return []; // Return empty array instead of throwing
+    }
   }
 };
 
