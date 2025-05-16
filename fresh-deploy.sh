@@ -351,6 +351,11 @@ log_info "Copying assets to new volume..."
 run_command "docker run --rm -v probenetworktools_frontend-build:/frontend-volume -v $(pwd)/nginx/frontend-build:/source-files alpine sh -c \"cp -rv /source-files/* /frontend-volume/ && echo 'Copy completed' && ls -la /frontend-volume/\"" "Copying assets to new frontend-build volume"
 log_success "Fresh frontend volume created and populated with latest assets"
 
+# Fix file ownership issues from Docker operations
+log_info "Fixing ownership of nginx/frontend-build directory files..."
+run_command "sudo chown -R \$USER:\$USER nginx/frontend-build/" "Resetting ownership of nginx/frontend-build directory to current user"
+log_success "Nginx frontend-build directory file ownership fixed"
+
 # Step 9: Stop existing containers
 log_info "Step 9: Stopping existing containers..."
 echo "[DOCKER] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Stopping containers" >> "$LOG_FILE"
@@ -363,6 +368,11 @@ echo "[DOCKER] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Starting containers with force
 run_command "docker compose build --no-cache" "Rebuilding all containers with no cache"
 run_command "docker compose up -d --force-recreate" "Starting all services with forced recreation"
 log_success "Services rebuilt and started"
+
+# Fix all file ownership issues that could affect git operations
+log_info "Fixing ownership of all project files..."
+run_command "sudo chown -R \$USER:\$USER ." "Resetting ownership of all project files to current user"
+log_success "File ownership fixed for git operations"
 
 # Step 11: Verify deployment
 log_info "Step 11: Verifying deployment..."
