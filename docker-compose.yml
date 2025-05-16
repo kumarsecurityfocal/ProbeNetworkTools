@@ -71,7 +71,6 @@ services:
     # Volumes for SSL certificates and webroot for certificate renewal
     volumes:
       - ./nginx/certs:/etc/letsencrypt/live/probeops.com
-      - ./nginx/ssl:/etc/letsencrypt
       - ./nginx/ssl/webroot:/var/www/certbot
       - ./nginx/ssl/ssl-dhparams.pem:/etc/letsencrypt/ssl-dhparams.pem
       - frontend-build:/usr/share/nginx/html
