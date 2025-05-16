@@ -4,6 +4,10 @@ const path = require('path');
 const http = require('http');
 const jwt = require('jsonwebtoken');
 
+// Import admin utilities
+const debugUtils = require('./debug-collector');
+const dbAdmin = require('./db-admin');
+
 // Create express app
 const app = express();
 const port = process.env.PORT || 5000;
