@@ -55,13 +55,31 @@ check_certificate() {
     
     # Use docker compose with -f to specifically point to the configuration file
     if [ -f "./docker-compose.yml" ]; then
-        # First check if certificate file exists in the container
-        if docker compose -f ./docker-compose.yml exec nginx test -f /etc/letsencrypt/live/probeops.com/fullchain.pem; then
-            execute_and_log "docker compose -f ./docker-compose.yml exec nginx openssl x509 -in /etc/letsencrypt/live/probeops.com/fullchain.pem -text -noout | grep 'Not After'" "Checking certificate expiration"
+        # First check if we have the certificate file in the local mounted volume
+        if [ -f "./nginx/ssl/live/probeops.com/fullchain.pem" ]; then
+            log_message "✅ Certificate found in local volume"
+            execute_and_log "openssl x509 -in ./nginx/ssl/live/probeops.com/fullchain.pem -text -noout | grep -E 'Subject:|Not Before|Not After'" "Checking local certificate details"
+            return 0
+        fi
+        
+        # If not found locally, check if certbot container is running and has the certificate
+        if docker compose -f ./docker-compose.yml ps | grep -q "probeops-certbot"; then
+            log_message "🔄 Checking for certificate inside certbot container..."
+            if docker compose -f ./docker-compose.yml exec certbot test -f /etc/letsencrypt/live/probeops.com/fullchain.pem; then
+                execute_and_log "docker compose -f ./docker-compose.yml exec certbot openssl x509 -in /etc/letsencrypt/live/probeops.com/fullchain.pem -text -noout | grep -E 'Subject:|Not Before|Not After'" "Checking certificate in certbot container"
+                return 0
+            fi
+        fi
+        
+        # As a last resort, check nginx container
+        log_message "🔄 Checking for certificate inside nginx container..."
+        if docker compose -f ./docker-compose.yml exec nginx test -f /etc/letsencrypt/live/probeops.com/fullchain.pem 2>/dev/null; then
+            execute_and_log "docker compose -f ./docker-compose.yml exec nginx openssl x509 -in /etc/letsencrypt/live/probeops.com/fullchain.pem -text -noout | grep -E 'Subject:|Not Before|Not After'" "Checking certificate in nginx container"
+            return 0
         else
-            log_message "⚠️ No certificate found at /etc/letsencrypt/live/probeops.com/fullchain.pem"
+            log_message "⚠️ No certificate found in any location"
             log_message "ℹ️ You need to issue a new certificate first (option 2)"
-            echo "⚠️ No certificate found. Please issue a new certificate first (option 2)."
+            echo "⚠️ No SSL certificate found. Please issue a new certificate first (option 2)."
             return 1
         fi
     else
