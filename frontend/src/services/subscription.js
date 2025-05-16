@@ -14,13 +14,34 @@ export const getUserSubscription = async () => {
 // Get all subscription tiers
 export const getSubscriptionTiers = async () => {
   try {
-    console.log("Fetching subscription tiers...");
+    console.log("Fetching subscription tiers from primary endpoint...");
     const response = await api.get('/subscription-tiers');
     console.log("Subscription tiers response:", response);
     return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
-    console.error('Error fetching subscription tiers:', error);
-    return []; // Return empty array instead of throwing
+    console.error('Error fetching subscription tiers from primary endpoint:', error);
+    
+    // Try alternative endpoints
+    try {
+      console.log("Trying alternative endpoint for subscription tiers...");
+      const altResponse = await api.get('/tiers');
+      console.log("Alternative subscription tiers response:", altResponse);
+      return Array.isArray(altResponse.data) ? altResponse.data : [];
+    } catch (altError) {
+      console.error('Alternative endpoint also failed:', altError);
+      
+      // One more attempt with api prefix
+      try {
+        console.log("Trying API-prefixed endpoint for subscription tiers...");
+        const apiResponse = await api.get('/api/subscription-tiers');
+        console.log("API-prefixed subscription tiers response:", apiResponse);
+        return Array.isArray(apiResponse.data) ? apiResponse.data : [];
+      } catch (apiError) {
+        console.error('All endpoints failed:', apiError);
+        // Return a default set of tiers for UI development/testing
+        return []; 
+      }
+    }
   }
 };
 

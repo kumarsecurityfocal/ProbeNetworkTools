@@ -2,7 +2,47 @@ import axios from 'axios';
 import { getAuthHeader } from './auth';
 
 // Base URL for API calls
-const API_URL = '/api';
+// The API URL can come from multiple sources
+// 1. From environment variables in production
+// 2. Hardcoded to the backend in development
+const API_URL = process.env.NODE_ENV === 'production' 
+  ? '/api' // In production, requests go through NGINX proxy
+  : 'http://localhost:8000'; // Direct to backend in development
+  
+// Helper function to load help JSON data
+export const getRegistrationHelp = async () => {
+  try {
+    // This is a workaround for the missing registration-help.json file
+    return {
+      steps: [
+        {
+          title: "Generate Token",
+          description: "Create a registration token with the 'Create Registration Token' button above."
+        },
+        {
+          title: "Install the ProbeOps Agent",
+          description: "Install the probe agent on your server using the package manager."
+        },
+        {
+          title: "Configure the Agent",
+          description: "Configure the agent with your token and API endpoint."
+        },
+        {
+          title: "Start the Agent",
+          description: "Start the agent service to begin reporting to the ProbeOps backend."
+        }
+      ],
+      tips: [
+        "Make sure your firewall allows outbound connections to the ProbeOps API endpoint.",
+        "Each token can only be used once to register a new probe node.",
+        "Tokens expire after the specified number of hours if unused."
+      ]
+    };
+  } catch (error) {
+    console.error('Error fetching registration help:', error);
+    return { steps: [], tips: [] };
+  }
+};
 
 /**
  * Get all probe nodes
