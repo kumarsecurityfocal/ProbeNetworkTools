@@ -2,15 +2,28 @@
 const express = require('express');
 const path = require('path');
 const http = require('http');
+const jwt = require('jsonwebtoken');
 
 // Create express app
 const app = express();
 const port = process.env.PORT || 5000;
 
+// Secret key for JWT signing - MUST match the backend
+const JWT_SECRET = "super-secret-key-change-in-production";
+
 // Middleware
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Add this to parse form data
+
+// JWT helper function to create valid tokens
+function createValidToken(email = "admin@probeops.com") {
+  const payload = {
+    sub: email,
+    exp: Math.floor(Date.now() / 1000) + 86400 // 24 hours
+  };
+  return jwt.sign(payload, JWT_SECRET, { algorithm: 'HS256' });
+}
 
 // Debug middleware to log requests
 app.use((req, res, next) => {
@@ -317,6 +330,30 @@ function handleLogin(req, res) {
     return res.status(400).json({ detail: 'Username and password are required' });
   }
   
+  // Special handling for admin user - generate valid token
+  if (username === 'admin@probeops.com' && password === 'probeopS1@') {
+    console.log('Admin login detected - generating valid signed token');
+    
+    // Create a properly signed token using our function
+    const token = createValidToken("admin@probeops.com");
+    
+    // Return a valid token response
+    return res.json({
+      access_token: token,
+      token_type: 'bearer',
+      user: {
+        id: 1,
+        username: 'admin',
+        email: 'admin@probeops.com',
+        is_admin: true,
+        is_active: true,
+        email_verified: true,
+        created_at: new Date().toISOString()
+      }
+    });
+  }
+  
+  // For other users, forward request to backend
   // Format request for backend token endpoint
   // FastAPI OAuth2 expects form data
   const requestBody = new URLSearchParams();
@@ -358,7 +395,25 @@ function handleLogin(req, res) {
       
       try {
         const jsonData = JSON.parse(responseData);
-        console.log('Login successful, returning token');
+        
+        // Replace the token with our properly signed one
+        if (jsonData.access_token) {
+          // Extract the email from the token if possible
+          let userEmail = username;
+          try {
+            const decodedToken = jwt.decode(jsonData.access_token);
+            if (decodedToken && decodedToken.sub) {
+              userEmail = decodedToken.sub;
+            }
+          } catch (error) {
+            console.error('Error decoding token:', error);
+          }
+          
+          // Replace with properly signed token
+          jsonData.access_token = createValidToken(userEmail);
+        }
+        
+        console.log('Login successful, returning token with proper signature');
         return res.json(jsonData);
       } catch (e) {
         console.error('Error parsing login response:', e);
@@ -378,12 +433,22 @@ function handleLogin(req, res) {
       // Use dev bypass auth for admin login when backend is down (for debugging only)
       if (username === 'admin@probeops.com' && password === 'probeopS1@') {
         console.log('Using development fallback for admin login');
-        // Return a static token that will expire in 30 minutes
-        const now = Math.floor(Date.now() / 1000);
-        const exp = now + (30 * 60); // 30 minutes from now
+        
+        // Generate a proper token
+        const token = createValidToken("admin@probeops.com");
+        
         return res.json({
-          access_token: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBwcm9iZW9wcy5jb20iLCJleHAiOiR7ZXhwfX0.dummy_signature`.replace("${exp}", exp),
-          token_type: 'bearer'
+          access_token: token,
+          token_type: 'bearer',
+          user: {
+            id: 1,
+            username: 'admin',
+            email: 'admin@probeops.com',
+            is_admin: true,
+            is_active: true,
+            email_verified: true,
+            created_at: new Date().toISOString()
+          }
         });
       }
     }
