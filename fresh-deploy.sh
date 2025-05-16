@@ -297,8 +297,8 @@ log_info "Step 6: Validating Docker Compose configuration..."
 run_command "docker compose config" "Validating docker-compose.yml"
 log_success "Docker Compose configuration is valid"
 
-# Step 6: Clean and rebuild frontend assets
-log_info "Step 6: Cleaning and rebuilding frontend assets..."
+# Step 7: Clean and rebuild frontend assets
+log_info "Step 7: Cleaning and rebuilding frontend assets..."
 run_command "sudo rm -rf public/*" "Cleaning public directory"
 run_command "mkdir -p public" "Creating public directory for frontend assets"
 
@@ -340,8 +340,8 @@ else
     exit 1
 fi
 
-# Step 7: Copy frontend assets to NGINX
-log_info "Step 7: Copying frontend assets to NGINX..."
+# Step 8: Copy frontend assets to NGINX
+log_info "Step 8: Copying frontend assets to NGINX..."
 run_command "mkdir -p nginx/frontend-build" "Creating nginx/frontend-build directory"
 run_command "sudo rm -rf nginx/frontend-build/*" "Cleaning nginx/frontend-build directory"
 run_command "ls -la public/" "Listing public directory contents before copy"
@@ -363,8 +363,8 @@ echo "$(date)" > nginx/frontend-build/.assets-deployed
 echo "[COPY] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Created timestamp file .assets-deployed" >> "$LOG_FILE"
 log_success "Frontend assets copied to NGINX directory"
 
-# Step 8: Handle docker volumes
-log_info "Step 8: Setting up Docker volumes..."
+# Step 9: Handle docker volumes
+log_info "Step 9: Setting up Docker volumes..."
 run_command "docker volume ls | grep probenetworktools || true" "Listing ProbeOps Docker volumes"
 
 # Remove existing frontend volume to ensure clean state
@@ -396,14 +396,14 @@ log_info "Fixing ownership of nginx/frontend-build directory files..."
 run_command "sudo chown -R \$USER:\$USER nginx/frontend-build/" "Resetting ownership of nginx/frontend-build directory to current user"
 log_success "Nginx frontend-build directory file ownership fixed"
 
-# Step 9: Stop existing containers
-log_info "Step 9: Stopping existing containers..."
+# Step 10: Stop existing containers
+log_info "Step 10: Stopping existing containers..."
 echo "[DOCKER] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Stopping containers" >> "$LOG_FILE"
 run_command "docker compose down" "Stopping and removing all existing containers"
 log_success "All existing containers stopped and removed"
 
-# Step 10: Start services with forced rebuild
-log_info "Step 10: Starting services with forced rebuild..."
+# Step 11: Start services with forced rebuild
+log_info "Step 11: Starting services with forced rebuild..."
 echo "[DOCKER] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Starting containers with forced rebuild" >> "$LOG_FILE"
 run_command "docker compose build --no-cache" "Rebuilding all containers with no cache"
 run_command "docker compose up -d --force-recreate" "Starting all services with forced recreation"
@@ -414,8 +414,8 @@ log_info "Fixing ownership of all project files..."
 run_command "sudo chown -R \$USER:\$USER ." "Resetting ownership of all project files to current user"
 log_success "File ownership fixed for git operations"
 
-# Step 11: Verify deployment
-log_info "Step 11: Verifying deployment..."
+# Step 12: Verify deployment
+log_info "Step 12: Verifying deployment..."
 echo "[VERIFY] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Verifying deployment" >> "$LOG_FILE"
 
 # Wait for services to initialize
