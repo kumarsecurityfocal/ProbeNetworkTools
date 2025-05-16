@@ -485,9 +485,31 @@ export const getScheduledProbeById = async (probeId) => {
 
 export const createScheduledProbe = async (probeData) => {
   try {
-    const response = await api.post('/probes', probeData);
-    return response.data;
+    console.log("Attempting to create scheduled probe with data:", probeData);
+    // Try multiple endpoints to handle different API configurations
+    try {
+      // First try the standard endpoint
+      const response = await api.post('/probes', probeData);
+      console.log("Probe created successfully:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("First endpoint failed:", error.message);
+      if (error.response && error.response.status === 405) {
+        // If 405 Method Not Allowed, try alternative endpoint
+        console.log("Trying alternative probe creation endpoint...");
+        const altResponse = await api.post('/scheduled-probes', probeData);
+        console.log("Probe created successfully with alternative endpoint:", altResponse.data);
+        return altResponse.data;
+      } else {
+        // Try with /api prefix
+        console.log("Trying with /api prefix...");
+        const apiResponse = await api.post('/api/probes', probeData);
+        console.log("Probe created successfully with /api prefix:", apiResponse.data);
+        return apiResponse.data;
+      }
+    }
   } catch (error) {
+    console.error("All probe creation endpoints failed:", error);
     return handleApiError(error);
   }
 };
