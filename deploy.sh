@@ -155,8 +155,8 @@ fi
 
 # Step 2: Set executable permissions
 log_info "Step 2: Setting executable permissions on scripts..."
-run_command "find . -name \"*.sh\" -type f | sort" "Listing shell scripts"
-run_command "find ./backend ./frontend ./nginx ./scripts ./probe -name \"*.sh\" -type f -print0 | xargs -0 chmod +x 2>/dev/null || true" "Setting executable permissions (restricting to app directories)"
+run_command "find . -path \"./nginx/ssl\" -prune -o -name \"*.sh\" -type f -print 2>/dev/null | sort" "Listing shell scripts (excluding nginx/ssl)"
+run_command "find ./backend ./frontend ./nginx ./probe -name \"*.sh\" -type f -print0 2>/dev/null | xargs -0 chmod +x 2>/dev/null || true" "Setting executable permissions (restricting to app directories)"
 log_success "Executable permissions set on all scripts"
 
 # Step 3: Environment setup
