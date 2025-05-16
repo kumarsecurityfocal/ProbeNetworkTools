@@ -162,9 +162,22 @@ log_info "Step 3: Setting up fresh environment configuration..."
 
 # Create environment files from templates
 if [ -f ".env.template" ]; then
-    log_info "Creating main .env file from template..."
-    run_command "cp .env.template .env" "Creating .env from template"
-    log_success "Created main .env file from template"
+    # Check if environment file already exists
+    if [ ! -f ".env" ]; then
+        log_info "Creating main .env file from template..."
+        
+        # Check if we should use the environment file from home directory
+        if [ -f "/home/ubuntu/environment/.env" ]; then
+            log_info "Using existing .env from /home/ubuntu/environment directory..."
+            run_command "cp /home/ubuntu/environment/.env .env" "Copying .env from /home/ubuntu/environment"
+        else
+            # Use template as fallback if no existing file is found
+            run_command "cp .env.template .env" "Creating .env from template"
+        fi
+        log_success "Created main .env file"
+    else
+        log_info "✅ Skipping main .env overwrite — file already exists"
+    fi
     
     # Count usable environment variables
     env_var_count=$(grep -v '^#' .env | grep -v '^$' | wc -l)
@@ -184,10 +197,24 @@ fi
 
 # Create backend environment file
 if [ -f "backend/.env.backend.template" ]; then
-    log_info "Creating backend .env.backend file from template..."
-    run_command "cp backend/.env.backend.template backend/.env.backend" "Creating backend/.env.backend from template"
+    # Check if environment file already exists
+    if [ ! -f "backend/.env.backend" ]; then
+        log_info "Creating backend .env.backend file from template..."
+        
+        # Check if we should use the environment file from home directory
+        if [ -f "/home/ubuntu/environment/.env.backend" ]; then
+            log_info "Using existing .env.backend from /home/ubuntu/environment directory..."
+            run_command "cp /home/ubuntu/environment/.env.backend backend/.env.backend" "Copying .env.backend from /home/ubuntu/environment"
+        else
+            # Use template as fallback if no existing file is found
+            run_command "cp backend/.env.backend.template backend/.env.backend" "Creating backend/.env.backend from template"
+        fi
+        log_success "Created backend environment configuration"
+    else
+        log_info "✅ Skipping .env.backend overwrite — file already exists"
+    fi
+    
     run_command "cat backend/.env.backend | grep -v '^#' | grep -v '^$'" "Displaying active backend environment variables"
-    log_success "Created backend environment configuration"
     
     # Check if we need to manually update the backend .env file
     if grep -q "CHANGE_ME" backend/.env.backend || grep -q "your-" backend/.env.backend || grep -q "example" backend/.env.backend; then
