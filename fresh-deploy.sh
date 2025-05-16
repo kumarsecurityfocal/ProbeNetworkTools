@@ -147,18 +147,58 @@ verify_or_exit "docker compose version >/dev/null 2>&1" "Docker Compose is not a
 
 log_info "Starting fresh ProbeOps deployment"
 
-# Step 1: Verify Project Structure
-log_info "Step 1: Verifying project structure..."
+# Step 1: Check for Git updates
+log_info "Step 1: Checking for Git repository updates..."
+
+# Check if this is a git repository
+if [ -d ".git" ]; then
+    log_info "Git repository detected, checking for updates..."
+    
+    # Check for uncommitted changes
+    if [ -n "$(git status --porcelain)" ]; then
+        log_warning "Uncommitted changes detected in the repository"
+        
+        # Ask user if they want to stash changes
+        echo -e "${YELLOW}There are uncommitted changes in the repository.${NC}"
+        echo -e "${YELLOW}Would you like to stash these changes before pulling updates? (y/n)${NC}"
+        read -r stash_response
+        
+        if [[ "$stash_response" =~ ^[Yy]$ ]]; then
+            log_info "Stashing uncommitted changes..."
+            run_command "git stash" "Stashing uncommitted changes"
+            log_success "Changes stashed successfully"
+        else
+            log_info "Proceeding without stashing changes"
+        fi
+    fi
+    
+    # Try to pull updates
+    log_info "Pulling latest updates from the main branch..."
+    run_command "git pull origin main" "Pulling latest updates from main branch"
+    
+    # Check if the pull was successful
+    if [ $? -eq 0 ]; then
+        log_success "Repository updated successfully"
+    else
+        log_warning "Failed to update repository. Check your network connection or repository configuration."
+        log_info "Proceeding with deployment using current version"
+    fi
+else
+    log_info "Not a Git repository or .git directory not found - skipping Git update check"
+fi
+
+# Step 2: Verify Project Structure
+log_info "Step 2: Verifying project structure..."
 run_command "ls -la" "Listing root directory contents"
 
-# Set executable permissions on all scripts
-log_info "Step 2: Setting executable permissions on all scripts..."
+# Step 3: Set executable permissions on all scripts
+log_info "Step 3: Setting executable permissions on all scripts..."
 run_command "find . -name \"*.sh\" -type f | sort" "Listing all shell scripts in the project"
 run_command "find . -name \"*.sh\" -exec chmod +x {} \;" "Setting executable permissions on all scripts"
 log_success "All shell scripts are now executable"
 
-# Step 3: Fresh Environment Setup
-log_info "Step 3: Setting up fresh environment configuration..."
+# Step 4: Fresh Environment Setup
+log_info "Step 4: Setting up fresh environment configuration..."
 
 # Create environment files from templates
 if [ -f ".env.template" ]; then
@@ -228,8 +268,8 @@ else
     exit 1
 fi
 
-# Step 4: Database Configuration
-log_info "Step 4: Configuring database connection..."
+# Step 5: Database Configuration
+log_info "Step 5: Configuring database connection..."
 
 # Check if database configuration is available
 if grep -q "DATABASE_URL" backend/.env.backend; then
@@ -252,8 +292,8 @@ else
     exit 1
 fi
 
-# Step 5: Validating Docker Compose configuration
-log_info "Step 5: Validating Docker Compose configuration..."
+# Step 6: Validating Docker Compose configuration
+log_info "Step 6: Validating Docker Compose configuration..."
 run_command "docker compose config" "Validating docker-compose.yml"
 log_success "Docker Compose configuration is valid"
 
