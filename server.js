@@ -38,6 +38,10 @@ app.get('/troubleshooting', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+app.get('/database', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // Parse and handle API routes
 app.use((req, res, next) => {
   const url = req.url;

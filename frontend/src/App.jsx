@@ -17,6 +17,9 @@ import UserProfile from './components/UserProfile';
 import Reports from './components/Reports';
 import Footer from './components/Footer';
 
+// Direct Access Pages
+import DatabasePage from './pages/DatabasePage';
+
 // Public Site Components
 import PublicLayout from './components/PublicLayout';
 import Landing from './pages/Landing';
@@ -136,6 +139,7 @@ function App() {
               <Route path="/scheduled-probes" element={<ScheduledProbes />} />
               <Route path="/profile" element={<UserProfile />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/database" element={<DatabasePage />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </Box>
