@@ -234,7 +234,7 @@
       <a href="#users" id="nav-users" class="nav-item">Users</a>
       <a href="#database" id="nav-database" class="nav-item">Database</a>
       <a href="#diagnostics" id="nav-diagnostics" class="nav-item">Diagnostics</a>
-      <a href="/admin-direct.html" class="nav-item">Admin Tools</a>
+      <a href="#tools" id="nav-tools" class="nav-item">Admin Tools</a>
     </div>
   </div>
   
@@ -373,6 +373,58 @@
       <div class="card">
         <h2>Error Logs</h2>
         <div id="error-logs" style="background: #f8f9fa; padding: 10px; max-height: 300px; overflow-y: auto; font-family: monospace; white-space: pre-wrap;">Loading logs...</div>
+      </div>
+    </div>
+    
+    <!-- Admin Tools Tab -->
+    <div id="tools-tab" class="tab-content">
+      <h1>Admin Tools</h1>
+      
+      <div class="card">
+        <h2>Authentication</h2>
+        <p>Manage user authentication and admin access.</p>
+        
+        <div style="margin-top: 20px;">
+          <button id="regenerate-admin-token" class="button button-primary">Regenerate Admin Token</button>
+          <button id="clear-auth-data" class="button button-danger">Clear Auth Data</button>
+        </div>
+        
+        <div id="auth-status-message" style="margin-top: 15px; display: none;" class="message success"></div>
+      </div>
+      
+      <div class="card">
+        <h2>Database Management</h2>
+        <p>Tools for database operations and maintenance.</p>
+        
+        <div style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 10px;">
+          <button id="show-db-schema" class="button">View Database Schema</button>
+          <button id="test-db-connection" class="button">Test Database Connection</button>
+          <button id="view-subscriptions" class="button">View User Subscriptions</button>
+        </div>
+        
+        <div id="db-tool-result" style="margin-top: 15px; background: #f8f9fa; padding: 10px; border-radius: 4px; display: none;"></div>
+      </div>
+      
+      <div class="card">
+        <h2>API Tools</h2>
+        <p>Tools for working with and testing the API.</p>
+        
+        <div style="margin-top: 20px;">
+          <div style="margin-bottom: 10px;">
+            <label><strong>API Endpoint:</strong></label>
+            <select id="api-endpoint" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd; width: 100%; margin-top: 5px;">
+              <option value="/users">Users List</option>
+              <option value="/metrics/dashboard">Dashboard Metrics</option>
+              <option value="/diagnostics/ping?target=google.com">Ping Diagnostic</option>
+              <option value="/subscription_tiers">Subscription Tiers</option>
+              <option value="/history?limit=5">Diagnostic History</option>
+            </select>
+          </div>
+          
+          <button id="test-api" class="button button-primary">Test API Endpoint</button>
+        </div>
+        
+        <div id="api-test-result" style="margin-top: 15px; background: #f8f9fa; padding: 10px; border-radius: 4px; max-height: 300px; overflow-y: auto; display: none; font-family: monospace;"></div>
       </div>
     </div>
   </div>

@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ProbeOps Database Admin</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      line-height: 1.6;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f7fa;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .header {
+      background-color: #2c3e50;
+      color: white;
+      padding: 15px 0;
+      margin-bottom: 20px;
+    }
+    
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 500;
+    }
+    
+    .panel {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      padding: 25px;
+      margin-bottom: 25px;
+    }
+    
+    .panel-header {
+      margin-top: 0;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #eaeaea;
+      color: #2c3e50;
+      font-size: 18px;
+      font-weight: 500;
+    }
+    
+    .btn {
+      display: inline-block;
+      font-weight: 400;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: middle;
+      cursor: pointer;
+      user-select: none;
+      padding: 8px 16px;
+      font-size: 14px;
+      line-height: 1.5;
+      border-radius: 4px;
+      text-decoration: none;
+      transition: all 0.2s ease-in-out;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+    
+    .btn:hover, .btn:focus {
+      background-color: #2980b9;
+      text-decoration: none;
+      outline: none;
+    }
+    
+    .btn-success {
+      background-color: #2ecc71;
+    }
+    
+    .btn-success:hover, .btn-success:focus {
+      background-color: #27ae60;
+    }
+    
+    .btn-danger {
+      background-color: #e74c3c;
+    }
+    
+    .btn-danger:hover, .btn-danger:focus {
+      background-color: #c0392b;
+    }
+    
+    .btn-warning {
+      background-color: #f39c12;
+    }
+    
+    .btn-warning:hover, .btn-warning:focus {
+      background-color: #d35400;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    
+    .form-control {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      font-size: 14px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    
+    .form-control:focus {
+      border-color: #3498db;
+      outline: none;
+    }
+    
+    textarea.form-control {
+      min-height: 120px;
+      font-family: monospace;
+    }
+    
+    .table-container {
+      overflow-x: auto;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #e1e1e1;
+    }
+    
+    th {
+      background-color: #f8f9fa;
+      font-weight: 500;
+      color: #2c3e50;
+    }
+    
+    tr:hover {
+      background-color: #f5f7fa;
+    }
+    
+    .result-container {
+      background-color: #f8f9fa;
+      border: 1px solid #e1e1e1;
+      border-radius: 4px;
+      padding: 15px;
+      margin-top: 15px;
+      max-height: 500px;
+      overflow: auto;
+    }
+    
+    .result-container pre {
+      margin: 0;
+      white-space: pre-wrap;
+      font-family: 'Courier New', monospace;
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 50px;
+    }
+    
+    .badge-success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    
+    .badge-info {
+      background-color: #d1ecf1;
+      color: #0c5460;
+    }
+    
+    .badge-warning {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+    
+    .badge-danger {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    
+    .alert {
+      padding: 12px 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+    
+    .alert-success {
+      background-color: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+    
+    .alert-info {
+      background-color: #d1ecf1;
+      border: 1px solid #bee5eb;
+      color: #0c5460;
+    }
+    
+    .alert-warning {
+      background-color: #fff3cd;
+      border: 1px solid #ffeeba;
+      color: #856404;
+    }
+    
+    .alert-danger {
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+    
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #e1e1e1;
+      margin-bottom: 20px;
+    }
+    
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-bottom: none;
+      margin-right: 5px;
+      border-top-left-radius: 4px;
+      border-top-right-radius: 4px;
+    }
+    
+    .tab.active {
+      border-color: #e1e1e1;
+      background-color: white;
+      margin-bottom: -1px;
+      padding-bottom: 11px;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .footer {
+      text-align: center;
+      padding: 20px 0;
+      margin-top: 40px;
+      font-size: 13px;
+      color: #7f8c8d;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .container {
+        padding: 15px;
+      }
+      
+      .header-content {
+        padding: 0 15px;
+      }
+      
+      .panel {
+        padding: 15px;
+      }
+      
+      .btn {
+        width: 100%;
+        margin-bottom: 10px;
+      }
+      
+      .tabs {
+        flex-wrap: wrap;
+      }
+      
+      .tab {
+        flex: 1 0 auto;
+        text-align: center;
+        margin-bottom: 5px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-content">
+      <h1>ProbeOps Database Admin</h1>
+      <div>
+        <a href="/dashboard" class="btn btn-warning">Back to Dashboard</a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="container">
+    <div class="alert alert-info">
+      <strong>Info:</strong> This is a direct database administration interface. Changes are made directly to the database.
+    </div>
+    
+    <div class="tabs">
+      <div class="tab active" data-tab="tables">Database Tables</div>
+      <div class="tab" data-tab="query">SQL Query</div>
+      <div class="tab" data-tab="schema">Schema Explorer</div>
+      <div class="tab" data-tab="users">User Management</div>
+    </div>
+    
+    <!-- Tables Tab -->
+    <div id="tables-tab" class="tab-content active">
+      <div class="panel">
+        <h2 class="panel-header">Database Tables</h2>
+        <div id="tables-container">Loading...</div>
+      </div>
+      
+      <div class="panel">
+        <h2 class="panel-header">Table Data</h2>
+        <div id="table-data">Select a table to view its data</div>
+      </div>
+    </div>
+    
+    <!-- SQL Query Tab -->
+    <div id="query-tab" class="tab-content">
+      <div class="panel">
+        <h2 class="panel-header">SQL Query</h2>
+        
+        <div class="alert alert-warning">
+          <strong>Warning:</strong> For security reasons, only SELECT queries are allowed in this interface.
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Enter your SQL query:</label>
+          <textarea id="sql-query" class="form-control" placeholder="SELECT * FROM users LIMIT 10;"></textarea>
+        </div>
+        
+        <button id="run-query" class="btn">Run Query</button>
+        <button id="clear-results" class="btn btn-warning">Clear Results</button>
+        
+        <div>
+          <h3>Example Queries:</h3>
+          <button class="btn example-query" data-query="SELECT * FROM users LIMIT 10;">Users</button>
+          <button class="btn example-query" data-query="SELECT * FROM subscription_tiers LIMIT 10;">Subscription Tiers</button>
+          <button class="btn example-query" data-query="SELECT * FROM subscriptions LIMIT 10;">Subscriptions</button>
+          <button class="btn example-query" data-query="SELECT * FROM api_keys LIMIT 10;">API Keys</button>
+          <button class="btn example-query" data-query="SELECT u.username, u.email, s.is_active, t.name AS tier_name 
+FROM users u
+JOIN subscriptions s ON u.id = s.user_id
+JOIN subscription_tiers t ON s.tier_id = t.id
+LIMIT 10;">Users with Subscriptions</button>
+        </div>
+        
+        <div id="query-result" class="result-container" style="display: none;"></div>
+      </div>
+    </div>
+    
+    <!-- Schema Explorer Tab -->
+    <div id="schema-tab" class="tab-content">
+      <div class="panel">
+        <h2 class="panel-header">Database Schema</h2>
+        <div id="schema-container">
+          <div class="form-group">
+            <label class="form-label">Select a table to view its schema:</label>
+            <select id="schema-table-select" class="form-control">
+              <option value="">Loading tables...</option>
+            </select>
+          </div>
+          
+          <button id="view-schema" class="btn">View Schema</button>
+        </div>
+        
+        <div id="schema-result" class="result-container" style="display: none;"></div>
+      </div>
+    </div>
+    
+    <!-- User Management Tab -->
+    <div id="users-tab" class="tab-content">
+      <div class="panel">
+        <h2 class="panel-header">User Management</h2>
+        
+        <div class="alert alert-info">
+          <strong>Info:</strong> This panel shows all registered users. Changes to user data should be made carefully.
+        </div>
+        
+        <div id="users-container">Loading users...</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="footer">
+    <p>ProbeOps Database Administration &copy; 2025</p>
+  </div>
+  
+  <script>
+    // Tab navigation
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Remove active class from all tabs and contents
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        // Add active class to clicked tab and corresponding content
+        tab.classList.add('active');
+        document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+      });
+    });
+    
+    // Database Tables
+    async function loadTables() {
+      try {
+        const response = await fetch('/api/admin-database');
+        const data = await response.json();
+        
+        if (data.tables && data.tables.length > 0) {
+          let html = '<div class="table-container"><table>';
+          html += '<thead><tr><th>Table Name</th><th>Rows</th><th>Columns</th><th>Actions</th></tr></thead><tbody>';
+          
+          data.tables.forEach(table => {
+            html += `
+              <tr>
+                <td>${table.name}</td>
+                <td>${table.rows}</td>
+                <td>${table.column_count || 'N/A'}</td>
+                <td>
+                  <button class="btn view-table-btn" data-table="${table.name}">View Data</button>
+                </td>
+              </tr>
+            `;
+          });
+          
+          html += '</tbody></table></div>';
+          document.getElementById('tables-container').innerHTML = html;
+          
+          // Add event listeners to view table buttons
+          document.querySelectorAll('.view-table-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+              loadTableData(btn.dataset.table);
+            });
+          });
+          
+          // Also populate the schema table select
+          let selectOptions = '<option value="">Select a table...</option>';
+          data.tables.forEach(table => {
+            selectOptions += `<option value="${table.name}">${table.name}</option>`;
+          });
+          document.getElementById('schema-table-select').innerHTML = selectOptions;
+        } else {
+          document.getElementById('tables-container').innerHTML = '<p>No tables found in the database.</p>';
+        }
+      } catch (error) {
+        console.error('Error loading tables:', error);
+        document.getElementById('tables-container').innerHTML = `<p>Error loading tables: ${error.message}</p>`;
+      }
+    }
+    
+    async function loadTableData(tableName) {
+      try {
+        document.getElementById('table-data').innerHTML = `<p>Loading data from ${tableName}...</p>`;
+        
+        const query = `SELECT * FROM "${tableName}" LIMIT 50;`;
+        const response = await fetch('/api/admin-database/query', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ query })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+          document.getElementById('table-data').innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+          return;
+        }
+        
+        if (!data.rows || data.rows.length === 0) {
+          document.getElementById('table-data').innerHTML = `<p>Table ${tableName} is empty.</p>`;
+          return;
+        }
+        
+        let html = `<h3>${tableName}</h3>`;
+        html += `<p>${data.rows.length} rows (limited to 50)</p>`;
+        html += '<div class="table-container"><table>';
+        
+        // Table headers
+        html += '<thead><tr>';
+        const columns = Object.keys(data.rows[0]);
+        columns.forEach(column => {
+          html += `<th>${column}</th>`;
+        });
+        html += '</tr></thead>';
+        
+        // Table body
+        html += '<tbody>';
+        data.rows.forEach(row => {
+          html += '<tr>';
+          columns.forEach(column => {
+            const value = row[column];
+            if (value === null) {
+              html += '<td><em>null</em></td>';
+            } else if (typeof value === 'object') {
+              html += `<td>${JSON.stringify(value)}</td>`;
+            } else {
+              html += `<td>${value}</td>`;
+            }
+          });
+          html += '</tr>';
+        });
+        html += '</tbody></table></div>';
+        
+        document.getElementById('table-data').innerHTML = html;
+      } catch (error) {
+        console.error('Error loading table data:', error);
+        document.getElementById('table-data').innerHTML = `<div class="alert alert-danger">Error loading table data: ${error.message}</div>`;
+      }
+    }
+    
+    // SQL Query
+    async function executeQuery() {
+      const query = document.getElementById('sql-query').value;
+      const resultContainer = document.getElementById('query-result');
+      
+      if (!query) {
+        resultContainer.innerHTML = '<div class="alert alert-danger">Please enter a query</div>';
+        resultContainer.style.display = 'block';
+        return;
+      }
+      
+      // Check if query starts with SELECT
+      if (!query.trim().toLowerCase().startsWith('select')) {
+        resultContainer.innerHTML = '<div class="alert alert-danger">Only SELECT queries are allowed for security reasons</div>';
+        resultContainer.style.display = 'block';
+        return;
+      }
+      
+      resultContainer.innerHTML = '<p>Executing query...</p>';
+      resultContainer.style.display = 'block';
+      
+      try {
+        const response = await fetch('/api/admin-database/query', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ query })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+          resultContainer.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+          return;
+        }
+        
+        if (!data.rows || data.rows.length === 0) {
+          resultContainer.innerHTML = '<p>Query returned no results</p>';
+          return;
+        }
+        
+        let html = `<p>${data.rows.length} rows returned</p>`;
+        html += '<div class="table-container"><table>';
+        
+        // Table headers
+        html += '<thead><tr>';
+        const columns = Object.keys(data.rows[0]);
+        columns.forEach(column => {
+          html += `<th>${column}</th>`;
+        });
+        html += '</tr></thead>';
+        
+        // Table body
+        html += '<tbody>';
+        data.rows.forEach(row => {
+          html += '<tr>';
+          columns.forEach(column => {
+            const value = row[column];
+            if (value === null) {
+              html += '<td><em>null</em></td>';
+            } else if (typeof value === 'object') {
+              html += `<td>${JSON.stringify(value)}</td>`;
+            } else {
+              html += `<td>${value}</td>`;
+            }
+          });
+          html += '</tr>';
+        });
+        html += '</tbody></table></div>';
+        
+        resultContainer.innerHTML = html;
+      } catch (error) {
+        console.error('Error executing query:', error);
+        resultContainer.innerHTML = `<div class="alert alert-danger">Error executing query: ${error.message}</div>`;
+      }
+    }
+    
+    // Schema Explorer
+    async function viewTableSchema() {
+      const tableName = document.getElementById('schema-table-select').value;
+      const resultContainer = document.getElementById('schema-result');
+      
+      if (!tableName) {
+        resultContainer.innerHTML = '<div class="alert alert-danger">Please select a table</div>';
+        resultContainer.style.display = 'block';
+        return;
+      }
+      
+      resultContainer.innerHTML = '<p>Loading schema...</p>';
+      resultContainer.style.display = 'block';
+      
+      try {
+        const response = await fetch(`/api/admin-database/schema/${tableName}`);
+        const data = await response.json();
+        
+        if (data.error) {
+          resultContainer.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+          return;
+        }
+        
+        let html = `<h3>Schema for ${tableName}</h3>`;
+        
+        // Columns
+        html += '<h4>Columns</h4>';
+        html += '<div class="table-container"><table>';
+        html += '<thead><tr><th>Column Name</th><th>Data Type</th><th>Nullable</th><th>Default</th></tr></thead>';
+        html += '<tbody>';
+        
+        if (data.columns && data.columns.length > 0) {
+          data.columns.forEach(column => {
+            html += `
+              <tr>
+                <td>${column.column_name}</td>
+                <td>${column.data_type}</td>
+                <td>${column.is_nullable === 'YES' ? 'YES' : 'NO'}</td>
+                <td>${column.column_default || '<em>null</em>'}</td>
+              </tr>
+            `;
+          });
+        } else {
+          html += '<tr><td colspan="4">No column information available</td></tr>';
+        }
+        
+        html += '</tbody></table></div>';
+        
+        // Foreign Keys
+        html += '<h4>Foreign Keys</h4>';
+        html += '<div class="table-container"><table>';
+        html += '<thead><tr><th>Constraint Name</th><th>Column</th><th>References Table</th><th>References Column</th></tr></thead>';
+        html += '<tbody>';
+        
+        if (data.foreignKeys && data.foreignKeys.length > 0) {
+          data.foreignKeys.forEach(fk => {
+            html += `
+              <tr>
+                <td>${fk.constraint_name}</td>
+                <td>${fk.column_name}</td>
+                <td>${fk.foreign_table_name}</td>
+                <td>${fk.foreign_column_name}</td>
+              </tr>
+            `;
+          });
+        } else {
+          html += '<tr><td colspan="4">No foreign keys defined</td></tr>';
+        }
+        
+        html += '</tbody></table></div>';
+        
+        // Indexes
+        html += '<h4>Indexes</h4>';
+        html += '<div class="table-container"><table>';
+        html += '<thead><tr><th>Index Name</th><th>Column</th><th>Unique</th><th>Primary Key</th></tr></thead>';
+        html += '<tbody>';
+        
+        if (data.indexes && data.indexes.length > 0) {
+          data.indexes.forEach(idx => {
+            html += `
+              <tr>
+                <td>${idx.index_name}</td>
+                <td>${idx.column_name}</td>
+                <td>${idx.is_unique ? 'Yes' : 'No'}</td>
+                <td>${idx.is_primary ? 'Yes' : 'No'}</td>
+              </tr>
+            `;
+          });
+        } else {
+          html += '<tr><td colspan="4">No indexes defined</td></tr>';
+        }
+        
+        html += '</tbody></table></div>';
+        
+        resultContainer.innerHTML = html;
+      } catch (error) {
+        console.error('Error viewing schema:', error);
+        resultContainer.innerHTML = `<div class="alert alert-danger">Error loading schema: ${error.message}</div>`;
+      }
+    }
+    
+    // User Management
+    async function loadUsers() {
+      try {
+        const query = 'SELECT * FROM users ORDER BY id LIMIT 100;';
+        const response = await fetch('/api/admin-database/query', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ query })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+          document.getElementById('users-container').innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+          return;
+        }
+        
+        if (!data.rows || data.rows.length === 0) {
+          document.getElementById('users-container').innerHTML = '<p>No users found in the database.</p>';
+          return;
+        }
+        
+        let html = '<div class="table-container"><table>';
+        html += '<thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Admin</th><th>Active</th><th>Created</th></tr></thead>';
+        html += '<tbody>';
+        
+        data.rows.forEach(user => {
+          html += `
+            <tr>
+              <td>${user.id}</td>
+              <td>${user.username}</td>
+              <td>${user.email}</td>
+              <td>${user.is_admin ? '<span class="badge badge-info">Yes</span>' : 'No'}</td>
+              <td>${user.is_active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-danger">Inactive</span>'}</td>
+              <td>${new Date(user.created_at).toLocaleString()}</td>
+            </tr>
+          `;
+        });
+        
+        html += '</tbody></table></div>';
+        document.getElementById('users-container').innerHTML = html;
+      } catch (error) {
+        console.error('Error loading users:', error);
+        document.getElementById('users-container').innerHTML = `<div class="alert alert-danger">Error loading users: ${error.message}</div>`;
+      }
+    }
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      // Load tables
+      loadTables();
+      
+      // Load users
+      loadUsers();
+      
+      // Add event listeners
+      document.getElementById('run-query').addEventListener('click', executeQuery);
+      
+      document.getElementById('clear-results').addEventListener('click', () => {
+        document.getElementById('query-result').style.display = 'none';
+      });
+      
+      document.getElementById('view-schema').addEventListener('click', viewTableSchema);
+      
+      // Example queries
+      document.querySelectorAll('.example-query').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.getElementById('sql-query').value = btn.dataset.query;
+        });
+      });
+    });
+  </script>
+</body>
+</html>
