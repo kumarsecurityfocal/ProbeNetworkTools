@@ -277,6 +277,11 @@ run_command "docker build -t probeops-frontend-build ./frontend" "Building front
 # Run the container with proper volume mounting to extract the build
 run_command "docker run --rm -v $(pwd)/public:/public probeops-frontend-build sh -c 'cp -r /app/dist/* /public/'" "Building frontend assets and copying to public directory"
 
+# Fix file ownership issues from Docker operations
+log_info "Fixing ownership of public directory files..."
+run_command "sudo chown -R \$USER:\$USER public/" "Resetting ownership of public directory to current user"
+log_success "Public directory file ownership fixed"
+
 # Make sure we have the public directory 
 run_command "mkdir -p public" "Ensuring public directory exists"
 
