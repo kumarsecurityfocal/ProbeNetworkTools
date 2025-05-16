@@ -1,148 +1,119 @@
 #!/bin/bash
 
-# ProbeOps Fix Database Connection Script
-# This script helps fix database connection issues in Docker deployment
-
-# Text formatting
-RED='\033[0;31m'
+# Colors for terminal output
 GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Helper function for logging
-log_success() {
-    echo -e "${GREEN}✅ $1${NC}"
-}
+echo -e "${GREEN}ProbeOps Database Connection Fixer${NC}"
+echo -e "This script updates your database connection settings to work correctly in both local and Docker environments."
 
-log_warning() {
-    echo -e "${YELLOW}⚠️ $1${NC}"
-}
+# Check if .env.backend exists
+if [ -f "backend/.env.backend" ]; then
+    echo -e "${YELLOW}Backing up existing backend/.env.backend to backend/.env.backend.bak${NC}"
+    cp backend/.env.backend backend/.env.backend.bak
+else
+    echo -e "${YELLOW}No existing backend/.env.backend found${NC}"
+fi
 
-log_error() {
-    echo -e "${RED}❌ $1${NC}"
-}
+# Ask about environment
+echo
+echo -e "${GREEN}Select your deployment environment:${NC}"
+echo "1) AWS RDS (production/staging)"
+echo "2) Local Docker PostgreSQL"
+echo -n "Enter choice [1-2]: "
+read env_choice
 
-log_info() {
-    echo -e "ℹ️ $1"
-}
+if [ "$env_choice" == "1" ]; then
+    # AWS RDS settings
+    echo
+    echo -e "${GREEN}Enter your AWS RDS connection details:${NC}"
+    
+    echo -n "RDS Hostname (e.g. mydb.abc123xyz.us-east-1.rds.amazonaws.com): "
+    read rds_host
+    
+    echo -n "RDS Port (usually 5432): "
+    read rds_port
+    
+    echo -n "RDS Database name: "
+    read rds_dbname
+    
+    echo -n "RDS Username: "
+    read rds_user
+    
+    echo -n "RDS Password: "
+    read -s rds_password
+    echo # Add a newline after password entry
+    
+    # Generate the connection string
+    DB_URL="postgresql+psycopg2://${rds_user}:${rds_password}@${rds_host}:${rds_port}/${rds_dbname}"
+    
+    # Create new .env.backend file
+    cat > backend/.env.backend <<EOF
+# Database connection
+# AWS RDS Connection - Updated by fix-database-connection.sh
+DATABASE_URL=${DB_URL}
 
-echo "==== ProbeOps Database Connection Fix ===="
-echo "This script will help fix PostgreSQL connection issues in Docker deployment."
-echo ""
+# JWT Authentication
+SECRET_KEY=${SECRET_KEY:-your-secret-key-here}
+ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
 
-# Make sure we're in the project root
-if [ ! -f "docker-compose.yml" ]; then
-    log_error "This script must be run from the project root directory."
+# CORS Settings
+CORS_ORIGINS=${CORS_ORIGINS:-http://localhost,http://localhost:3000,http://127.0.0.1,http://frontend,https://probeops.com,https://www.probeops.com}
+
+# Diagnostic tool settings
+PROBE_TIMEOUT=${PROBE_TIMEOUT:-5}
+EOF
+
+    echo -e "${GREEN}Successfully updated backend/.env.backend with AWS RDS settings${NC}"
+    
+elif [ "$env_choice" == "2" ]; then
+    # Local PostgreSQL settings
+    cat > backend/.env.backend <<EOF
+# Database connection
+# Local Docker PostgreSQL - Updated by fix-database-connection.sh
+DATABASE_URL=postgresql+psycopg2://postgres:postgres@db:5432/probeops
+
+# JWT Authentication
+SECRET_KEY=${SECRET_KEY:-your-secret-key-here}
+ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+
+# CORS Settings
+CORS_ORIGINS=${CORS_ORIGINS:-http://localhost,http://localhost:3000,http://127.0.0.1,http://frontend,https://probeops.com,https://www.probeops.com}
+
+# Diagnostic tool settings
+PROBE_TIMEOUT=${PROBE_TIMEOUT:-5}
+EOF
+
+    echo -e "${GREEN}Successfully updated backend/.env.backend with local Docker PostgreSQL settings${NC}"
+    echo "Make sure the PostgreSQL service is uncommented in your docker-compose.yml file"
+    
+else
+    echo -e "${RED}Invalid choice. Exiting.${NC}"
     exit 1
 fi
 
-# Step 1: Check environment variables
-log_info "Step 1: Checking PostgreSQL environment variables..."
-if [ -z "$DATABASE_URL" ]; then
-    log_warning "DATABASE_URL environment variable is not set."
-    if [ -n "$PGDATABASE" ] && [ -n "$PGUSER" ] && [ -n "$PGPASSWORD" ] && [ -n "$PGHOST" ] && [ -n "$PGPORT" ]; then
-        log_info "Building DATABASE_URL from individual PostgreSQL variables..."
-        export DATABASE_URL="postgresql+psycopg2://${PGUSER}:${PGPASSWORD}@${PGHOST}:${PGPORT}/${PGDATABASE}"
-        log_success "Generated DATABASE_URL: ${DATABASE_URL}"
-    else
-        log_error "Missing PostgreSQL environment variables. Please make sure the Replit database is properly set up."
-        exit 1
-    fi
-else
-    log_success "DATABASE_URL is set: ${DATABASE_URL}"
-fi
-
-# Step 2: Update .env file with current DATABASE_URL
-log_info "Step 2: Updating .env files with correct DATABASE_URL..."
-
-# Create or update .env file
-if [ -f ".env" ]; then
-    # Check if DATABASE_URL already exists in .env
-    if grep -q "DATABASE_URL=" .env; then
-        log_info "Updating existing DATABASE_URL in .env"
-        sed -i "s|DATABASE_URL=.*|DATABASE_URL=${DATABASE_URL}|g" .env
-    else
-        log_info "Adding DATABASE_URL to .env"
-        echo "DATABASE_URL=${DATABASE_URL}" >> .env
-    fi
-else
-    log_info "Creating new .env file with DATABASE_URL"
-    echo "# ProbeOps Environment Variables" > .env
-    echo "DATABASE_URL=${DATABASE_URL}" >> .env
-fi
-log_success "Updated .env file with correct DATABASE_URL"
-
-# Step 3: Update backend/.env.backend file with current DATABASE_URL
-if [ -f "backend/.env.backend" ]; then
-    # Check if DATABASE_URL already exists in backend/.env.backend
-    if grep -q "DATABASE_URL=" backend/.env.backend; then
-        log_info "Updating existing DATABASE_URL in backend/.env.backend"
-        sed -i "s|DATABASE_URL=.*|DATABASE_URL=${DATABASE_URL}|g" backend/.env.backend
-    else
-        log_info "Adding DATABASE_URL to backend/.env.backend"
-        echo "DATABASE_URL=${DATABASE_URL}" >> backend/.env.backend
-    fi
-    log_success "Updated backend/.env.backend with correct DATABASE_URL"
-else
-    log_warning "backend/.env.backend file not found. Creating it..."
-    mkdir -p backend
-    echo "# Database connection" > backend/.env.backend
-    echo "DATABASE_URL=${DATABASE_URL}" >> backend/.env.backend
-    log_success "Created backend/.env.backend with DATABASE_URL"
-fi
-
-# Step 4: Check if PostgreSQL client is installed
-log_info "Step 4: Checking if PostgreSQL client is installed..."
-if ! command -v psql &> /dev/null; then
-    log_warning "PostgreSQL client not installed. This might be useful for debugging."
-else
-    log_success "PostgreSQL client is installed"
+# Update docker-compose.yml to include db dependency
+if [ "$env_choice" == "2" ] && grep -q "# Database service" docker-compose.yml; then
+    echo -e "${YELLOW}Ensuring the database service is enabled in docker-compose.yml...${NC}"
     
-    # Extract connection details from DATABASE_URL
-    log_info "Testing database connection with psql..."
-    DB_HOST=$(echo $DATABASE_URL | sed -n 's/.*@\([^:]*\).*/\1/p')
-    DB_PORT=$(echo $DATABASE_URL | sed -n 's/.*:\([0-9]*\)\/.*/\1/p')
-    DB_NAME=$(echo $DATABASE_URL | sed -n 's/.*\/\([^?]*\).*/\1/p')
-    DB_USER=$(echo $DATABASE_URL | sed -n 's/.*:\/\/\([^:]*\):.*/\1/p')
+    # Check if db service is commented out and uncomment it
+    sed -i 's/# \+db:/  db:/g' docker-compose.yml
     
-    log_info "Connection details extracted:"
-    log_info "Host: $DB_HOST, Port: $DB_PORT, Database: $DB_NAME, User: $DB_USER"
-    
-    # Test connection
-    export PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p')
-    if psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -c "\l" &> /dev/null; then
-        log_success "Successfully connected to PostgreSQL database!"
-    else
-        log_error "Failed to connect to PostgreSQL database. Please check your credentials."
+    # Make sure backend depends on db
+    if ! grep -q "depends_on:" docker-compose.yml || ! grep -A3 "depends_on:" docker-compose.yml | grep -q "db"; then
+        echo -e "${YELLOW}Adding database dependency to backend service...${NC}"
+        sed -i '/backend:/,/command:/ s/networks:.*/networks:\n      - probeops-network\n    depends_on:\n      - db/g' docker-compose.yml
     fi
+    
+    echo -e "${GREEN}Docker Compose configuration updated${NC}"
 fi
 
-# Step 5: Update docker-compose.yml to ensure correct DATABASE_URL
-log_info "Step 5: Checking docker-compose.yml configuration..."
-if grep -q "DATABASE_URL=postgresql+psycopg2://postgres:postgres@localhost:5432/probeops" docker-compose.yml; then
-    log_warning "Found hardcoded database connection string in docker-compose.yml. Fixing..."
-    sed -i "s|DATABASE_URL=postgresql+psycopg2://postgres:postgres@localhost:5432/probeops|DATABASE_URL=\${DATABASE_URL}|g" docker-compose.yml
-    log_success "Updated docker-compose.yml to use DATABASE_URL environment variable"
-fi
-
-# Step 6: Restart docker containers if they're running
-log_info "Step 6: Restarting Docker containers to apply changes..."
-if docker ps | grep -q "probeops-backend"; then
-    log_info "Stopping and restarting Docker containers..."
-    docker compose down
-    docker compose up -d --build
-    log_success "Docker containers restarted with new database configuration"
-else
-    log_warning "Docker containers are not running. No restart needed."
-    log_info "To start containers with the new configuration, run: docker compose up -d"
-fi
-
-echo ""
-echo "==== Database Connection Fix Complete ===="
-echo "Your database connection has been updated with the correct connection string."
-echo "If problems persist, consider these troubleshooting steps:"
-echo "1. Check if the database server is accessible from this machine"
-echo "2. Verify database user credentials and permissions"
-echo "3. Check if the database exists and the user has access"
-echo "4. Check the Docker logs for any errors: docker compose logs backend"
-echo ""
+echo
+echo -e "${GREEN}Database connection setup complete!${NC}"
+echo -e "Next steps:"
+echo "1. If using local development, run: docker-compose up -d"
+echo "2. If using AWS RDS, make sure your security groups allow connections from your server"
+echo
+echo -e "${YELLOW}Your original configuration has been backed up to backend/.env.backend.bak${NC}"
