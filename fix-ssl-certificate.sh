@@ -153,7 +153,8 @@ issue_certificate() {
     fi
     
     # Build the command with proper domain arguments and preferred chain for Windows compatibility
-    CERTBOT_CMD="docker run --rm -v $(pwd)/nginx/ssl:/etc/letsencrypt -v $(pwd)/nginx/ssl/webroot:/var/www/certbot -p 80:80 certbot/certbot certonly --standalone --preferred-chain \"ISRG Root X1\" --preferred-challenges http --email $EMAIL --agree-tos --no-eff-email --verbose $FORCE_FLAG ${DOMAINS[*]}"
+    # Using explicit version v2.10.0 for better support of preferred chain feature
+    CERTBOT_CMD="docker run --rm -v $(pwd)/nginx/ssl:/etc/letsencrypt -v $(pwd)/nginx/ssl/webroot:/var/www/certbot -p 80:80 certbot/certbot:v2.10.0 certonly --standalone --preferred-chain \"ISRG Root X1\" --preferred-challenges http --email $EMAIL --agree-tos --no-eff-email --verbose $FORCE_FLAG ${DOMAINS[*]}"
     
     # Execute the command with proper domain array handling
     execute_and_log "$CERTBOT_CMD" "Issuing certificate with Certbot"
@@ -167,6 +168,24 @@ issue_certificate() {
     if [ $CERT_SUCCESS -eq 0 ]; then
         log_message "✅ Certificate issuance successful"
         echo "Certificate issuance completed successfully."
+        
+        # Verify the certificate chain is correct (should be ISRG Root X1 / R3)
+        echo "Verifying certificate chain..."
+        if [ -f "./nginx/ssl/live/probeops.com/fullchain.pem" ]; then
+            ISSUER=$(openssl x509 -in ./nginx/ssl/live/probeops.com/fullchain.pem -issuer -noout | grep "Issuer")
+            echo "$ISSUER"
+            
+            if [[ "$ISSUER" == *"CN = R3"* || "$ISSUER" == *"ISRG Root X1"* ]]; then
+                log_message "✅ Certificate chain verified - using trusted ISRG Root X1/R3 chain"
+                echo "✅ Certificate chain verified - using trusted ISRG Root X1/R3 chain"
+            else
+                log_message "⚠️ Certificate using a different chain: $ISSUER"
+                echo "⚠️ Note: Certificate is using a different chain than requested."
+                echo "   This may cause issues with some Windows clients."
+                echo "   Chain detected: $ISSUER"
+            fi
+        fi
+        
         echo "You can now use the certificates in your NGINX configuration."
     else
         log_message "❌ Certificate issuance failed"
