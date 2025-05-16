@@ -152,8 +152,8 @@ issue_certificate() {
         FORCE_FLAG=""
     fi
     
-    # Build the command with proper domain arguments
-    CERTBOT_CMD="docker run --rm -v $(pwd)/nginx/ssl:/etc/letsencrypt -v $(pwd)/nginx/ssl/webroot:/var/www/certbot -p 80:80 certbot/certbot certonly --standalone --preferred-challenges http --email $EMAIL --agree-tos --no-eff-email --verbose $FORCE_FLAG ${DOMAINS[*]}"
+    # Build the command with proper domain arguments and preferred chain for Windows compatibility
+    CERTBOT_CMD="docker run --rm -v $(pwd)/nginx/ssl:/etc/letsencrypt -v $(pwd)/nginx/ssl/webroot:/var/www/certbot -p 80:80 certbot/certbot certonly --standalone --preferred-chain \"ISRG Root X1\" --preferred-challenges http --email $EMAIL --agree-tos --no-eff-email --verbose $FORCE_FLAG ${DOMAINS[*]}"
     
     # Execute the command with proper domain array handling
     execute_and_log "$CERTBOT_CMD" "Issuing certificate with Certbot"
