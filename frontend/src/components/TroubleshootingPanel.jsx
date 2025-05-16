@@ -39,8 +39,10 @@ import {
   Storage as StorageIcon,
   Api as ApiIcon,
   Router as RouterIcon,
-  CloudSync as CloudSyncIcon
+  CloudSync as CloudSyncIcon,
+  Database as DatabaseIcon
 } from '@mui/icons-material';
+import DatabaseExplorer from './DatabaseExplorer';
 import { executeSystemCommand, getConfigurationSettings, updateConfigurationSettings, 
          getLogs, clearLogs, getSystemStatus, getApiEndpointStatus, 
          runDiagnosticTest } from '../services/troubleshooting';
@@ -274,6 +276,7 @@ const TroubleshootingPanel = () => {
           <Tab label="Logs" icon={<SettingsIcon />} iconPosition="start" />
           <Tab label="Configuration" icon={<ApiIcon />} iconPosition="start" />
           <Tab label="API Diagnostics" icon={<RouterIcon />} iconPosition="start" />
+          <Tab label="Database" icon={<DatabaseIcon />} iconPosition="start" />
         </Tabs>
       </Paper>
       
@@ -732,6 +735,20 @@ const TroubleshootingPanel = () => {
               </Box>
             </Grid>
           </Grid>
+        </Paper>
+      )}
+      
+      {/* Database Explorer Tab */}
+      {activeTab === 4 && (
+        <Paper sx={{ p: 3 }}>
+          <Box sx={{ mb: 2 }}>
+            <Alert severity="info" sx={{ mb: 2 }}>
+              This interface provides read-only access to the database for troubleshooting purposes.
+              All queries are logged and subject to resource limitations.
+            </Alert>
+            
+            <DatabaseExplorer />
+          </Box>
         </Paper>
       )}
       
