@@ -150,6 +150,9 @@ const AdminPanel = () => {
   });
 
   // Check if user is admin
+  // Add navigate for redirects
+  const navigate = useNavigate();
+  
   useEffect(() => {
     console.log("DEBUG ADMIN: AdminPanel component mounted");
     console.log("DEBUG ADMIN: Current user:", currentLoggedInUser);
@@ -157,13 +160,18 @@ const AdminPanel = () => {
     if (!currentLoggedInUser) {
       console.log("DEBUG ADMIN: No user is logged in or user data not loaded yet");
       setError('No user detected. Please log in again.');
+      // Don't redirect yet, wait for auth to complete
     } else if (!currentLoggedInUser.is_admin) {
       console.log(`DEBUG ADMIN: User ${currentLoggedInUser.username} is not an admin (is_admin=${currentLoggedInUser.is_admin})`);
       setError('Access denied. Admin privileges required.');
+      // Redirect non-admin users to dashboard
+      navigate('/dashboard', { replace: true });
     } else {
       console.log(`DEBUG ADMIN: User ${currentLoggedInUser.username} has admin privileges`);
+      // User is admin, access granted
+      console.log("DEBUG ADMIN: Loading admin panel data for admin user");
     }
-  }, [currentLoggedInUser]);
+  }, [currentLoggedInUser, navigate]);
 
   // Load subscription data - simplified to ensure UI always loads even if data is loading
   useEffect(() => {

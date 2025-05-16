@@ -88,8 +88,8 @@ export const AuthProvider = ({ children }) => {
           
           // If the admin flag is missing, let's ensure it doesn't break the admin panel
           // This helps if the backend is omitting the field but the user is an admin
-          if (username === 'admin') {
-            console.log("DEBUG AUTH CONTEXT: Username is 'admin', assuming admin privileges");
+          if (username === 'admin' || username === 'admin@probeops.com') {
+            console.log("DEBUG AUTH CONTEXT: Username is admin account, assuming admin privileges");
             user.is_admin = true;
           }
         }
