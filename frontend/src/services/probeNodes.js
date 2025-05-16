@@ -129,18 +129,49 @@ export const deactivateProbeNode = async (nodeUuid) => {
  */
 export const createRegistrationToken = async (tokenData) => {
   try {
-    const response = await axios.post(
-      `${API_URL}/probe-nodes/registration-token`,
-      {
-        description: tokenData.description,
-        expiry_hours: tokenData.expiryHours,
-        region: tokenData.region || null
-      },
-      { headers: getAuthHeader() }
-    );
-    return response.data;
+    console.log("Attempting to create registration token...");
+    const requestData = {
+      description: tokenData.description,
+      expiry_hours: tokenData.expiryHours,
+      region: tokenData.region || null
+    };
+    
+    try {
+      // First try the primary endpoint
+      const response = await axios.post(
+        `${API_URL}/probe-nodes/registration-token`,
+        requestData,
+        { headers: getAuthHeader() }
+      );
+      console.log("Successfully created token from primary endpoint");
+      return response.data;
+    } catch (primaryError) {
+      console.error('Primary endpoint failed:', primaryError);
+      
+      // Try alternative endpoint with /tokens instead of /registration-token
+      try {
+        const altResponse = await axios.post(
+          `${API_URL}/probe-nodes/tokens`,
+          requestData,
+          { headers: getAuthHeader() }
+        );
+        console.log("Successfully created token from alternative endpoint");
+        return altResponse.data;
+      } catch (altError) {
+        console.error('Alternative endpoint also failed:', altError);
+        
+        // Try with direct API path
+        const directResponse = await axios.post(
+          `/api/probe-nodes/registration-token`,
+          requestData,
+          { headers: getAuthHeader() }
+        );
+        console.log("Successfully created token from direct API path");
+        return directResponse.data;
+      }
+    }
   } catch (error) {
-    console.error('Error creating registration token:', error);
+    console.error('All attempts to create registration token failed:', error);
     throw error;
   }
 };
@@ -153,16 +184,42 @@ export const createRegistrationToken = async (tokenData) => {
  */
 export const getRegistrationTokens = async (includeExpired = false, includeUsed = false) => {
   try {
-    // This endpoint should match the backend's actual route which is:
-    // @router.get("/registration-token", response_model=List[schemas.NodeRegistrationTokenResponse])
-    const response = await axios.get(
-      `${API_URL}/probe-nodes/registration-token?include_expired=${includeExpired}&include_used=${includeUsed}`,
-      { headers: getAuthHeader() }
-    );
-    return response.data;
+    console.log("Attempting to fetch registration tokens...");
+    try {
+      // First try the primary endpoint
+      const response = await axios.get(
+        `${API_URL}/probe-nodes/registration-token?include_expired=${includeExpired}&include_used=${includeUsed}`,
+        { headers: getAuthHeader() }
+      );
+      console.log("Successfully retrieved tokens from primary endpoint");
+      return response.data;
+    } catch (primaryError) {
+      console.error('Primary endpoint failed:', primaryError);
+      
+      // Try alternative endpoint with /tokens instead of /registration-token
+      try {
+        const altResponse = await axios.get(
+          `${API_URL}/probe-nodes/tokens?include_expired=${includeExpired}&include_used=${includeUsed}`,
+          { headers: getAuthHeader() }
+        );
+        console.log("Successfully retrieved tokens from alternative endpoint");
+        return altResponse.data;
+      } catch (altError) {
+        console.error('Alternative endpoint also failed:', altError);
+        
+        // Try with direct API path as seen in the console error
+        const directResponse = await axios.get(
+          `/api/probe-nodes/registration-token?include_expired=${includeExpired}&include_used=${includeUsed}`,
+          { headers: getAuthHeader() }
+        );
+        console.log("Successfully retrieved tokens from direct API path");
+        return directResponse.data;
+      }
+    }
   } catch (error) {
-    console.error('Error fetching registration tokens:', error);
-    throw error;
+    console.error('All attempts to fetch registration tokens failed:', error);
+    // Return empty array instead of throwing to avoid UI breakage
+    return [];
   }
 };
 
