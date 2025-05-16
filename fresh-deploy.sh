@@ -200,6 +200,9 @@ log_success "All shell scripts are now executable"
 # Step 4: Fresh Environment Setup
 log_info "Step 4: Setting up fresh environment configuration..."
 
+# Flag to track template changes
+TEMPLATE_CHANGES=false
+
 # Create environment files from templates
 if [ -f ".env.template" ]; then
     # Check if environment file already exists
@@ -208,8 +211,27 @@ if [ -f ".env.template" ]; then
         
         # Check if we should use the environment file from home directory
         if [ -f "/home/ubuntu/environment/.env" ]; then
-            log_info "Using existing .env from /home/ubuntu/environment directory..."
-            run_command "cp /home/ubuntu/environment/.env .env" "Copying .env from /home/ubuntu/environment"
+            # Check if template has been modified by comparing with a reference copy
+            if [ -f "/home/ubuntu/environment/.env.template.ref" ]; then
+                if ! cmp -s ".env.template" "/home/ubuntu/environment/.env.template.ref"; then
+                    log_warning "🔄 Main .env.template has changed since last deployment!"
+                    TEMPLATE_CHANGES=true
+                    # Create a backup of modified template
+                    run_command "cp .env.template /home/ubuntu/environment/.env.template.new" "Backing up modified .env.template"
+                    # Use the template since it has changed
+                    run_command "cp .env.template .env" "Creating .env from modified template"
+                else
+                    log_info "Template unchanged. Using existing .env from /home/ubuntu/environment directory..."
+                    run_command "cp /home/ubuntu/environment/.env .env" "Copying .env from /home/ubuntu/environment"
+                fi
+            else
+                # First time run - save a reference copy of the template
+                log_info "Saving reference copy of .env.template..."
+                run_command "cp .env.template /home/ubuntu/environment/.env.template.ref" "Creating reference copy of .env.template"
+                # Use environment file since we don't have a reference to compare
+                log_info "Using existing .env from /home/ubuntu/environment directory..."
+                run_command "cp /home/ubuntu/environment/.env .env" "Copying .env from /home/ubuntu/environment"
+            fi
         else
             # Use template as fallback if no existing file is found
             run_command "cp .env.template .env" "Creating .env from template"
@@ -243,8 +265,27 @@ if [ -f "backend/.env.backend.template" ]; then
         
         # Check if we should use the environment file from home directory
         if [ -f "/home/ubuntu/environment/.env.backend" ]; then
-            log_info "Using existing .env.backend from /home/ubuntu/environment directory..."
-            run_command "cp /home/ubuntu/environment/.env.backend backend/.env.backend" "Copying .env.backend from /home/ubuntu/environment"
+            # Check if backend template has been modified by comparing with reference copy
+            if [ -f "/home/ubuntu/environment/.env.backend.template.ref" ]; then
+                if ! cmp -s "backend/.env.backend.template" "/home/ubuntu/environment/.env.backend.template.ref"; then
+                    log_warning "🔄 Backend .env.backend.template has changed since last deployment!"
+                    TEMPLATE_CHANGES=true
+                    # Create a backup of modified template
+                    run_command "cp backend/.env.backend.template /home/ubuntu/environment/.env.backend.template.new" "Backing up modified backend/.env.backend.template"
+                    # Use the template since it has changed
+                    run_command "cp backend/.env.backend.template backend/.env.backend" "Creating backend/.env.backend from modified template"
+                else
+                    log_info "Backend template unchanged. Using existing .env.backend from /home/ubuntu/environment directory..."
+                    run_command "cp /home/ubuntu/environment/.env.backend backend/.env.backend" "Copying .env.backend from /home/ubuntu/environment"
+                fi
+            else
+                # First time run - save a reference copy of the backend template
+                log_info "Saving reference copy of backend/.env.backend.template..."
+                run_command "cp backend/.env.backend.template /home/ubuntu/environment/.env.backend.template.ref" "Creating reference copy of backend/.env.backend.template"
+                # Use environment file since we don't have a reference to compare
+                log_info "Using existing .env.backend from /home/ubuntu/environment directory..."
+                run_command "cp /home/ubuntu/environment/.env.backend backend/.env.backend" "Copying .env.backend from /home/ubuntu/environment"
+            fi
         else
             # Use template as fallback if no existing file is found
             run_command "cp backend/.env.backend.template backend/.env.backend" "Creating backend/.env.backend from template"
@@ -536,6 +577,24 @@ echo "Log files:" | tee -a "$LOG_FILE"
 echo "1. Main deployment log: $LOG_FILE" | tee -a "$LOG_FILE"
 echo "2. Container logs directory: $LOG_DIR/" | tee -a "$LOG_FILE"
 echo "3. Container warnings and errors: $warnings_file" | tee -a "$LOG_FILE"
+
+# Final check for template changes
+if [ "$TEMPLATE_CHANGES" = true ]; then
+    echo ""
+    echo -e "${YELLOW}⚠️  IMPORTANT: Template files have changed since the last deployment!${NC}"
+    echo -e "${YELLOW}   Check the following files for any new required values:${NC}"
+    
+    if [ -f "/home/ubuntu/environment/.env.template.new" ]; then
+        echo -e "${YELLOW}   - .env.template (Backup saved to /home/ubuntu/environment/.env.template.new)${NC}"
+    fi
+    
+    if [ -f "/home/ubuntu/environment/.env.backend.template.new" ]; then
+        echo -e "${YELLOW}   - backend/.env.backend.template (Backup saved to /home/ubuntu/environment/.env.backend.template.new)${NC}"
+    fi
+    
+    echo -e "${YELLOW}   You may need to modify your environment files to include new configuration values.${NC}"
+    echo ""
+fi
 
 log_success "Deployment completed successfully. Use the following URLs to access the application:"
 echo "https://probeops.com"
