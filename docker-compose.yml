@@ -23,8 +23,6 @@ services:
       - backend-data:/app/data
     networks:
       - probeops-network
-    depends_on:
-      - db
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -99,25 +97,6 @@ services:
   # For production with AWS RDS, comment out this entire service block
   # and set DATABASE_URL in your environment variables or secrets panel
   # Example for AWS RDS: DATABASE_URL=postgresql+psycopg2://username:password@your-rds-endpoint.region.rds.amazonaws.com:5432/dbname
-  db:
-    image: postgres:15
-    container_name: probeops-postgres
-    restart: always
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=probeops
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    networks:
-      - probeops-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
 networks:
   probeops-network:
@@ -126,4 +105,3 @@ networks:
 volumes:
   backend-data:
   frontend-build:
-  postgres-data:
