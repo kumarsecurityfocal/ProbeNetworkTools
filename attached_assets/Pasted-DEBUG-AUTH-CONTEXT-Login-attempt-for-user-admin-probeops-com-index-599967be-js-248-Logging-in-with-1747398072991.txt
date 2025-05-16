@@ -1,0 +1,190 @@
+DEBUG AUTH CONTEXT: Login attempt for user: admin@probeops.com
+index-599967be.js:248 Logging in with admin@probeops.com
+index-599967be.js:248 DEBUG AUTH: Starting authentication process
+index-599967be.js:248 DEBUG AUTH: Trying to authenticate with endpoint: /auth/login
+index-599967be.js:245 
+            
+            
+           POST https://probeops.com/auth/login 405 (Not Allowed)
+(anonymous) @ index-599967be.js:245
+xhr @ index-599967be.js:245
+I0 @ index-599967be.js:247
+Promise.then
+_request @ index-599967be.js:248
+request @ index-599967be.js:247
+(anonymous) @ index-599967be.js:248
+(anonymous) @ index-599967be.js:243
+H7 @ index-599967be.js:248
+cW @ index-599967be.js:253
+login @ index-599967be.js:253
+g @ index-599967be.js:253
+uP @ index-599967be.js:37
+pP @ index-599967be.js:37
+fP @ index-599967be.js:37
+Wv @ index-599967be.js:37
+x2 @ index-599967be.js:37
+(anonymous) @ index-599967be.js:37
+Zm @ index-599967be.js:40
+Bb @ index-599967be.js:37
+Kp @ index-599967be.js:37
+Rm @ index-599967be.js:37
+$P @ index-599967be.js:37Understand this error
+index-599967be.js:248 DEBUG AUTH: Endpoint /auth/login failed: Request failed with status code 405
+index-599967be.js:248 DEBUG AUTH: Status: 405, Data: <html>
+<head><title>405 Not Allowed</title></head>
+<body>
+<center><h1>405 Not Allowed</h1></center>
+<hr><center>nginx/1.27.5</center>
+</body>
+</html>
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+
+index-599967be.js:248 DEBUG AUTH: Trying to authenticate with endpoint: /auth/token
+index-599967be.js:245 
+            
+            
+           POST https://probeops.com/auth/token 405 (Not Allowed)
+(anonymous) @ index-599967be.js:245
+xhr @ index-599967be.js:245
+I0 @ index-599967be.js:247
+Promise.then
+_request @ index-599967be.js:248
+request @ index-599967be.js:247
+(anonymous) @ index-599967be.js:248
+(anonymous) @ index-599967be.js:243
+H7 @ index-599967be.js:248
+await in H7
+cW @ index-599967be.js:253
+login @ index-599967be.js:253
+g @ index-599967be.js:253
+uP @ index-599967be.js:37
+pP @ index-599967be.js:37
+fP @ index-599967be.js:37
+Wv @ index-599967be.js:37
+x2 @ index-599967be.js:37
+(anonymous) @ index-599967be.js:37
+Zm @ index-599967be.js:40
+Bb @ index-599967be.js:37
+Kp @ index-599967be.js:37
+Rm @ index-599967be.js:37
+$P @ index-599967be.js:37Understand this error
+index-599967be.js:248 DEBUG AUTH: Endpoint /auth/token failed: Request failed with status code 405
+index-599967be.js:248 DEBUG AUTH: Status: 405, Data: <html>
+<head><title>405 Not Allowed</title></head>
+<body>
+<center><h1>405 Not Allowed</h1></center>
+<hr><center>nginx/1.27.5</center>
+</body>
+</html>
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+
+index-599967be.js:248 DEBUG AUTH: Trying to authenticate with endpoint: /login
+index-599967be.js:248 DEBUG AUTH: Login successful with endpoint /login
+index-599967be.js:248 DEBUG AUTH: Response data: {access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZ…3NjF9.heCPkRrQCj4ie4CZQNonudSq0OXEKaU1unjIbTSIMks', token_type: 'bearer'}
+index-599967be.js:248 DEBUG AUTH: Token received (starts with: eyJhbGciOi...)
+index-599967be.js:248 Fetching user profile...
+index-599967be.js:248 User profile response: <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ProbeOps - Network Operations Platform</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+    />
+    <script type="module" crossorigin src="/assets/index-599967be.js"></script>
+    <link rel="stylesheet" href="/assets/index-423914fd.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    
+  </body>
+</html>
+
+index-599967be.js:253 DEBUG AUTH CONTEXT: Login successful, user data: <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ProbeOps - Network Operations Platform</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+    />
+    <script type="module" crossorigin src="/assets/index-599967be.js"></script>
+    <link rel="stylesheet" href="/assets/index-423914fd.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    
+  </body>
+</html>
+
+index-599967be.js:253 DEBUG AUTH CONTEXT: User admin status: undefined
+index-599967be.js:253 DEBUG AUTH CONTEXT: Warning - is_admin flag is missing from user data!
+login @ index-599967be.js:253
+await in login
+g @ index-599967be.js:253
+uP @ index-599967be.js:37
+pP @ index-599967be.js:37
+fP @ index-599967be.js:37
+Wv @ index-599967be.js:37
+x2 @ index-599967be.js:37
+(anonymous) @ index-599967be.js:37
+Zm @ index-599967be.js:40
+Bb @ index-599967be.js:37
+Kp @ index-599967be.js:37
+Rm @ index-599967be.js:37
+$P @ index-599967be.js:37Understand this warning
+index-599967be.js:261 Footer - isAuthenticated: true
+index-599967be.js:253 Fetching diagnostic history with params: {limit: 5}
+index-599967be.js:253 History response: {data: '<!DOCTYPE html>\n<html lang="en">\n  <head>\n    <met…    <div id="root"></div>\n    \n  </body>\n</html>\n', status: 200, statusText: 'OK', headers: Cp, config: {…}, …}
+index-599967be.js:248 DEBUG AUTH: Attempting to fetch user profile after login
+index-599967be.js:248 DEBUG AUTH: User profile fetch successful: <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ProbeOps - Network Operations Platform</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+    />
+    <script type="module" crossorigin src="/assets/index-599967be.js"></script>
+    <link rel="stylesheet" href="/assets/index-423914fd.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    
+  </body>
+</html>
+
+index-599967be.js:248 DEBUG AUTH: Is admin: undefined
+index-599967be.js:253 Calculating dashboard metrics directly
+index-599967be.js:253 Calculated dashboard metrics: {diagnostic_count: 0, api_key_count: 0, scheduled_probe_count: 0, success_rate: 0, avg_response_time: 0}
