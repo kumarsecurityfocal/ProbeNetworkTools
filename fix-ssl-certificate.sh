@@ -160,7 +160,7 @@ issue_certificate() {
       -v $(pwd)/nginx/ssl/webroot:/var/www/certbot \
       -p 80:80 certbot/certbot:v2.10.0 certonly \
       --standalone \
-      --preferred-chain ISRG Root X1 \
+      --preferred-chain="ISRG Root X1" \
       --preferred-challenges http \
       --email $EMAIL \
       --agree-tos \
