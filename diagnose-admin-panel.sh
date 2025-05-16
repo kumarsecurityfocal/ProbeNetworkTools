@@ -1,206 +1,79 @@
 #!/bin/bash
-# ProbeOps Admin Panel Diagnostic Script
-# This script tests API endpoints and authentication to diagnose admin panel issues
+# Script to add debugging to the frontend AuthContext component
 
-echo "==== ProbeOps Admin Panel Diagnostic Tool ===="
-echo "This script will help diagnose why the admin panel isn't visible."
-echo
+echo "ProbeOps Frontend Authentication Debugging Script"
+echo "================================================="
 
-# Set defaults
-ADMIN_USERNAME="admin"
-ADMIN_PASSWORD="admin123"
-API_BASE_URL="https://probeops.com"
+# Define colors for output
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
 
-# Ask for configuration
-read -p "Enter admin username [admin]: " input_username
-ADMIN_USERNAME=${input_username:-$ADMIN_USERNAME}
+# Check if we're running as root (required to modify files)
+if [ "$EUID" -ne 0 ]; then
+  echo -e "${YELLOW}This script should be run as root. Attempting to use sudo for necessary commands.${NC}"
+fi
 
-read -sp "Enter admin password [hidden]: " input_password
-echo
-ADMIN_PASSWORD=${input_password:-$ADMIN_PASSWORD}
+FRONTEND_DIR="/home/ubuntu/ProbeNetworkTools/frontend"
+AUTH_CONTEXT_PATH="$FRONTEND_DIR/src/context/AuthContext.jsx"
+API_SERVICE_PATH="$FRONTEND_DIR/src/services/api.js"
 
-read -p "Enter API base URL [https://probeops.com]: " input_url
-API_BASE_URL=${input_url:-$API_BASE_URL}
+# Create backups
+TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+BACKUP_DIR="/home/ubuntu/debug-backups"
 
-echo
-echo "Testing connection to $API_BASE_URL..."
+if [ ! -d "$BACKUP_DIR" ]; then
+  echo "Creating backup directory at $BACKUP_DIR"
+  sudo mkdir -p "$BACKUP_DIR"
+fi
 
-# Create log file
-LOG_FILE="admin-panel-diagnostic-$(date +%Y%m%d-%H%M%S).log"
-echo "ProbeOps Admin Panel Diagnostic Results" > $LOG_FILE
-echo "Date: $(date)" >> $LOG_FILE
-echo "API URL: $API_BASE_URL" >> $LOG_FILE
-echo "Admin Username: $ADMIN_USERNAME" >> $LOG_FILE
-echo "----------------------------------------" >> $LOG_FILE
-
-# Function to log API responses
-log_response() {
-    local endpoint=$1
-    local http_code=$2
-    local response=$3
-    
-    echo "Endpoint: $endpoint" >> $LOG_FILE
-    echo "HTTP Status: $http_code" >> $LOG_FILE
-    echo "Response:" >> $LOG_FILE
-    echo "$response" >> $LOG_FILE
-    echo "----------------------------------------" >> $LOG_FILE
-}
-
-# Test API health
-echo "1. Testing API health..."
-health_response=$(curl -s -o /dev/null -w "%{http_code}" "$API_BASE_URL/health")
-if [ "$health_response" = "200" ]; then
-    echo "✅ API health check successful"
-    echo "API Health: OK (200)" >> $LOG_FILE
+# Backup AuthContext
+if [ -f "$AUTH_CONTEXT_PATH" ]; then
+  echo "Backing up AuthContext.jsx..."
+  sudo cp "$AUTH_CONTEXT_PATH" "$BACKUP_DIR/AuthContext.jsx.backup-$TIMESTAMP"
+  echo -e "${GREEN}Backup created at $BACKUP_DIR/AuthContext.jsx.backup-$TIMESTAMP${NC}"
 else
-    echo "❌ API health check failed: $health_response"
-    echo "API Health: Failed ($health_response)" >> $LOG_FILE
+  echo -e "${RED}Error: AuthContext.jsx not found at $AUTH_CONTEXT_PATH${NC}"
+  exit 1
 fi
 
-# Try different auth endpoints
-echo
-echo "2. Testing authentication endpoints..."
-
-# Array of possible auth endpoints to try
-auth_endpoints=(
-    "/auth/login"
-    "/auth/token"
-    "/login"
-    "/token"
-)
-
-auth_success=false
-for endpoint in "${auth_endpoints[@]}"; do
-    echo "   Trying $endpoint..."
-    
-    # Create form data for login
-    auth_data="username=$ADMIN_USERNAME&password=$ADMIN_PASSWORD"
-    
-    # Try to authenticate
-    response=$(curl -s -w "\nHTTP_CODE:%{http_code}" \
-        -X POST "$API_BASE_URL$endpoint" \
-        -H "Content-Type: application/x-www-form-urlencoded" \
-        -d "$auth_data")
-    
-    # Extract HTTP code and body
-    http_code=$(echo "$response" | grep "HTTP_CODE:" | cut -d":" -f2)
-    body=$(echo "$response" | sed '/HTTP_CODE:/d')
-    
-    log_response "$endpoint" "$http_code" "$body"
-    
-    # Check if login was successful
-    if [ "$http_code" = "200" ]; then
-        echo "✅ Authentication successful via $endpoint"
-        auth_success=true
-        
-        # Extract token from response
-        access_token=$(echo $body | grep -o '"access_token":"[^"]*"' | cut -d'"' -f4)
-        if [ -n "$access_token" ]; then
-            echo "   Access token obtained"
-            break
-        else
-            echo "❌ No access token in response"
-        fi
-    else
-        echo "❌ Authentication failed via $endpoint: HTTP $http_code"
-    fi
-done
-
-if [ "$auth_success" = false ]; then
-    echo "❌ All authentication attempts failed"
-    echo "All authentication attempts failed" >> $LOG_FILE
-    echo
-    echo "Diagnostic log saved to: $LOG_FILE"
-    exit 1
+# Backup API service
+if [ -f "$API_SERVICE_PATH" ]; then
+  echo "Backing up api.js..."
+  sudo cp "$API_SERVICE_PATH" "$BACKUP_DIR/api.js.backup-$TIMESTAMP"
+  echo -e "${GREEN}Backup created at $BACKUP_DIR/api.js.backup-$TIMESTAMP${NC}"
+else
+  echo -e "${RED}Error: api.js not found at $API_SERVICE_PATH${NC}"
+  exit 1
 fi
 
-# Test user profile endpoints
-echo
-echo "3. Testing user profile endpoints..."
+# Add debug logs to AuthContext
+echo "Adding debug logging to AuthContext.jsx..."
+sudo sed -i 's/const login = async (credentials) => {/const login = async (credentials) => {\n    console.log("DEBUG AUTH CONTEXT: Login attempt for user", credentials.username);/g' "$AUTH_CONTEXT_PATH"
+sudo sed -i 's/setUser(userData);/console.log("DEBUG AUTH CONTEXT: User data received:", userData);\n    setUser(userData);/g' "$AUTH_CONTEXT_PATH"
+sudo sed -i 's/setToken(data.access_token);/console.log("DEBUG AUTH CONTEXT: Token received:", data.access_token.substring(0, 10) + "...");\n    setToken(data.access_token);/g' "$AUTH_CONTEXT_PATH"
+sudo sed -i 's/fetchUserProfile();/console.log("DEBUG AUTH CONTEXT: Fetching user profile...");\n    fetchUserProfile();/g' "$AUTH_CONTEXT_PATH"
+sudo sed -i 's/const isAdmin = user && user.is_admin;/const isAdmin = user && user.is_admin;\n  console.log("DEBUG AUTH CONTEXT: User admin status:", isAdmin, "User object:", user);/g' "$AUTH_CONTEXT_PATH"
 
-profile_endpoints=(
-    "/users/me"
-    "/auth/users/me"
-    "/me"
-    "/profile"
-)
+# Add debug logs to API service
+echo "Adding debug logging to api.js..."
+sudo sed -i 's/export const getUserProfile = async () => {/export const getUserProfile = async () => {\n  console.log("DEBUG API: Fetching user profile...");/g' "$API_SERVICE_PATH"
+sudo sed -i 's/return response.data;/console.log("DEBUG API: User profile response:", response.data);\n  return response.data;/g' "$API_SERVICE_PATH"
 
-profile_success=false
-for endpoint in "${profile_endpoints[@]}"; do
-    echo "   Trying $endpoint..."
-    
-    # Get user profile
-    response=$(curl -s -w "\nHTTP_CODE:%{http_code}" \
-        -X GET "$API_BASE_URL$endpoint" \
-        -H "Authorization: Bearer $access_token")
-    
-    # Extract HTTP code and body
-    http_code=$(echo "$response" | grep "HTTP_CODE:" | cut -d":" -f2)
-    body=$(echo "$response" | sed '/HTTP_CODE:/d')
-    
-    log_response "$endpoint" "$http_code" "$body"
-    
-    # Check if profile fetch was successful
-    if [ "$http_code" = "200" ]; then
-        echo "✅ Profile fetch successful via $endpoint"
-        profile_success=true
-        
-        # Check for admin flag
-        is_admin=$(echo $body | grep -o '"is_admin":[^,}]*' | cut -d":" -f2)
-        if [ -n "$is_admin" ]; then
-            echo "   is_admin flag found: $is_admin"
-            if [ "$is_admin" = "true" ]; then
-                echo "✅ User has admin privileges"
-            else
-                echo "❌ User does not have admin privileges"
-            fi
-        else
-            echo "❌ is_admin flag not found in profile"
-        fi
-        
-        break
-    else
-        echo "❌ Profile fetch failed via $endpoint: HTTP $http_code"
-    fi
-done
+# Rebuild the frontend
+echo "Rebuilding frontend with debug logs..."
+cd "$FRONTEND_DIR"
+npm run build
 
-if [ "$profile_success" = false ]; then
-    echo "❌ All profile fetch attempts failed"
-    echo "All profile fetch attempts failed" >> $LOG_FILE
-fi
+# Copy the built files to the NGINX directory
+NGINX_PUBLIC_DIR="/home/ubuntu/ProbeNetworkTools/public"
+echo "Copying built files to NGINX public directory..."
+cp -r dist/* "$NGINX_PUBLIC_DIR/"
 
-# Test admin-specific endpoints
-echo
-echo "4. Testing admin-specific endpoints..."
-
-admin_endpoints=(
-    "/users"
-    "/subscriptions/tiers"
-    "/metrics/system"
-)
-
-for endpoint in "${admin_endpoints[@]}"; do
-    echo "   Trying $endpoint..."
-    
-    # Get admin data
-    response=$(curl -s -w "\nHTTP_CODE:%{http_code}" \
-        -X GET "$API_BASE_URL$endpoint" \
-        -H "Authorization: Bearer $access_token")
-    
-    # Extract HTTP code and body
-    http_code=$(echo "$response" | grep "HTTP_CODE:" | cut -d":" -f2)
-    body=$(echo "$response" | sed '/HTTP_CODE:/d')
-    
-    log_response "$endpoint" "$http_code" "$body"
-    
-    # Check if admin endpoint access was successful
-    if [ "$http_code" = "200" ]; then
-        echo "✅ Admin endpoint access successful: $endpoint"
-    else
-        echo "❌ Admin endpoint access failed: $endpoint (HTTP $http_code)"
-    fi
-done
-
-echo
-echo "Diagnostic complete. Results saved to: $LOG_FILE"
-echo "Please provide this file to the support team for analysis."
+echo -e "${GREEN}Debug logging has been added to the frontend.${NC}"
+echo "Please log in to the application and check the browser console for detailed logs."
+echo "After reviewing logs, you can restore the original files with:"
+echo "sudo cp $BACKUP_DIR/AuthContext.jsx.backup-$TIMESTAMP $AUTH_CONTEXT_PATH"
+echo "sudo cp $BACKUP_DIR/api.js.backup-$TIMESTAMP $API_SERVICE_PATH"
+echo "Then rebuild the frontend with: cd $FRONTEND_DIR && npm run build"
