@@ -155,17 +155,18 @@ issue_certificate() {
     # Build the command with proper domain arguments and preferred chain for Windows compatibility
     # Using explicit version v2.10.0 for better support of preferred chain feature
     # Breaking into multiple lines for better readability and proper arg handling
-    CERTBOT_CMD="docker run --rm \
-      -v $(pwd)/nginx/ssl:/etc/letsencrypt \
-      -v $(pwd)/nginx/ssl/webroot:/var/www/certbot \
+    # Using single quotes for the main command and embedding double quotes properly
+    CERTBOT_CMD='docker run --rm \
+      -v '$(pwd)'/nginx/ssl:/etc/letsencrypt \
+      -v '$(pwd)'/nginx/ssl/webroot:/var/www/certbot \
       -p 80:80 certbot/certbot:v2.10.0 certonly \
       --standalone \
       --preferred-chain="ISRG Root X1" \
       --preferred-challenges http \
-      --email $EMAIL \
+      --email '"$EMAIL"' \
       --agree-tos \
       --no-eff-email \
-      --verbose $FORCE_FLAG ${DOMAINS[*]}"
+      --verbose '"$FORCE_FLAG"' '"${DOMAINS[*]}"''
     
     # Execute the command with proper domain array handling
     execute_and_log "$CERTBOT_CMD" "Issuing certificate with Certbot"
