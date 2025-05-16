@@ -1,0 +1,32 @@
+one}
+✅ User found: admin (email: admin@probeops.com)
+INFO:     127.0.0.1:60052 - "GET /subscriptions HTTP/1.1" 200 OK
+🔍 Decoded JWT payload: {'sub': 'admin@probeops.com', 'exp': 1747411382}
+2025-05-16 15:38:09,174 - app.auth - DEBUG - Decoded JWT payload: {'sub': 'admin@probeops.com', 'exp': 1747411382}
+📧 Found email in token: admin@probeops.com
+✅ TokenPayload validated: {'sub': 'admin@probeops.com', 'exp': None}
+2025-05-16 15:38:09,174 - app.auth - DEBUG - TokenPayload validated: {'sub': 'admin@probeops.com', 'exp': None}
+✅ User found: admin (email: admin@probeops.com)
+INFO:     127.0.0.1:60052 - "GET /subscriptions HTTP/1.1" 200 OK
+❌ JWTError: Signature verification failed.
+2025-05-16 15:38:20,324 - app.auth - ERROR - JWT decoding error: Signature verification failed.
+INFO:     127.0.0.1:52356 - "GET /users/me HTTP/1.1" 401 Unauthorized
+❌ JWTError: Signature verification failed.
+2025-05-16 15:38:29,607 - app.auth - ERROR - JWT decoding error: Signature verification failed.
+INFO:     127.0.0.1:56640 - "GET /users/me HTTP/1.1" 401 Unauthorized
+❌ JWTError: Signature verification failed.
+2025-05-16 15:38:42,296 - app.auth - ERROR - JWT decoding error: Signature verification failed.
+INFO:     127.0.0.1:45282 - "GET /users/me HTTP/1.1" 401 Unauthorized
+❌ JWTError: Signature verification failed.
+2025-05-16 15:38:53,571 - app.auth - ERROR - JWT decoding error: Signature verification failed.
+INFO:     127.0.0.1:56696 - "GET /users/me HTTP/1.1" 401 Unauthorized
+❌ JWTError: Signature verification failed.
+2025-05-16 15:42:21,558 - app.auth - ERROR - JWT decoding error: Signature verification failed.
+INFO:     127.0.0.1:58494 - "GET /users/me HTTP/1.1" 401 Unauthorized
+❌ JWTError: Signature verification failed.
+2025-05-16 15:42:36,315 - app.auth - ERROR - JWT decoding error: Signature verification failed.
+INFO:     127.0.0.1:45930 - "GET /history?limit=5 HTTP/1.1" 401 Unauthorized
+❌ JWTError: Signature verification failed.
+2025-05-16 15:42:44,971 - app.auth - ERROR - JWT decoding error: Signature verification failed.
+INFO:     127.0.0.1:56506 - "GET /history?limit=5 HTTP/1.1" 401 Unauthorized
+^[[1;2B
