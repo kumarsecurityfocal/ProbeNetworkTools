@@ -1,0 +1,36 @@
+aint "usage_logs_user_id_fkey"
+DETAIL:  Key (user_id)=(433449) is not present in table "users".
+
+[SQL: INSERT INTO usage_logs (user_id, endpoint, timestamp, success, response_time, ip_address, tier_id, api_key_id, was_queued, queue_time) VALUES (%(user_id)s, %(endpoint)s, %(timestamp)s, %(success)s, %(response_time)s, %(ip_address)s, %(tier_id)s, %(api_key_id)s, %(was_queued)s, %(queue_time)s) RETURNING usage_logs.id]
+[parameters: {'user_id': 433449, 'endpoint': '/login', 'timestamp': datetime.datetime(2025, 5, 17, 19, 10, 32, 457635), 'success': True, 'response_time': 0.2956357002258301, 'ip_address': '172.19.0.2', 'tier_id': None, 'api_key_id': None, 'was_queued': False, 'queue_time': None}]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+INFO:     172.19.0.2:51818 - "POST /api/auth/login HTTP/1.0" 404 Not Found
+🔍 Validation error: [{'type': 'model_attributes_type', 'loc': ('body',), 'msg': 'Input should be a valid dictionary or object to extract fields from', 'input': b'username=admin%40probeops.com&password=pobeopS1%40'}]
+INFO:     172.19.0.2:51822 - "POST /login/json HTTP/1.0" 422 Unprocessable Entity
+INFO:     172.19.0.2:40456 - "POST /api/login HTTP/1.0" 404 Not Found
+2025-05-17 19:10:41,776 - python_multipart.multipart - DEBUG - Calling on_field_start with no data
+2025-05-17 19:10:41,776 - python_multipart.multipart - DEBUG - Calling on_field_name with data[0:8]
+2025-05-17 19:10:41,776 - python_multipart.multipart - DEBUG - Calling on_field_data with data[9:29]
+2025-05-17 19:10:41,776 - python_multipart.multipart - DEBUG - Calling on_field_end with no data
+2025-05-17 19:10:41,776 - python_multipart.multipart - DEBUG - Calling on_field_start with no data
+2025-05-17 19:10:41,776 - python_multipart.multipart - DEBUG - Calling on_field_name with data[30:38]
+2025-05-17 19:10:41,776 - python_multipart.multipart - DEBUG - Calling on_field_data with data[39:50]
+2025-05-17 19:10:41,777 - python_multipart.multipart - DEBUG - Calling on_field_end with no data
+2025-05-17 19:10:41,777 - python_multipart.multipart - DEBUG - Calling on_end with no data
+Login attempt for username: admin@probeops.com
+Auth attempt - Input username/email: admin@probeops.com
+Treating as email first: admin@probeops.com
+Found user by email: admin
+Authentication failed: Password incorrect for user: admin
+Authentication failed for username: admin@probeops.com
+INFO:     172.19.0.2:40458 - "POST /login HTTP/1.0" 401 Unauthorized
+2025-05-17 19:10:42,041 - app.middleware.rate_limit - ERROR - Error recording usage: (psycopg2.errors.ForeignKeyViolation) insert or update on table "usage_logs" violates foreign key constraint "usage_logs_user_id_fkey"
+DETAIL:  Key (user_id)=(433449) is not present in table "users".
+
+[SQL: INSERT INTO usage_logs (user_id, endpoint, timestamp, success, response_time, ip_address, tier_id, api_key_id, was_queued, queue_time) VALUES (%(user_id)s, %(endpoint)s, %(timestamp)s, %(success)s, %(response_time)s, %(ip_address)s, %(tier_id)s, %(api_key_id)s, %(was_queued)s, %(queue_time)s) RETURNING usage_logs.id]
+[parameters: {'user_id': 433449, 'endpoint': '/login', 'timestamp': datetime.datetime(2025, 5, 17, 19, 10, 42, 37666), 'success': True, 'response_time': 0.2569754123687744, 'ip_address': '172.19.0.2', 'tier_id': None, 'api_key_id': None, 'was_queued': False, 'queue_time': None}]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+INFO:     172.19.0.2:40472 - "POST /api/auth/login HTTP/1.0" 404 Not Found
+🔍 Validation error: [{'type': 'model_attributes_type', 'loc': ('body',), 'msg': 'Input should be a valid dictionary or object to extract fields from', 'input': b'username=admin%40probeops.com&password=pobeopS1%40'}]
+INFO:     172.19.0.2:40480 - "POST /login/json HTTP/1.0" 422 Unprocessable Entity
+ubuntu@ip-172-16-0-80:~/ProbeNetworkTools/scripts$
