@@ -1,0 +1,40 @@
+ubuntu@ip-172-16-0-80:~/ProbeNetworkTools$ python3 scripts/database/migrate_to_hash_ids_fix.py --dry-run
+[INFO] Running in DRY RUN mode - no changes will be made
+[INFO] Found 1 potential Alembic directories:
+  1. backend/alembic - 5 migrations found, alembic.ini: ✗, env.py: ✓
+[SUCCESS] Using Alembic directory: backend/alembic
+[SUCCESS] Versions directory: backend/alembic/versions
+[SUCCESS] Config path: backend/alembic.ini
+[INFO] Analyzing migration files...
+[INFO] Creating hash-based ID mappings...
+[INFO] Migration ID mappings:
+  20250514_create_base_schema              → 3a9afb49e44f
+  20250515_add_tier_limits                 → f05271beffdf
+  20250515_add_usage_logs                  → f184f0511e19
+  20250515_add_probe_nodes                 → 9b7b6f2aa641
+  20250515_add_probe_connection_fields     → 173448795c66
+[INFO] Updating migration files...
+[INFO] Would rename 20250514_create_base_schema.py to 3a9afb49e44f_create_base_schema.py
+[INFO] Would update revision ID from 20250514_create_base_schema to 3a9afb49e44f
+[INFO] Would rename 20250515_add_tier_limits.py to f05271beffdf_add_tier_limits.py
+[INFO] Would update revision ID from 20250515_add_tier_limits to f05271beffdf
+[INFO] Would rename 20250515_add_usage_logs.py to f184f0511e19_add_usage_logs.py
+[INFO] Would update revision ID from 20250515_add_usage_logs to f184f0511e19
+[INFO] Would rename 20250515_add_probe_nodes.py to 9b7b6f2aa641_add_probe_nodes.py
+[INFO] Would update revision ID from 20250515_add_probe_nodes to 9b7b6f2aa641
+[INFO] Would rename 20250515_add_probe_connection_fields.py to 173448795c66_add_probe_connection_fields.py
+[INFO] Would update revision ID from 20250515_add_probe_connection_fields to 173448795c66
+[INFO] Updating alembic_version table in database...
+[WARNING] alembic_version table does not exist in the database
+[INFO] Updating Alembic configuration...
+[INFO] Would update alembic.ini with hash-based revision settings
+[INFO] Updating env.py for autogenerate support...
+[INFO] Using model file: backend/app/models.py
+[INFO] The following updates are needed for env.py:
+  - Add import: from backend.app.models import Base
+[INFO] Would update env.py to support autogenerate
+[INFO] Creating migration guide...
+[INFO] Would create migration guide at backend/alembic/README_MIGRATIONS.md
+[SUCCESS] Dry run completed. No changes were made.
+[INFO] Run without --dry-run to apply changes
+ubuntu@ip-172-16-0-80:~/ProbeNetworkTools$

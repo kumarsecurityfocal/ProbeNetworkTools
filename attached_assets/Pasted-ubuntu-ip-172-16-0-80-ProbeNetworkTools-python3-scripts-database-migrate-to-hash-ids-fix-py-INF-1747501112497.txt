@@ -1,0 +1,39 @@
+ubuntu@ip-172-16-0-80:~/ProbeNetworkTools$ python3 scripts/database/migrate_to_hash_ids_fix.py
+[INFO] Found 1 potential Alembic directories:
+  1. backend/alembic - 5 migrations found, alembic.ini: ✗, env.py: ✓
+[SUCCESS] Using Alembic directory: backend/alembic
+[SUCCESS] Versions directory: backend/alembic/versions
+[SUCCESS] Config path: backend/alembic.ini
+[WARNING] alembic_version table does not exist in the database
+[SUCCESS] Backup created at: database_backups/migration_backups/migration_backup_20250517_165730
+[INFO] Created backup at database_backups/migration_backups/migration_backup_20250517_165730
+[INFO] Analyzing migration files...
+[INFO] Creating hash-based ID mappings...
+[INFO] Migration ID mappings:
+  20250514_create_base_schema              → 3a9afb49e44f
+  20250515_add_tier_limits                 → f05271beffdf
+  20250515_add_usage_logs                  → f184f0511e19
+  20250515_add_probe_nodes                 → 9b7b6f2aa641
+  20250515_add_probe_connection_fields     → 173448795c66
+[INFO] Updating migration files...
+[SUCCESS] Updated migration: 20250514_create_base_schema → 3a9afb49e44f
+[SUCCESS] Updated migration: 20250515_add_tier_limits → f05271beffdf
+[SUCCESS] Updated migration: 20250515_add_usage_logs → f184f0511e19
+[SUCCESS] Updated migration: 20250515_add_probe_nodes → 9b7b6f2aa641
+[SUCCESS] Updated migration: 20250515_add_probe_connection_fields → 173448795c66
+[INFO] Updating alembic_version table in database...
+[WARNING] alembic_version table does not exist in the database
+[INFO] Updating Alembic configuration...
+[SUCCESS] Updated alembic.ini with hash-based revision settings (backup at backend/alembic.ini.bak)
+[INFO] Updating env.py for autogenerate support...
+[INFO] Using model file: backend/app/models.py
+[INFO] The following updates are needed for env.py:
+  - Add import: from backend.app.models import Base
+[SUCCESS] Updated env.py to support autogenerate (backup at backend/alembic/env.py.bak)
+[INFO] Creating migration guide...
+[SUCCESS] Created migration guide at backend/alembic/README_MIGRATIONS.md
+[SUCCESS] Migration completed successfully!
+[INFO] You can now use standard Alembic commands like:
+[INFO]   - alembic revision --autogenerate -m "description"
+[INFO]   - alembic upgrade head
+ubuntu@ip-172-16-0-80:~/ProbeNetworkTools$
