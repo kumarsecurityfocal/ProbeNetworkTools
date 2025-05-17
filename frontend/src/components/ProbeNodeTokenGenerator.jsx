@@ -35,7 +35,9 @@ import {
   ContentCopy as CopyIcon,
   Check as CheckIcon,
   Info as InfoIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
+  Delete as DeleteIcon,
+  History as HistoryIcon
 } from '@mui/icons-material';
 import { useApi } from '../hooks/useApi';
 
@@ -56,6 +58,8 @@ const ProbeNodeTokenGenerator = () => {
   const [customApiKey, setCustomApiKey] = useState('');
   const [heartbeatInterval, setHeartbeatInterval] = useState(15);
   const [logLevel, setLogLevel] = useState('INFO');
+  const [generatedTokens, setGeneratedTokens] = useState([]);
+  const [showTokenHistory, setShowTokenHistory] = useState(false);
 
   // Generate a random UUID for node
   const generateNodeUuid = () => {
@@ -152,6 +156,22 @@ const ProbeNodeTokenGenerator = () => {
       // Set the generated token
       setGeneratedToken(tokenResponse.data.token);
       
+      // Add to the list of generated tokens with timestamp
+      const newToken = {
+        id: Date.now(),
+        token: tokenResponse.data.token.substring(0, 20) + '...',
+        fullToken: tokenResponse.data.token,
+        name: nodeName,
+        description: nodeDescription || 'No description',
+        date: new Date().toISOString(),
+        nodeUuid: finalNodeUuid,
+        heartbeatInterval,
+        logLevel,
+        expireDays
+      };
+      
+      setGeneratedTokens(prev => [newToken, ...prev]);
+      
       // Show the token dialog
       setTokenDialog(true);
       
@@ -179,17 +199,102 @@ const ProbeNodeTokenGenerator = () => {
       }
     );
   };
+  
+  // Copy token from history to clipboard
+  const handleCopyHistoryToken = (token) => {
+    navigator.clipboard.writeText(token).then(
+      () => {
+        setSnackbarMessage('Token copied to clipboard');
+        setSnackbarOpen(true);
+      },
+      () => {
+        setError('Failed to copy token');
+      }
+    );
+  };
+  
+  // Remove token from history
+  const handleRemoveToken = (tokenId) => {
+    setGeneratedTokens(prev => prev.filter(token => token.id !== tokenId));
+    setSnackbarMessage('Token removed from history');
+    setSnackbarOpen(true);
+  };
 
   return (
     <Box sx={{ mb: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6">Generate Probe Node Token</Typography>
-        <Tooltip title="Learn more about probe node tokens">
-          <IconButton onClick={() => setInfoDialogOpen(true)}>
-            <InfoIcon />
-          </IconButton>
-        </Tooltip>
+        <Box>
+          <Tooltip title="Toggle token history">
+            <IconButton 
+              onClick={() => setShowTokenHistory(!showTokenHistory)}
+              color={showTokenHistory ? "primary" : "default"}
+            >
+              <HistoryIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Learn more about probe node tokens">
+            <IconButton onClick={() => setInfoDialogOpen(true)}>
+              <InfoIcon />
+            </IconButton>
+          </Tooltip>
+        </Box>
       </Box>
+      
+      {/* Token History Display */}
+      {showTokenHistory && generatedTokens.length > 0 && (
+        <Paper sx={{ mb: 3, p: 2 }}>
+          <Typography variant="subtitle1" gutterBottom>
+            Recent Generated Tokens
+          </Typography>
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Token</TableCell>
+                  <TableCell>Created</TableCell>
+                  <TableCell>Expiry</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {generatedTokens.map((token) => (
+                  <TableRow key={token.id}>
+                    <TableCell>{token.name}</TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                        {token.token}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      {new Date(token.date).toLocaleString()}
+                    </TableCell>
+                    <TableCell>
+                      {token.expireDays === 0 ? 
+                        'Never' : 
+                        `${token.expireDays} ${token.expireDays === 1 ? 'day' : 'days'}`
+                      }
+                    </TableCell>
+                    <TableCell>
+                      <Tooltip title="Copy full token">
+                        <IconButton size="small" onClick={() => handleCopyHistoryToken(token.fullToken)}>
+                          <CopyIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Remove from history">
+                        <IconButton size="small" onClick={() => handleRemoveToken(token.id)}>
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
+      )}
 
       <Paper sx={{ p: 3 }}>
         {error && (
@@ -439,6 +544,14 @@ const ProbeNodeTokenGenerator = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={() => setSnackbarOpen(false)}
+        message={snackbarMessage}
+      />
+      
       {/* Info Dialog */}
       <Dialog
         open={infoDialogOpen}
