@@ -62,7 +62,7 @@ const TokenManagement = () => {
     setError('');
     
     try {
-      const response = await api.get('/api/admin/probe-tokens');
+      const response = await api.get('/admin/probe-tokens');
       setTokens(response.data || []);
     } catch (err) {
       console.error('Error fetching tokens:', err);
@@ -77,7 +77,7 @@ const TokenManagement = () => {
     if (!selectedToken) return;
     
     try {
-      await api.delete(`/api/admin/probe-tokens/${selectedToken.id}`);
+      await api.delete(`/admin/probe-tokens/${selectedToken.id}`);
       setTokens(tokens.filter(token => token.id !== selectedToken.id));
       setDeleteDialogOpen(false);
       setSelectedToken(null);

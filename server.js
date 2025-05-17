@@ -178,7 +178,7 @@ app.post('/api/admin/generate-probe-token', (req, res) => {
 });
 
 // Endpoint to get all probe tokens
-app.get('/api/admin/probe-tokens', (req, res) => {
+app.get('/admin/probe-tokens', (req, res) => {
   try {
     res.json(probeTokens);
   } catch (error) {
@@ -191,7 +191,7 @@ app.get('/api/admin/probe-tokens', (req, res) => {
 });
 
 // Endpoint to delete a probe token
-app.delete('/api/admin/probe-tokens/:id', (req, res) => {
+app.delete('/admin/probe-tokens/:id', (req, res) => {
   try {
     const { id } = req.params;
     
