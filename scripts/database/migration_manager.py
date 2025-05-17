@@ -150,7 +150,7 @@ class MigrationManager:
         current = "head"
         while current and current != "base":
             # Get the script for this revision
-            script = self.script_directory.get_revision(current)
+            script = self.script_directory.get_revision(str(current))
             if script is None:
                 missing_dependencies.append(f"Migration {current} not found")
                 break
@@ -245,7 +245,7 @@ class MigrationManager:
         """
         # Check if we have a base migration
         base_migrations = []
-        for script in self.script_directory.get_revisions():
+        for script in self.script_directory.get_revisions("head"):
             if script.down_revision is None:
                 base_migrations.append(script.revision)
         
@@ -328,6 +328,14 @@ def main():
         else:
             logger.error("Failed to ensure base migration")
     
+    if args.stamp:
+        logger.info(f"Stamping database with revision: {args.stamp}")
+        if manager.stamp_revision(args.stamp):
+            logger.info(f"Database successfully stamped with revision: {args.stamp}")
+        else:
+            logger.error(f"Failed to stamp database with revision: {args.stamp}")
+            sys.exit(1)
+    
     if args.apply:
         current = manager.get_current_revision()
         logger.info(f"Current database revision: {current}")
@@ -336,6 +344,7 @@ def main():
             logger.info("Migrations applied successfully")
         else:
             logger.error("Failed to apply migrations")
+            sys.exit(1)
     
     if args.reset:
         if input("Are you sure you want to reset the database? This will DELETE ALL DATA! (y/N): ").lower() == 'y':
@@ -343,6 +352,7 @@ def main():
                 logger.info("Database reset and migrations applied successfully")
             else:
                 logger.error("Failed to reset database")
+                sys.exit(1)
         else:
             logger.info("Database reset cancelled")
 

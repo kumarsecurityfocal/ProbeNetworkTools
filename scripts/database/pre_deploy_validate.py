@@ -78,7 +78,7 @@ class DeploymentValidator:
         """
         # First, explicitly check for a base migration
         base_migrations = []
-        for script in self.migration_manager.script_directory.get_revisions():
+        for script in self.migration_manager.script_directory.get_revisions("head"):
             if script.down_revision is None:
                 base_migrations.append(script.revision)
         
