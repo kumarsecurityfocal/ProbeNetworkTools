@@ -21,7 +21,14 @@ import {
   DialogActions,
   CircularProgress,
   Switch,
-  FormControlLabel
+  FormControlLabel,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip
 } from '@mui/material';
 import {
   Add as AddIcon,

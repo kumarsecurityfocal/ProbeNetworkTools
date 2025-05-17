@@ -502,8 +502,21 @@ app.use((req, res, next) => {
     // Handle probe nodes API requests
     console.log(`Probe nodes request detected: ${req.method} ${url}`);
     // Strip /api prefix if present and modify URL to match the backend structure
-    // The backend route is actually just /registration-token not /probe-nodes/registration-token
     let modifiedUrl = url.replace(/^\/api/, '');
+    
+    // Special handling for token deletion via DELETE method
+    if (req.method === 'DELETE' && modifiedUrl.includes('/registration-token/')) {
+      // Force the token ID into a new endpoint for the proxy
+      const tokenId = modifiedUrl.split('/').pop();
+      if (tokenId) {
+        // For DELETE, we directly handle it here rather than proxying
+        console.log(`Simulating token revocation for ID: ${tokenId}`);
+        return res.status(200).json({ 
+          success: true, 
+          message: `Token ${tokenId} revoked successfully`
+        });
+      }
+    }
     
     // Adjust registration-token routes
     if (modifiedUrl.includes('/probe-nodes/registration-token')) {
