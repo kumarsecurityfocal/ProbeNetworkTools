@@ -744,33 +744,9 @@ else
     fi
 fi
 
-# Step 10.6: Fix JWT user authentication
-log_info "Step 10.6: Ensuring admin user and JWT authentication..."
-echo "[AUTH] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Starting JWT auth fix process" >> "$LOG_FILE"
-
-# Check if the auth fix script exists
-AUTH_FIX_SCRIPT="scripts/fix_jwt_auth.py"
-if [ -f "$AUTH_FIX_SCRIPT" ]; then
-    log_info "Found JWT authentication fix script at $AUTH_FIX_SCRIPT"
-    log_info "Running authentication fix script..."
-    run_command "cd backend && python3 ../$AUTH_FIX_SCRIPT" "Running JWT authentication fix"
-    log_success "JWT authentication fix completed"
-else
-    log_warning "JWT authentication fix script not found at $AUTH_FIX_SCRIPT - skipping"
-    echo "[AUTH_WARNING] $(date +"%Y-%m-%d %H:%M:%S.%3N") - JWT authentication fix script not found" >> "$LOG_FILE"
-    
-    # Try alternative auth fix implementation if it exists
-    ALT_AUTH_FIX_SCRIPT="auth-fix.js"
-    if [ -f "$ALT_AUTH_FIX_SCRIPT" ]; then
-        log_info "Found alternative JWT authentication fix script at $ALT_AUTH_FIX_SCRIPT"
-        log_info "Running alternative authentication fix script..."
-        run_command "node $ALT_AUTH_FIX_SCRIPT" "Running alternative JWT authentication fix"
-        log_success "Alternative JWT authentication fix completed"
-    else
-        log_warning "No JWT authentication fix scripts found - auth may require manual setup"
-        echo "[AUTH_WARNING] $(date +"%Y-%m-%d %H:%M:%S.%3N") - No JWT authentication fix scripts found" >> "$LOG_FILE"
-    fi
-fi
+# JWT authentication step removed - fresh deployment no longer requires JWT fix
+log_info "Step 10.6: Authentication check - skipping since we're using a fresh deployment"
+echo "[AUTH] $(date +"%Y-%m-%d %H:%M:%S.%3N") - JWT auth fix skipped for fresh deployment" >> "$LOG_FILE"
 
 # Step 11: Starting Docker containers
 log_info "Step 11: Starting Docker containers..."
