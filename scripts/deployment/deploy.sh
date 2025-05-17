@@ -522,6 +522,76 @@ else
     fi
 fi
 
+# Step 10.6: Fix JWT user authentication
+log_info "Step 10.6: Ensuring admin user and JWT authentication..."
+echo "[AUTH] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Starting JWT auth fix process" >> "$LOG_FILE"
+
+# Check if the JWT auth fix script exists
+JWT_AUTH_SCRIPT="$(pwd)/scripts/fix_jwt_auth.py"
+if [ -f "$JWT_AUTH_SCRIPT" ]; then
+    log_info "Found JWT auth fix script at $JWT_AUTH_SCRIPT"
+    
+    # Make sure the script is executable
+    chmod +x "$JWT_AUTH_SCRIPT"
+    
+    # Create db environment file from backend environment if needed
+    ENV_DB_FILE=".env.db"
+    if [ ! -f "$ENV_DB_FILE" ]; then
+        if [ -f "backend/.env.backend" ]; then
+            log_info "Creating .env.db file from backend/.env.backend..."
+            grep "DATABASE_URL" backend/.env.backend > "$ENV_DB_FILE"
+            log_success "Created .env.db file with DATABASE_URL"
+        else
+            log_warning "No backend/.env.backend file found - JWT auth fix script may not work correctly"
+        fi
+    fi
+    
+    # Run the JWT auth script
+    log_info "Running JWT auth fix script to ensure admin user exists..."
+    
+    # First check if admin user exists
+    if python3 "$JWT_AUTH_SCRIPT" --check; then
+        log_success "Admin user check completed successfully"
+    else
+        log_warning "Admin user check failed or user doesn't exist"
+        
+        # Reset/create admin user
+        log_info "Attempting to reset/create admin user..."
+        if python3 "$JWT_AUTH_SCRIPT" --reset; then
+            log_success "Admin user reset/creation completed successfully"
+        else
+            log_error "Admin user reset/creation failed!"
+            echo "[AUTH_ERROR] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Admin user reset failed" >> "$LOG_FILE"
+            
+            # Ask the user if they want to continue despite the auth failure
+            echo -e "${RED}Admin user setup failed. This will prevent login to the application.${NC}"
+            echo -e "${YELLOW}Would you like to continue with deployment anyway? (y/n)${NC}"
+            read -r continue_response
+            
+            if [[ ! "$continue_response" =~ ^[Yy]$ ]]; then
+                log_error "Deployment aborted due to admin user setup failure"
+                echo "[DEPLOYMENT_ABORTED] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Deployment aborted due to admin user setup failure" >> "$LOG_FILE"
+                exit 1
+            else
+                log_warning "Continuing deployment despite admin user setup failure"
+                echo "[AUTH_WARNING] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Continuing deployment despite admin user setup failure" >> "$LOG_FILE"
+            fi
+        fi
+        
+        # Verify JWT token generation
+        log_info "Verifying JWT token generation..."
+        if python3 "$JWT_AUTH_SCRIPT" --verify; then
+            log_success "JWT token verification completed successfully"
+        else
+            log_warning "JWT token verification failed - authentication may not work correctly"
+            echo "[AUTH_WARNING] $(date +"%Y-%m-%d %H:%M:%S.%3N") - JWT token verification failed" >> "$LOG_FILE"
+        fi
+    fi
+else
+    log_warning "JWT auth fix script not found at $JWT_AUTH_SCRIPT - skipping admin user setup"
+    echo "[AUTH_WARNING] $(date +"%Y-%m-%d %H:%M:%S.%3N") - JWT auth fix script not found" >> "$LOG_FILE"
+fi
+
 # Step 11: Start services with forced rebuild
 log_info "Step 11: Starting services with forced rebuild..."
 echo "[DOCKER] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Starting containers with forced rebuild" >> "$LOG_FILE"
