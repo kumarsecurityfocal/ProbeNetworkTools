@@ -16,8 +16,17 @@ app.use(express.urlencoded({ extended: true }));
 // Helper function to create a valid token with proper expiration
 function createAdminToken() {
   const payload = {
+    // Essential claim fields required by the backend
     sub: "admin@probeops.com",
-    exp: Math.floor(Date.now() / 1000) + 86400 * 7 // 7 days
+    exp: Math.floor(Date.now() / 1000) + 86400 * 7, // 7 days
+    iat: Math.floor(Date.now() / 1000), // issued at time
+    
+    // User-specific claims needed for proper validation
+    user_id: 1,
+    username: "admin",
+    is_admin: true,
+    is_active: true,
+    email: "admin@probeops.com"
   };
   return jwt.sign(payload, JWT_SECRET, { algorithm: 'HS256' });
 }

@@ -22,9 +22,16 @@ app.use(express.urlencoded({ extended: true })); // Add this to parse form data
 
 // JWT helper function to create valid tokens with 7-day expiration
 function createValidToken(email = "admin@probeops.com") {
+  // Make a robust JWT token with proper claims for admin
   const payload = {
     sub: email,
-    exp: Math.floor(Date.now() / 1000) + (86400 * 7) // 7 days (extended from 24 hours)
+    exp: Math.floor(Date.now() / 1000) + (86400 * 7), // 7 days (extended from 24 hours)
+    // Add additional claims required by the backend validation
+    user_id: email === "admin@probeops.com" ? 1 : 2,
+    username: email === "admin@probeops.com" ? "admin" : email.split('@')[0],
+    is_admin: email === "admin@probeops.com",
+    is_active: true,
+    iat: Math.floor(Date.now() / 1000) // issued at time
   };
   return jwt.sign(payload, JWT_SECRET, { algorithm: 'HS256' });
 }
