@@ -89,7 +89,7 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node auth-fix.js"
-waitForPort = 6000
+waitForPort = 5000
 
 [[workflows.workflow]]
 name = "DB Explorer"
