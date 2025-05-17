@@ -70,6 +70,8 @@ class MigrationManager:
         
         self._validate_paths()
         self.alembic_cfg = Config(str(ALEMBIC_INI))
+        # Set the script_location explicitly to point to the correct alembic directory
+        self.alembic_cfg.set_main_option('script_location', str(PROJECT_ROOT / 'backend' / 'alembic'))
         self.script_directory = ScriptDirectory.from_config(self.alembic_cfg)
         self.engine = self._get_database_engine()
         
