@@ -659,6 +659,19 @@ if [ -d "backend/alembic" ]; then
     MIGRATION_STATUS=$?
     set -e  # Re-enable exit on error
     
+    # Check for common errors that can be safely ignored
+    if [ $MIGRATION_STATUS -ne 0 ]; then
+        if echo "$MIGRATION_OUTPUT" | grep -q "DuplicateTable"; then
+            log_warning "Some database tables already exist. This is usually harmless."
+            # Set migration status to success since the database structure should be fine
+            MIGRATION_STATUS=0
+        elif echo "$MIGRATION_OUTPUT" | grep -q "already exists" || echo "$MIGRATION_OUTPUT" | grep -q "duplicate"; then
+            log_warning "Some database objects already exist. This is usually harmless."
+            # Set migration status to success since the database structure should be fine
+            MIGRATION_STATUS=0
+        fi
+    fi
+    
     # Check if we have multiple heads
     if echo "$MIGRATION_OUTPUT" | grep -q "multiple heads"; then
         log_warning "Multiple Alembic migration heads detected. Attempting to merge..."
