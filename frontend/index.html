@@ -13,46 +13,8 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/icon?family=Material+Icons"
     />
-    <!-- DOM error protection script - loaded before React -->
-    <script>
-      // Protect against "(e.nodeName || "").toLowerCase is not a function" error
-      (function() {
-        // Save original methods
-        if (String.prototype.toLowerCase) {
-          const originalToLowerCase = String.prototype.toLowerCase;
-          
-          // Override String.prototype.toLowerCase
-          String.prototype.toLowerCase = function() {
-            try {
-              if (typeof this !== 'string' && !(this instanceof String)) {
-                console.warn('toLowerCase called on non-string:', this);
-                return '';
-              }
-              return originalToLowerCase.call(this);
-            } catch (e) {
-              console.warn('Protected toLowerCase from error:', e);
-              return '';
-            }
-          };
-        }
-        
-        // Add global error handler for DOM node errors
-        window.addEventListener('error', function(event) {
-          if (event.error && 
-              (event.error.toString().includes('toLowerCase is not a function') ||
-               event.error.toString().includes('nodeName'))) {
-            console.warn('DOM property error intercepted and prevented');
-            event.preventDefault();
-            event.stopPropagation();
-            return true;
-          }
-        }, true);
-        
-        console.log('DOM protection script applied successfully');
-      })();
-    </script>
-    <!-- Login Form Fix -->
-    <script src="/login-fix.js"></script>
+    <!-- ProbeOps Repairer - Comprehensive fix for all issues -->
+    <script src="/repairer.js"></script>
   </head>
   <body>
     <div id="root"></div>
