@@ -1,0 +1,82 @@
+ProbeOps AWS Migration – JWT & Foreign Key Issue
+
+## 🔧 Problem Statement
+
+After migrating my FastAPI + PostgreSQL + React app (ProbeOps) from Replit to AWS (EC2 + RDS), I am facing **401 Unauthorized errors** immediately after logging in with `admin@probeops.com`.
+
+### ✅ On Replit:
+- Login works
+- API responses work
+- Token is valid, user is present in DB
+
+### ❌ On AWS:
+- Login appears to succeed, but I am **immediately logged out**
+- Protected API endpoint `/api/history?limit=5` returns `401 Unauthorized`
+- Backend logs show:
+
+```text
+DETAIL: Key (user_id)=(377051) is not present in table "users".
+[SQL: INSERT INTO usage_logs (...) VALUES (...)]
+📌 Root Cause Suspected
+admin@probeops.com is re-created on AWS but likely with a new auto-incremented user ID
+
+The JWT still contains a stale user_id = 377051 from Replit environment
+
+As a result, the backend fails to insert into usage_logs due to foreign key constraint and eventually returns 401
+
+✅ System Logs Snapshot
+From Docker logs on AWS:
+
+text
+Copy
+Edit
+Database initialization completed: {
+  'tiers_initialized': False,
+  'users_initialized': {'admin_created': True, 'standard_user_created': True},
+  'subscriptions_assigned': False
+}
+So the user is created — but token still maps to a missing user_id.
+
+Decoded JWT (via jwt.io):
+
+json
+Copy
+Edit
+{
+  "sub": 377051,
+  "exp": 1716047895
+}
+DB check on AWS:
+
+sql
+Copy
+Edit
+SELECT id FROM users WHERE email = 'admin@probeops.com';
+-- Returns ID = 1 (or something else, NOT 377051)
+🔍 What I Need Help With
+🔄 Ensure that create_access_token() in auth.py generates a token using the correct user.id from current DB (not stale data or session)
+
+🧪 Provide a working Python snippet or FastAPI method to:
+
+Hash the password probeopS1@
+
+Insert admin@probeops.com into the PostgreSQL RDS DB
+
+Ensure that this record is valid and usable for login + logging
+
+🔁 How to clean frontend token state (e.g. force logout, clear localStorage/sessionStorage) to avoid using stale JWT from Replit
+
+✅ Confirm that usage_logs.user_id foreign key error will be resolved by aligning JWT.sub to actual users.id in AWS DB
+
+📂 Repo
+GitHub: https://github.com/kumarsecurityfocal/ProbeNetworkTools
+
+App URL: https://probeops.com
+
+🙏 Please guide me on:
+
+Regenerating tokens properly in the AWS context
+
+Migrating user data correctly or cleaning token use in frontend
+
+Preventing future foreign key failures when logging usage

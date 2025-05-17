@@ -1,0 +1,80 @@
+JWT user_id Mismatch and 401s on AWS
+markdown
+Copy
+Edit
+🔧 PROBLEM STATEMENT:
+After migrating my FastAPI + PostgreSQL + React app (ProbeOps) from Replit to AWS (EC2 + RDS), I am facing **401 Unauthorized errors** immediately after logging in using `admin@probeops.com`.
+
+🧪 ON REPLIT:
+✅ Everything works — login, token issuance, and API calls
+✅ DB is initialized and the admin user works as expected
+
+🛠 ON AWS:
+❌ Login *visually* succeeds but I’m logged out right after
+❌ Protected endpoint `/api/history?limit=5` returns 401
+❌ Logs show this critical error:
+
+DETAIL: Key (user_id)=(377051) is not present in table "users".
+[SQL: INSERT INTO usage_logs (...) VALUES (...)]
+
+yaml
+Copy
+Edit
+
+🎯 I suspect the `JWT` token still carries a **stale or mismatched `user_id` (377051)`** that doesn't exist in my RDS `users` table.
+
+---
+
+📦 SYSTEM DETAILS:
+
+✅ **Backend logs:**
+```text
+Database initialization completed: {
+  'tiers_initialized': False,
+  'users_initialized': {'admin_created': True, 'standard_user_created': True},
+  'subscriptions_assigned': False
+}
+✅ admin@probeops.com is created on container startup.
+
+❌ But token still carries user_id=377051, which does not exist in the AWS DB, hence the FOREIGN KEY VIOLATION when inserting into usage_logs.
+
+📌 WHAT I NEED HELP WITH:
+
+Confirm and regenerate a clean JWT on login using the correct user_id from the current PostgreSQL RDS instance.
+
+Ensure that create_access_token(user) in auth.py is using the correct user.id from DB (and not any hardcoded or stale value).
+
+Provide a Python script or FastAPI-compatible snippet to:
+
+Hash a password (probeopS1@)
+
+Insert admin@probeops.com safely into my current DB with logging enabled
+
+How to reset tokens on frontend if an invalid token is cached (e.g., purge localStorage / sessionStorage)
+
+📂 ARTIFACTS & DATA:
+
+✅ JWT causing issues (decoded via jwt.io):
+
+json
+Copy
+Edit
+{
+  "sub": 377051,
+  "exp": 1716047895,
+  ...
+}
+✅ Expected user ID in AWS DB:
+
+sql
+Copy
+Edit
+SELECT id FROM users WHERE email = 'admin@probeops.com';
+-- Returns different ID like 1 or 2 (NOT 377051)
+🙏 Please help verify the cause, update the token logic if needed, and guide me on cleaning frontend state + aligning DB IDs during migration.
+
+🌐 Repo: https://github.com/kumarsecurityfocal/ProbeNetworkTools
+
+yaml
+Copy
+Edit
