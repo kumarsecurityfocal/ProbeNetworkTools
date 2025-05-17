@@ -56,12 +56,19 @@ const ProbeNodesManagement = () => {
   const [error, setError] = useState(null);
   const [selectedNode, setSelectedNode] = useState(null);
   const [expandedNode, setExpandedNode] = useState(null);
+  const [tokenDialogOpen, setTokenDialogOpen] = useState(false);
   const [nodeEditDialogOpen, setNodeEditDialogOpen] = useState(false);
   const [filters, setFilters] = useState({
     region: '',
     status: '',
     activeOnly: false
   });
+  const [tokenForm, setTokenForm] = useState({
+    description: '',
+    expiryHours: 24,
+    region: ''
+  });
+  const [newToken, setNewToken] = useState(null);
   const [notification, setNotification] = useState({
     open: false,
     message: '',
@@ -179,7 +186,36 @@ const ProbeNodesManagement = () => {
     }
   };
 
-  // Note: Token creation methods removed in favor of using the dedicated ProbeNodeTokenGenerator component
+  // Open token creation dialog
+  const handleOpenTokenDialog = () => {
+    setTokenForm({
+      description: '',
+      expiryHours: 24,
+      region: ''
+    });
+    setNewToken(null);
+    setTokenDialogOpen(true);
+  };
+
+  // Handle token form input changes
+  const handleTokenFormChange = (e) => {
+    const { name, value } = e.target;
+    setTokenForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Create a new registration token
+  const handleCreateToken = async () => {
+    try {
+      const result = await createRegistrationToken(tokenForm);
+      setNewToken(result);
+      showNotification('Registration token created successfully', 'success');
+    } catch (err) {
+      showNotification('Failed to create registration token', 'error');
+    }
+  };
 
   // Copy token to clipboard
   const copyToClipboard = (text) => {
@@ -295,11 +331,12 @@ const ProbeNodesManagement = () => {
               Refresh
             </Button>
             <Button 
-              variant="outlined" 
-              startIcon={<RefreshIcon />} 
-              onClick={fetchRegistrationTokens}
+              variant="contained" 
+              color="primary" 
+              startIcon={<AddIcon />}
+              onClick={handleOpenTokenDialog}
             >
-              Refresh Tokens
+              Create Registration Token
             </Button>
           </Box>
         </Box>
@@ -678,7 +715,96 @@ const ProbeNodesManagement = () => {
         )}
       </Paper>
 
-      {/* Note: Token generation dialog removed. Using the dedicated ProbeNodeTokenGenerator component instead */}
+      {/* Registration Token Dialog */}
+      <Dialog 
+        open={tokenDialogOpen} 
+        onClose={() => setTokenDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Create Registration Token</DialogTitle>
+        <DialogContent>
+          {newToken ? (
+            <Box sx={{ my: 2 }}>
+              <Alert severity="success" sx={{ mb: 2 }}>
+                Token created successfully! This token will expire {formatDate(newToken.expires_at)}.
+              </Alert>
+              <Typography variant="subtitle2" gutterBottom>Registration Token:</Typography>
+              <Paper
+                sx={{
+                  p: 2,
+                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 2
+                }}
+              >
+                <Typography variant="body2" sx={{ wordBreak: 'break-all', fontFamily: 'monospace' }}>
+                  {newToken.token}
+                </Typography>
+                <IconButton
+                  onClick={() => copyToClipboard(newToken.token)}
+                  size="small"
+                >
+                  <ContentCopyIcon fontSize="small" />
+                </IconButton>
+              </Paper>
+              <Typography variant="body2" color="textSecondary">
+                Copy this token to use when registering a new probe node. For security reasons, this token will not be shown again.
+              </Typography>
+            </Box>
+          ) : (
+            <Box sx={{ mt: 2 }}>
+              <TextField
+                fullWidth
+                label="Description"
+                name="description"
+                value={tokenForm.description}
+                onChange={handleTokenFormChange}
+                margin="normal"
+                helperText="Enter a description for this token (e.g., 'AWS US-East Node')"
+                required
+              />
+              <TextField
+                fullWidth
+                label="Expiry Hours"
+                name="expiryHours"
+                type="number"
+                value={tokenForm.expiryHours}
+                onChange={handleTokenFormChange}
+                margin="normal"
+                InputProps={{ inputProps: { min: 1, max: 168 } }}
+                helperText="How many hours should this token be valid for (1-168)"
+              />
+              <TextField
+                fullWidth
+                label="Intended Region"
+                name="region"
+                value={tokenForm.region}
+                onChange={handleTokenFormChange}
+                margin="normal"
+                helperText="Optional region code for this node (e.g., 'us-east')"
+              />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setTokenDialogOpen(false)}>
+            {newToken ? 'Close' : 'Cancel'}
+          </Button>
+          {!newToken && (
+            <Button 
+              onClick={handleCreateToken} 
+              color="primary" 
+              variant="contained"
+              disabled={!tokenForm.description}
+            >
+              Create Token
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
 
       {/* Node Edit Dialog */}
       <Dialog 

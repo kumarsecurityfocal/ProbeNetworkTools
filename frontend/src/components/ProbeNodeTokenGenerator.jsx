@@ -9,6 +9,7 @@ import {
   MenuItem,
   Select,
   InputLabel,
+  Divider,
   Alert,
   IconButton,
   Tooltip,
@@ -29,15 +30,12 @@ import {
   TableRow,
   Chip
 } from '@mui/material';
-import Divider from '@mui/material/Divider';
 import {
   Add as AddIcon,
   ContentCopy as CopyIcon,
   Check as CheckIcon,
   Info as InfoIcon,
-  Refresh as RefreshIcon,
-  Delete as DeleteIcon,
-  History as HistoryIcon
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 import { useApi } from '../hooks/useApi';
 
@@ -58,8 +56,6 @@ const ProbeNodeTokenGenerator = () => {
   const [customApiKey, setCustomApiKey] = useState('');
   const [heartbeatInterval, setHeartbeatInterval] = useState(15);
   const [logLevel, setLogLevel] = useState('INFO');
-  const [generatedTokens, setGeneratedTokens] = useState([]);
-  const [showTokenHistory, setShowTokenHistory] = useState(false);
 
   // Generate a random UUID for node
   const generateNodeUuid = () => {
@@ -76,16 +72,9 @@ const ProbeNodeTokenGenerator = () => {
     }
   }, [nodeName, advancedMode]);
   
-  // Expanded defensive checks to prevent errors related to DOM properties
+  // Defensive check to prevent toLowerCase errors when nodeName might be undefined or null
   const getSafeNodeName = () => {
     return typeof nodeName === 'string' ? nodeName : '';
-  };
-  
-  // Safe access to DOM element properties
-  const getSafeElementProperty = (element, property) => {
-    if (!element) return '';
-    const value = element[property];
-    return typeof value === 'string' ? value : '';
   };
 
   // Handle token generation
@@ -163,22 +152,6 @@ const ProbeNodeTokenGenerator = () => {
       // Set the generated token
       setGeneratedToken(tokenResponse.data.token);
       
-      // Add to the list of generated tokens with timestamp
-      const newToken = {
-        id: Date.now(),
-        token: tokenResponse.data.token.substring(0, 20) + '...',
-        fullToken: tokenResponse.data.token,
-        name: nodeName,
-        description: nodeDescription || 'No description',
-        date: new Date().toISOString(),
-        nodeUuid: finalNodeUuid,
-        heartbeatInterval,
-        logLevel,
-        expireDays
-      };
-      
-      setGeneratedTokens(prev => [newToken, ...prev]);
-      
       // Show the token dialog
       setTokenDialog(true);
       
@@ -206,50 +179,19 @@ const ProbeNodeTokenGenerator = () => {
       }
     );
   };
-  
-  // Copy token from history to clipboard
-  const handleCopyHistoryToken = (token) => {
-    navigator.clipboard.writeText(token).then(
-      () => {
-        setSnackbarMessage('Token copied to clipboard');
-        setSnackbarOpen(true);
-      },
-      () => {
-        setError('Failed to copy token');
-      }
-    );
-  };
-  
-  // Remove token from history
-  const handleRemoveToken = (tokenId) => {
-    setGeneratedTokens(prev => prev.filter(token => token.id !== tokenId));
-    setSnackbarMessage('Token removed from history');
-    setSnackbarOpen(true);
-  };
 
   return (
     <Box sx={{ mb: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6">Generate Probe Node Token</Typography>
-        <Box>
-          <Tooltip title="Toggle token history">
-            <IconButton 
-              onClick={() => setShowTokenHistory(!showTokenHistory)}
-              color={showTokenHistory ? "primary" : "default"}
-            >
-              <HistoryIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Learn more about probe node tokens">
-            <IconButton onClick={() => setInfoDialogOpen(true)}>
-              <InfoIcon />
-            </IconButton>
-          </Tooltip>
-        </Box>
+        <Tooltip title="Learn more about probe node tokens">
+          <IconButton onClick={() => setInfoDialogOpen(true)}>
+            <InfoIcon />
+          </IconButton>
+        </Tooltip>
       </Box>
 
-      {/* Generate Token Form - ALWAYS SHOWN FIRST */}
-      <Paper sx={{ p: 3, mb: 3 }}>
+      <Paper sx={{ p: 3 }}>
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
             {error}
@@ -413,73 +355,6 @@ const ProbeNodeTokenGenerator = () => {
         </Box>
       </Paper>
 
-      {/* Token History Display - Simple Card Based Version */}
-      {showTokenHistory && generatedTokens.length > 0 && (
-        <Paper sx={{ mb: 3, p: 2 }}>
-          <Typography variant="subtitle1" gutterBottom>
-            Recent Generated Tokens
-          </Typography>
-          
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {generatedTokens.map((token) => {
-              // Safely get properties (avoid DOM errors)
-              const id = token?.id || Math.random();
-              const name = token?.name || 'Unnamed Token';
-              const tokenPreview = token?.token || '[token preview]';
-              const fullToken = token?.fullToken || '';
-              const date = token?.date ? new Date(token.date).toLocaleString() : 'N/A';
-              const expireDays = token?.expireDays;
-              
-              return (
-                <Paper key={id} variant="outlined" sx={{ p: 2 }}>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={4}>
-                      <Typography variant="subtitle2" component="div">
-                        {name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Created: {date}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
-                      <Typography variant="subtitle2" component="div">
-                        Token:
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                        {tokenPreview}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={2}>
-                      <Typography variant="body2" component="div">
-                        Expires in: {expireDays === 0 ? 'Never' : `${expireDays || 0} ${(expireDays || 0) === 1 ? 'day' : 'days'}`}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={2} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-                      <Button 
-                        size="small" 
-                        startIcon={<CopyIcon />} 
-                        onClick={() => handleCopyHistoryToken(fullToken)}
-                        sx={{ mr: 1 }}
-                      >
-                        Copy
-                      </Button>
-                      <Button 
-                        size="small" 
-                        color="error" 
-                        startIcon={<DeleteIcon />} 
-                        onClick={() => handleRemoveToken(id)}
-                      >
-                        Remove
-                      </Button>
-                    </Grid>
-                  </Grid>
-                </Paper>
-              );
-            })}
-          </Box>
-        </Paper>
-      )}
-
       {/* Token Generated Dialog */}
       <Dialog
         open={tokenDialog}
@@ -564,14 +439,6 @@ const ProbeNodeTokenGenerator = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={4000}
-        onClose={() => setSnackbarOpen(false)}
-        message={snackbarMessage}
-      />
-      
       {/* Info Dialog */}
       <Dialog
         open={infoDialogOpen}
