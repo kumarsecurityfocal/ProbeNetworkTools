@@ -59,6 +59,39 @@ app.get('/database', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Endpoint for registering probe nodes
+app.post('/api/probe-nodes', (req, res) => {
+  try {
+    const { node_uuid, name, description, metadata } = req.body;
+    
+    // Validate required parameters
+    if (!node_uuid || !name) {
+      return res.status(400).json({ error: 'Node UUID and name are required' });
+    }
+    
+    // This endpoint would normally save to database, but for now just return success
+    console.log(`Registering probe node: ${name} (${node_uuid})`);
+    
+    // Return success response
+    res.status(200).json({
+      id: Math.floor(Math.random() * 1000), // simulate an ID
+      node_uuid,
+      name,
+      description: description || '',
+      metadata: metadata || {},
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      status: 'pending_activation'
+    });
+  } catch (error) {
+    console.error('Error registering probe node:', error);
+    res.status(500).json({ 
+      error: 'Failed to register probe node', 
+      detail: error.message 
+    });
+  }
+});
+
 // Endpoint for generating probe node tokens
 app.post('/api/admin/generate-probe-token', (req, res) => {
   try {
