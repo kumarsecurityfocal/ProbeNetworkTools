@@ -3,9 +3,11 @@ import { Box, Tabs, Tab, Typography } from '@mui/material';
 import { 
   SettingsRemote as NodesIcon,
   VpnKey as TokensIcon,
+  List as ListIcon,
 } from '@mui/icons-material';
 import SimpleProbeNodesManagement from './SimpleProbeNodesManagement';
 import SimpleTokenGenerator from './SimpleTokenGenerator';
+import TokenManagement from './TokenManagement';
 
 // TabPanel component for tab content
 function TabPanel(props) {
@@ -49,6 +51,7 @@ const ProbeManagement = () => {
         >
           <Tab icon={<NodesIcon />} label="Probe Nodes" />
           <Tab icon={<TokensIcon />} label="Generate Tokens" />
+          <Tab icon={<ListIcon />} label="Manage Tokens" />
         </Tabs>
       </Box>
 
@@ -58,6 +61,10 @@ const ProbeManagement = () => {
 
       <TabPanel value={tabValue} index={1}>
         <SimpleTokenGenerator />
+      </TabPanel>
+      
+      <TabPanel value={tabValue} index={2}>
+        <TokenManagement />
       </TabPanel>
     </Box>
   );

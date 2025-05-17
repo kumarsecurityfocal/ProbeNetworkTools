@@ -95,6 +95,14 @@ function handleNodes(req, res) {
   }
 }
 
+// In-memory storage for tokens
+const probeTokens = [];
+
+// Function to generate a unique ID
+function generateId() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+}
+
 // Endpoint for generating probe node tokens
 app.post('/api/admin/generate-probe-token', (req, res) => {
   try {
@@ -143,18 +151,65 @@ app.post('/api/admin/generate-probe-token', (req, res) => {
     // Sign the token
     const token = jwt.sign(payload, JWT_SECRET);
     
-    // Return the token
-    res.json({ 
+    // Create token record
+    const tokenRecord = { 
+      id: generateId(),
       token,
       node_uuid,
       name,
+      description: description || '',
+      revoked: false,
       created_at: new Date().toISOString(),
       expires_at: exp ? new Date(exp * 1000).toISOString() : null
-    });
+    };
+    
+    // Store token in memory
+    probeTokens.push(tokenRecord);
+    
+    // Return the token
+    res.json(tokenRecord);
   } catch (error) {
     console.error('Error generating probe token:', error);
     res.status(500).json({ 
       error: 'Failed to generate probe token', 
+      detail: error.message 
+    });
+  }
+});
+
+// Endpoint to get all probe tokens
+app.get('/api/admin/probe-tokens', (req, res) => {
+  try {
+    res.json(probeTokens);
+  } catch (error) {
+    console.error('Error fetching probe tokens:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch probe tokens', 
+      detail: error.message 
+    });
+  }
+});
+
+// Endpoint to delete a probe token
+app.delete('/api/admin/probe-tokens/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Find the token index
+    const tokenIndex = probeTokens.findIndex(token => token.id === id);
+    
+    if (tokenIndex === -1) {
+      return res.status(404).json({ error: 'Token not found' });
+    }
+    
+    // Mark token as revoked (soft delete)
+    probeTokens[tokenIndex].revoked = true;
+    
+    res.json({ success: true, message: 'Token revoked successfully' });
+  } catch (error) {
+    console.error('Error revoking probe token:', error);
+    res.status(500).json({ 
+      error: 'Failed to revoke probe token', 
       detail: error.message 
     });
   }
