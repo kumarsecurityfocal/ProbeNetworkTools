@@ -125,7 +125,7 @@ If you encounter connectivity issues:
    journalctl -u probeops-node -f
    
    # For Docker deployment
-   docker compose -f docker-compose.probe.yml logs -f
+   docker compose -f scripts/docker-compose.probe.yml logs -f
    ```
 
 2. Verify the backend is accessible:
@@ -159,8 +159,8 @@ For Docker deployment:
 
 ```bash
 # Pull latest changes
-docker compose -f docker-compose.probe.yml pull
+docker compose -f scripts/docker-compose.probe.yml pull
 
 # Restart the container
-docker compose -f docker-compose.probe.yml up -d
+docker compose -f scripts/docker-compose.probe.yml up -d
 ```
