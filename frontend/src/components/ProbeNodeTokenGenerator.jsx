@@ -76,9 +76,16 @@ const ProbeNodeTokenGenerator = () => {
     }
   }, [nodeName, advancedMode]);
   
-  // Defensive check to prevent toLowerCase errors when nodeName might be undefined or null
+  // Expanded defensive checks to prevent errors related to DOM properties
   const getSafeNodeName = () => {
     return typeof nodeName === 'string' ? nodeName : '';
+  };
+  
+  // Safe access to DOM element properties
+  const getSafeElementProperty = (element, property) => {
+    if (!element) return '';
+    const value = element[property];
+    return typeof value === 'string' ? value : '';
   };
 
   // Handle token generation
@@ -240,63 +247,9 @@ const ProbeNodeTokenGenerator = () => {
           </Tooltip>
         </Box>
       </Box>
-      
-      {/* Token History Display */}
-      {showTokenHistory && generatedTokens.length > 0 && (
-        <Paper sx={{ mb: 3, p: 2 }}>
-          <Typography variant="subtitle1" gutterBottom>
-            Recent Generated Tokens
-          </Typography>
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Token</TableCell>
-                  <TableCell>Created</TableCell>
-                  <TableCell>Expiry</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {generatedTokens.map((token) => (
-                  <TableRow key={token.id}>
-                    <TableCell>{token.name}</TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                        {token.token}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(token.date).toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      {token.expireDays === 0 ? 
-                        'Never' : 
-                        `${token.expireDays} ${token.expireDays === 1 ? 'day' : 'days'}`
-                      }
-                    </TableCell>
-                    <TableCell>
-                      <Tooltip title="Copy full token">
-                        <IconButton size="small" onClick={() => handleCopyHistoryToken(token.fullToken)}>
-                          <CopyIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Remove from history">
-                        <IconButton size="small" onClick={() => handleRemoveToken(token.id)}>
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
-      )}
 
-      <Paper sx={{ p: 3 }}>
+      {/* Generate Token Form - ALWAYS SHOWN FIRST */}
+      <Paper sx={{ p: 3, mb: 3 }}>
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
             {error}
@@ -459,6 +412,61 @@ const ProbeNodeTokenGenerator = () => {
           </Box>
         </Box>
       </Paper>
+
+      {/* Token History Display - SHOWN BELOW */}
+      {showTokenHistory && generatedTokens.length > 0 && (
+        <Paper sx={{ mb: 3, p: 2 }}>
+          <Typography variant="subtitle1" gutterBottom>
+            Recent Generated Tokens
+          </Typography>
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Token</TableCell>
+                  <TableCell>Created</TableCell>
+                  <TableCell>Expiry</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {generatedTokens.map((token) => (
+                  <TableRow key={token.id}>
+                    <TableCell>{getSafeElementProperty(token, 'name')}</TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                        {getSafeElementProperty(token, 'token')}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      {token && token.date ? new Date(token.date).toLocaleString() : 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      {token && token.expireDays === 0 ? 
+                        'Never' : 
+                        `${token.expireDays || 0} ${(token.expireDays || 0) === 1 ? 'day' : 'days'}`
+                      }
+                    </TableCell>
+                    <TableCell>
+                      <Tooltip title="Copy full token">
+                        <IconButton size="small" onClick={() => handleCopyHistoryToken(getSafeElementProperty(token, 'fullToken'))}>
+                          <CopyIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Remove from history">
+                        <IconButton size="small" onClick={() => handleRemoveToken(token.id)}>
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
+      )}
 
       {/* Token Generated Dialog */}
       <Dialog
