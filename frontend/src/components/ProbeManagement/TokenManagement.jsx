@@ -63,10 +63,17 @@ const TokenManagement = () => {
     
     try {
       const response = await api.get('/admin/probe-tokens');
-      setTokens(response.data || []);
+      // Make sure we handle if the response is not an array
+      if (Array.isArray(response.data)) {
+        setTokens(response.data);
+      } else {
+        setTokens([]);
+        console.log("Response is not an array:", response.data);
+      }
     } catch (err) {
       console.error('Error fetching tokens:', err);
       setError('Failed to fetch tokens: ' + (err.response?.data?.error || err.message));
+      setTokens([]); // Set to empty array on error
     } finally {
       setLoading(false);
     }

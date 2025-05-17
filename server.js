@@ -103,6 +103,9 @@ function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
 }
 
+// Export these for direct access from other routes
+global.probeTokens = probeTokens;
+
 // Endpoint for generating probe node tokens
 app.post('/api/admin/generate-probe-token', (req, res) => {
   try {
@@ -360,6 +363,26 @@ app.post('/api/admin/execute-query', async (req, res) => {
       detail: error.message 
     });
   }
+});
+
+// Admin route for token management
+app.get('/admin/probe-tokens', (req, res) => {
+  console.log('Serving probe tokens');
+  res.json(probeTokens);
+});
+
+app.delete('/admin/probe-tokens/:id', (req, res) => {
+  const { id } = req.params;
+  const tokenIndex = probeTokens.findIndex(token => token.id === id);
+    
+  if (tokenIndex === -1) {
+    return res.status(404).json({ error: 'Token not found' });
+  }
+    
+  // Mark token as revoked (soft delete)
+  probeTokens[tokenIndex].revoked = true;
+    
+  res.json({ success: true, message: 'Token revoked successfully' });
 });
 
 // Parse and handle API routes
