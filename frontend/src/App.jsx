@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-
 import { Box, CssBaseline, ThemeProvider } from '@mui/material';
 import { useAuth } from './context/AuthContext';
 import { lightTheme, darkTheme } from './theme/theme';
+import ErrorBoundary from './ErrorBoundary';
 
 // App Components
 import AuthForm from './components/AuthForm';
@@ -101,9 +102,10 @@ function App() {
   const isAppRoute = isAuthenticated && !publicRoutes.includes(window.location.pathname);
   
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <div className="min-h-screen flex flex-col">
+    <ErrorBoundary>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <div className="min-h-screen flex flex-col">
         {isAppRoute && <Navbar 
           darkMode={darkMode} 
           toggleDarkMode={toggleDarkMode} 
