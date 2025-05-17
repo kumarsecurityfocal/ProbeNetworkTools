@@ -454,6 +454,74 @@ echo "[DOCKER] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Stopping containers" >> "$LOG_
 run_command "docker compose down" "Stopping and removing all existing containers"
 log_success "All existing containers stopped and removed"
 
+# Step 10.5: Run database migrations
+log_info "Step 10.5: Running database migrations..."
+echo "[DATABASE] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Starting database migration process" >> "$LOG_FILE"
+
+# Check if the database migration script exists
+DB_MIGRATION_SCRIPT="$(pwd)/scripts/database/safe_deploy_db.sh"
+if [ -f "$DB_MIGRATION_SCRIPT" ]; then
+    log_info "Found database migration script at $DB_MIGRATION_SCRIPT"
+    
+    # Make sure the script is executable
+    chmod +x "$DB_MIGRATION_SCRIPT"
+    
+    # Run the database migration script
+    log_info "Running database migration script..."
+    if "$DB_MIGRATION_SCRIPT"; then
+        log_success "Database migration completed successfully"
+    else
+        log_error "Database migration failed!"
+        echo "[DATABASE_ERROR] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Database migration failed" >> "$LOG_FILE"
+        
+        # Ask the user if they want to continue despite the migration failure
+        echo -e "${RED}Database migration failed. This may cause application issues.${NC}"
+        echo -e "${YELLOW}Would you like to continue with deployment anyway? (y/n)${NC}"
+        read -r continue_response
+        
+        if [[ ! "$continue_response" =~ ^[Yy]$ ]]; then
+            log_error "Deployment aborted due to database migration failure"
+            echo "[DEPLOYMENT_ABORTED] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Deployment aborted due to database migration failure" >> "$LOG_FILE"
+            exit 1
+        else
+            log_warning "Continuing deployment despite database migration failure"
+            echo "[DATABASE_WARNING] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Continuing deployment despite database migration failure" >> "$LOG_FILE"
+        fi
+    fi
+else
+    log_warning "Database migration script not found at $DB_MIGRATION_SCRIPT"
+    echo "[DATABASE_WARNING] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Database migration script not found" >> "$LOG_FILE"
+    
+    # Try using the alternative integration script if available
+    ALT_DB_SCRIPT="$(pwd)/scripts/deployment/db_migration_deploy.sh"
+    if [ -f "$ALT_DB_SCRIPT" ]; then
+        log_info "Found alternative database migration script at $ALT_DB_SCRIPT"
+        chmod +x "$ALT_DB_SCRIPT"
+        
+        if "$ALT_DB_SCRIPT"; then
+            log_success "Database migration completed successfully using alternative script"
+        else
+            log_error "Database migration failed with alternative script!"
+            echo "[DATABASE_ERROR] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Database migration failed with alternative script" >> "$LOG_FILE"
+            
+            # Ask the user if they want to continue despite the migration failure
+            echo -e "${RED}Database migration failed. This may cause application issues.${NC}"
+            echo -e "${YELLOW}Would you like to continue with deployment anyway? (y/n)${NC}"
+            read -r continue_response
+            
+            if [[ ! "$continue_response" =~ ^[Yy]$ ]]; then
+                log_error "Deployment aborted due to database migration failure"
+                exit 1
+            else
+                log_warning "Continuing deployment despite database migration failure"
+            fi
+        fi
+    else
+        log_warning "No database migration scripts found - skipping database migrations"
+        echo "[DATABASE_WARNING] $(date +"%Y-%m-%d %H:%M:%S.%3N") - No database migration scripts found" >> "$LOG_FILE"
+    fi
+fi
+
 # Step 11: Start services with forced rebuild
 log_info "Step 11: Starting services with forced rebuild..."
 echo "[DOCKER] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Starting containers with forced rebuild" >> "$LOG_FILE"

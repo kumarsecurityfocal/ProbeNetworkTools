@@ -1,0 +1,41 @@
+Validation passed!
+Step 2: Creating database backup
+-------------------------------
+Backing up database to: /home/ubuntu/ProbeNetworkTools/database_backups/probeops_backup_20250517_134432.sql
+Could not determine PostgreSQL server version from DATABASE_URL.
+Attempting to get version from server...
+PostgreSQL client version: 17.5
+17.5
+22.04
+PostgreSQL server version: 17.*
+WARNING: PostgreSQL version mismatch detected.
+Server is version 17.*, but client is version 17.5
+17.5
+22.04
+Attempting to install PostgreSQL 17 client tools...
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+postgresql-client-17 is already the newest version (17.5-1.pgdg22.04+1).
+0 upgraded, 0 newly installed, 0 to remove and 5 not upgraded.
+Failed to install matching PostgreSQL client. Proceeding with backup attempt.
+Running backup with pg_dump...
+Backup created successfully!
+Backup compressed to: /home/ubuntu/ProbeNetworkTools/database_backups/probeops_backup_20250517_134432.sql.gz
+Step 3: Running migrations
+-------------------------
+Checking if database is fresh and needs stamping...
+Fresh database detected with no migration history.
+Checking for base migration to stamp...
+Found base migration: 2025-05-17 13:44:34,004 - migration_manager - INFO - Loading environment from /home/ubuntu/ProbeNetworkTools/.env.db
+20250514_create_base_schema
+Would you like to stamp the database with this base migration? (y/n)
+y
+Stamping database with base migration: 2025-05-17 13:44:34,004 - migration_manager - INFO - Loading environment from /home/ubuntu/ProbeNetworkTools/.env.db
+20250514_create_base_schema
+2025-05-17 13:44:41,492 - migration_manager - INFO - Loading environment from /home/ubuntu/ProbeNetworkTools/.env.db
+2025-05-17 13:44:41,506 - migration_manager - INFO - Stamping database with revision: 2025-05-17 13:44:34,004 - migration_manager - INFO - Loading environment from /home/ubuntu/ProbeNetworkTools/.env.db
+20250514_create_base_schema
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+ubuntu@ip-172-16-0-80:~/ProbeNetworkTools$
