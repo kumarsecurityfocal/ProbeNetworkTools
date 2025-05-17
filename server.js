@@ -95,76 +95,6 @@ function handleNodes(req, res) {
   }
 }
 
-// Endpoint for listing probe node registration tokens
-app.get('/api/probe-nodes/registration-token', (req, res) => {
-  try {
-    // Parse query parameters
-    const includeExpired = req.query.include_expired === 'true';
-    const includeUsed = req.query.include_used === 'true';
-    
-    console.log(`Token listing request: include_expired=${includeExpired}, include_used=${includeUsed}`);
-    
-    // Sample data for tokens
-    const tokens = [
-      {
-        id: 1,
-        description: "Production Server",
-        token: "xxxxx.xxxxx.xxxxx",
-        created_at: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 days ago
-        expiry_date: new Date(Date.now() + 86400000 * 28).toISOString(), // 28 days from now
-        used: false,
-        region: "us-east"
-      },
-      {
-        id: 2,
-        description: "Development Environment",
-        token: "yyyyy.yyyyy.yyyyy",
-        created_at: new Date(Date.now() - 86400000 * 10).toISOString(), // 10 days ago
-        expiry_date: new Date(Date.now() - 86400000 * 5).toISOString(), // 5 days ago (expired)
-        used: false,
-        region: "us-west"
-      },
-      {
-        id: 3,
-        description: "Test Server",
-        token: "zzzzz.zzzzz.zzzzz",
-        created_at: new Date(Date.now() - 86400000 * 15).toISOString(), // 15 days ago
-        expiry_date: new Date(Date.now() + 86400000 * 15).toISOString(), // 15 days from now
-        used: true,
-        region: "eu-west"
-      },
-      {
-        id: 7,
-        description: "Legacy Token",
-        token: "aaaaa.aaaaa.aaaaa",
-        created_at: new Date(Date.now() - 86400000 * 60).toISOString(), // 60 days ago
-        expiry_date: new Date(Date.now() - 86400000 * 30).toISOString(), // 30 days ago (expired)
-        used: true,
-        region: "ap-east"
-      }
-    ];
-    
-    // Apply filters
-    const filteredTokens = tokens.filter(token => {
-      if (!includeExpired && new Date(token.expiry_date) < new Date()) {
-        return false;
-      }
-      if (!includeUsed && token.used) {
-        return false;
-      }
-      return true;
-    });
-    
-    res.status(200).json(filteredTokens);
-  } catch (error) {
-    console.error('Error listing tokens:', error);
-    res.status(500).json({ 
-      error: 'Failed to list tokens', 
-      detail: error.message 
-    });
-  }
-});
-
 // Endpoint for generating probe node tokens
 app.post('/api/admin/generate-probe-token', (req, res) => {
   try {
@@ -572,21 +502,8 @@ app.use((req, res, next) => {
     // Handle probe nodes API requests
     console.log(`Probe nodes request detected: ${req.method} ${url}`);
     // Strip /api prefix if present and modify URL to match the backend structure
+    // The backend route is actually just /registration-token not /probe-nodes/registration-token
     let modifiedUrl = url.replace(/^\/api/, '');
-    
-    // Special handling for token deletion via DELETE method
-    if (req.method === 'DELETE' && modifiedUrl.includes('/registration-token/')) {
-      // Force the token ID into a new endpoint for the proxy
-      const tokenId = modifiedUrl.split('/').pop();
-      if (tokenId) {
-        // For DELETE, we directly handle it here rather than proxying
-        console.log(`Simulating token revocation for ID: ${tokenId}`);
-        return res.status(200).json({ 
-          success: true, 
-          message: `Token ${tokenId} revoked successfully`
-        });
-      }
-    }
     
     // Adjust registration-token routes
     if (modifiedUrl.includes('/probe-nodes/registration-token')) {

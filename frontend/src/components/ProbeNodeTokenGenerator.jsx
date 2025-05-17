@@ -28,13 +28,9 @@ import {
   ContentCopy as CopyIcon,
   Check as CheckIcon,
   Info as InfoIcon,
-  Refresh as RefreshIcon,
-  Delete as DeleteIcon,
-  FilterList as FilterListIcon
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 import { useApi } from '../hooks/useApi';
-import SimpleTokenTable from './SimpleTokenTable';
-import { normalizeUrl } from '../utils/urlUtils';
 
 const ProbeNodeTokenGenerator = () => {
   const { api } = useApi();
@@ -53,13 +49,6 @@ const ProbeNodeTokenGenerator = () => {
   const [customApiKey, setCustomApiKey] = useState('');
   const [heartbeatInterval, setHeartbeatInterval] = useState(15);
   const [logLevel, setLogLevel] = useState('INFO');
-  
-  // For tracking generated tokens
-  const [generatedTokens, setGeneratedTokens] = useState([]);
-  const [tokensLoading, setTokensLoading] = useState(false);
-  const [showTokensFilter, setShowTokensFilter] = useState(false);
-  const [includeExpired, setIncludeExpired] = useState(false);
-  const [includeUsed, setIncludeUsed] = useState(false);
 
   // Generate a random UUID for node
   const generateNodeUuid = () => {
@@ -69,50 +58,21 @@ const ProbeNodeTokenGenerator = () => {
   };
 
   // Generate random values for node UUID and reset when node name changes
-  // Initialize node UUID when name changes and fetch tokens on component mount
   useEffect(() => {
     if (!advancedMode) {
       // Only auto-generate if not in advanced mode
       setNodeUuid(generateNodeUuid());
     }
   }, [nodeName, advancedMode]);
-  
-  // Fetch tokens on component mount
-  useEffect(() => {
-    fetchGeneratedTokens();
-  }, []);
-  
-  // Function to fetch generated tokens
-  const fetchGeneratedTokens = async () => {
-    setTokensLoading(true);
-    try {
-      // This endpoint returns a list of existing probe tokens
-      const response = await api.get(`/api/probe-nodes/registration-token?include_expired=${includeExpired}&include_used=${includeUsed}`);
-      setGeneratedTokens(response.data || []);
-    } catch (error) {
-      console.error('Error fetching tokens:', error);
-      // Don't show error to avoid UI clutter - token list is a secondary feature
-    } finally {
-      setTokensLoading(false);
-    }
-  };
-  
-  // Defensive check to prevent toLowerCase errors when nodeName might be undefined or null
-  const getSafeNodeName = () => {
-    return typeof nodeName === 'string' ? nodeName : '';
-  };
 
   // Handle token generation
   const handleGenerateToken = async () => {
-    const safeNodeName = getSafeNodeName();
-    
-    if (!safeNodeName.trim()) {
+    if (!nodeName.trim()) {
       setError('Node name is required');
       return;
     }
 
-    const safeNodeUuid = typeof nodeUuid === 'string' ? nodeUuid : '';
-    if (advancedMode && !safeNodeUuid.trim()) {
+    if (advancedMode && !nodeUuid.trim()) {
       setError('Node UUID is required in advanced mode');
       return;
     }
@@ -184,39 +144,11 @@ const ProbeNodeTokenGenerator = () => {
       setNodeName('');
       setNodeDescription('');
       
-      // Refresh the tokens list to include this new token
-      fetchGeneratedTokens();
-      
     } catch (error) {
       console.error('Error generating token:', error);
       setError('Failed to generate token: ' + (error.response?.data?.detail || error.message));
     } finally {
       setLoading(false);
-    }
-  };
-  
-  // Handle token deletion/revocation
-  const handleDeleteToken = async (tokenId) => {
-    if (!tokenId) return;
-    
-    if (!window.confirm('Are you sure you want to revoke this token? This action cannot be undone.')) {
-      return;
-    }
-    
-    try {
-      // Try to delete the token using our improved endpoint
-      await api.delete(`/api/probe-nodes/registration-token/${tokenId}`);
-      
-      // Show success message
-      setSnackbarMessage('Token revoked successfully');
-      setSnackbarOpen(true);
-      
-      // Refresh the tokens list
-      fetchGeneratedTokens();
-    } catch (error) {
-      console.error('Error deleting token:', error);
-      setSnackbarMessage('Failed to revoke token: ' + (error.response?.data?.detail || error.message));
-      setSnackbarOpen(true);
     }
   };
 
@@ -233,87 +165,17 @@ const ProbeNodeTokenGenerator = () => {
     );
   };
 
-  // Format date for display
-  const formatDate = (dateString) => {
-    if (!dateString) return 'Never';
-    const date = new Date(dateString);
-    return date.toLocaleString();
-  };
-
   return (
     <Box sx={{ mb: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6">Probe Node Tokens</Typography>
-        <Box>
-          <Button 
-            variant="outlined"
-            size="small"
-            onClick={fetchGeneratedTokens}
-            startIcon={<RefreshIcon />}
-            sx={{ mr: 1 }}
-          >
-            Refresh
-          </Button>
-          <Tooltip title="Learn more about probe node tokens">
-            <IconButton onClick={() => setInfoDialogOpen(true)}>
-              <InfoIcon />
-            </IconButton>
-          </Tooltip>
-        </Box>
+        <Typography variant="h6">Generate Probe Node Token</Typography>
+        <Tooltip title="Learn more about probe node tokens">
+          <IconButton onClick={() => setInfoDialogOpen(true)}>
+            <InfoIcon />
+          </IconButton>
+        </Tooltip>
       </Box>
 
-      {/* Tokens Table */}
-      <Paper sx={{ p: 3, mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="subtitle1" fontWeight="500">Generated Node Tokens</Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={includeExpired}
-                  onChange={() => setIncludeExpired(!includeExpired)}
-                  size="small"
-                />
-              }
-              label="Show Expired"
-              sx={{ mr: 1 }}
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={includeUsed}
-                  onChange={() => setIncludeUsed(!includeUsed)}
-                  size="small"
-                />
-              }
-              label="Show Used"
-            />
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={fetchGeneratedTokens}
-              startIcon={<FilterListIcon />}
-              sx={{ ml: 1 }}
-            >
-              Apply
-            </Button>
-          </Box>
-        </Box>
-        
-        {tokensLoading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <TokenList 
-            tokens={generatedTokens} 
-            onDeleteToken={handleDeleteToken} 
-            formatDate={formatDate}
-          />
-        )}
-      </Paper>
-      
-      {/* Token Generation Form */}
       <Paper sx={{ p: 3 }}>
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
@@ -321,11 +183,11 @@ const ProbeNodeTokenGenerator = () => {
           </Alert>
         )}
 
-        <Typography variant="subtitle1" fontWeight="500" gutterBottom>
-          Generate New Token
+        <Typography variant="subtitle2" gutterBottom>
+          Create a token for a new probe node deployment
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          This will create a new token containing all necessary configuration for setting up a new probe node.
+          This token will contain all necessary configuration for setting up a new probe node.
           The node will use this token to connect to the backend and perform diagnostics.
         </Typography>
 
@@ -470,7 +332,7 @@ const ProbeNodeTokenGenerator = () => {
               variant="contained"
               startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <AddIcon />}
               onClick={handleGenerateToken}
-              disabled={loading || !getSafeNodeName().trim()}
+              disabled={loading || !nodeName.trim()}
             >
               Generate Token
             </Button>
@@ -523,12 +385,6 @@ const ProbeNodeTokenGenerator = () => {
               2. Run the following command to configure the probe node:<br />
               <Box sx={{ bgcolor: 'background.default', p: 1, borderRadius: 1, mt: 1, fontFamily: 'monospace' }}>
                 python run_probe_node_token.py --token "{generatedToken}"
-              </Box>
-              <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
-                Or use the deployment script:
-              </Typography>
-              <Box sx={{ bgcolor: 'background.default', p: 1, borderRadius: 1, mt: 0.5, fontFamily: 'monospace' }}>
-                ./deploy-probe.sh "{generatedToken}"
               </Box>
               <Typography variant="caption" sx={{ mt: 1 }}>
                 Node Configuration Parameters (included in token):
