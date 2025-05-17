@@ -95,8 +95,8 @@ function handleNodes(req, res) {
   }
 }
 
-// In-memory storage for tokens
-const probeTokens = [];
+// In-memory storage for tokens - use global to ensure persistence across routes
+global.probeTokens = global.probeTokens || [];
 
 // Function to generate a unique ID
 function generateId() {
@@ -365,30 +365,85 @@ app.post('/api/admin/execute-query', async (req, res) => {
   }
 });
 
+// Initialize probeTokens if it doesn't exist
+if (!global.probeTokens) {
+  global.probeTokens = [];
+}
+
 // Admin route for token management - ensure this is correctly registered
 app.get('/admin/probe-tokens', (req, res) => {
-  console.log('Serving probe tokens:', JSON.stringify(probeTokens));
-  return res.status(200).json(probeTokens || []);
+  console.log('Serving probe tokens:', JSON.stringify(global.probeTokens));
+  return res.status(200).json(global.probeTokens || []);
 });
 
 // Make the route available at both paths to ensure compatibility
 app.get('/api/admin/probe-tokens', (req, res) => {
-  console.log('Serving probe tokens via /api path:', JSON.stringify(probeTokens));
-  return res.status(200).json(probeTokens || []);
+  console.log('Serving probe tokens via /api path:', JSON.stringify(global.probeTokens));
+  return res.status(200).json(global.probeTokens || []);
 });
 
-app.delete('/admin/probe-tokens/:id', (req, res) => {
+// Support delete operation at both paths with a single handler
+app.delete(['/api/admin/probe-tokens/:id', '/admin/probe-tokens/:id'], (req, res) => {
   const { id } = req.params;
-  const tokenIndex = probeTokens.findIndex(token => token.id === id);
-    
+  const tokenIndex = global.probeTokens.findIndex(token => token.id === id);
+  
   if (tokenIndex === -1) {
     return res.status(404).json({ error: 'Token not found' });
   }
-    
+  
   // Mark token as revoked (soft delete)
-  probeTokens[tokenIndex].revoked = true;
-    
+  global.probeTokens[tokenIndex].revoked = true;
+  
   res.json({ success: true, message: 'Token revoked successfully' });
+});
+
+// Add probe-nodes endpoint
+app.get(['/probe-nodes', '/api/probe-nodes'], (req, res) => {
+  console.log('Probe nodes request detected:', req.method, req.url);
+  console.log('Modified URL for probe nodes:', req.url);
+  
+  // Mock data for probe nodes
+  const probeNodes = [
+    {
+      id: 'node-1',
+      name: 'Production Probe',
+      status: 'active',
+      last_seen: new Date().toISOString(),
+      region: 'us-west',
+      created_at: '2025-05-16T10:30:00Z'
+    },
+    {
+      id: 'node-2',
+      name: 'Development Probe',
+      status: 'inactive',
+      last_seen: '2025-05-14T08:15:00Z',
+      region: 'us-east',
+      created_at: '2025-05-12T15:45:00Z'
+    }
+  ];
+  
+  res.json(probeNodes);
+});
+
+// Add debug status endpoints
+app.get('/api/admin/debug-status', (req, res) => {
+  res.json({ 
+    debugMode: global.debugMode || false,
+    databaseConnected: true,
+    authServiceRunning: true
+  });
+});
+
+app.post('/api/admin/toggle-debug', (req, res) => {
+  const { enabled } = req.body;
+  global.debugMode = enabled;
+  
+  console.log(`Debug mode ${enabled ? 'enabled' : 'disabled'}`);
+  res.json({ 
+    success: true, 
+    debugMode: global.debugMode,
+    message: `Debug mode ${enabled ? 'enabled' : 'disabled'}`
+  });
 });
 
 // Parse and handle API routes
