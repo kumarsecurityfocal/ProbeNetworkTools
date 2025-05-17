@@ -1465,14 +1465,14 @@ const AdminPanel = () => {
 
       {/* Probe Nodes Management Tab - Combined Probe Nodes and Token Generation */}
       <TabPanel value={tabValue} index={3}>
-        <Box sx={{ mb: 4 }}>
-          <ProbeNodesManagement />
-        </Box>
-        <Divider sx={{ my: 4 }} />
         <Typography variant="h6" gutterBottom>
           Generate New Probe Node Tokens
         </Typography>
         <ProbeNodeTokenGenerator />
+        <Divider sx={{ my: 4 }} />
+        <Box sx={{ mb: 4 }}>
+          <ProbeNodesManagement />
+        </Box>
       </TabPanel>
 
       {/* Edit Subscription Dialog */}

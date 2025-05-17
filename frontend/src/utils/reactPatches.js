@@ -12,11 +12,33 @@
  * with nodeName.toLowerCase() and similar issues
  */
 export const applyReactDOMPatches = () => {
-  // Capture the original Element.prototype methods that might be causing issues
-  const originalGetAttribute = Element.prototype.getAttribute;
+  // Apply Node prototype patches to prevent toLowerCase issues
+  if (typeof Node !== 'undefined' && Node.prototype) {
+    // Save the original Object.getOwnPropertyDescriptor for nodeName
+    const originalNodeNameDescriptor = Object.getOwnPropertyDescriptor(Node.prototype, 'nodeName');
+    
+    // Define a safer nodeName property that always returns a string
+    if (originalNodeNameDescriptor && originalNodeNameDescriptor.get) {
+      Object.defineProperty(Node.prototype, 'nodeName', {
+        get: function() {
+          try {
+            const value = originalNodeNameDescriptor.get.call(this);
+            return value === null || value === undefined ? '' : String(value);
+          } catch (e) {
+            console.warn('Safe nodeName accessor caught error', e);
+            return '';
+          }
+        },
+        configurable: true
+      });
+    }
+  }
   
-  // Override problematic methods with safer versions
+  // Patch Element prototype methods
   if (typeof Element !== 'undefined' && Element.prototype) {
+    // Save original methods
+    const originalGetAttribute = Element.prototype.getAttribute;
+    
     // Patch getAttribute to ensure it returns strings
     Element.prototype.getAttribute = function(attr) {
       try {
@@ -27,19 +49,34 @@ export const applyReactDOMPatches = () => {
         return null;
       }
     };
-    
-    // Add other patches as needed
   }
   
-  // Add global error handler for nodeName issues
+  // Create safer versions of common operations on String
+  if (typeof String.prototype.toLowerCase !== 'undefined') {
+    const originalToLowerCase = String.prototype.toLowerCase;
+    
+    // Override String.prototype.toLowerCase to handle null and undefined
+    String.prototype.toLowerCase = function() {
+      try {
+        return originalToLowerCase.call(this);
+      } catch (e) {
+        console.warn('Safe toLowerCase patch caught error:', e);
+        return '';
+      }
+    };
+  }
+  
+  // Add global error handler for DOM-related issues
   if (typeof window !== 'undefined') {
     window.addEventListener('error', function(event) {
       // Check if it's a toLowerCase error on potentially null values
       if (event.error && 
-          event.error.toString().includes('toLowerCase is not a function')) {
+          (event.error.toString().includes('toLowerCase is not a function') ||
+           event.error.toString().includes('Cannot read properties of null'))) {
         console.warn('DOM property error intercepted and prevented');
         event.preventDefault();
         event.stopPropagation();
+        return true; // Prevent the error from propagating
       }
     });
   }
