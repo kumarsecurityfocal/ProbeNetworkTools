@@ -136,6 +136,22 @@ class ProbeNode:
             logger.error(f"Error registering node: {e}")
             return False
 
+    async def heartbeat_loop(self, websocket):
+        """Send periodic heartbeats to keep the connection alive."""
+        logger.info(f"Starting heartbeat with interval: {self.heartbeat_interval} seconds")
+        while True:
+            try:
+                await websocket.send(json.dumps({
+                    'type': 'heartbeat',
+                    'node_uuid': self.node_uuid,
+                    'timestamp': datetime.now().isoformat()
+                }))
+                logger.debug("Heartbeat sent")
+                await asyncio.sleep(self.heartbeat_interval)
+            except Exception as e:
+                logger.error(f"Error sending heartbeat: {e}")
+                await asyncio.sleep(5)  # Wait before retrying on error
+    
     async def connect_websocket(self):
         """Establish and maintain WebSocket connection to the backend."""
         import websockets
@@ -158,14 +174,25 @@ class ProbeNode:
                         'timestamp': datetime.now().isoformat()
                     }))
                     
+                    # Start heartbeat task
+                    heartbeat_task = asyncio.create_task(self.heartbeat_loop(websocket))
+                    
                     # Main connection loop
-                    while True:
+                    try:
+                        while True:
+                            try:
+                                message = await websocket.recv()
+                                await self.handle_message(websocket, message)
+                            except websockets.exceptions.ConnectionClosed:
+                                logger.warning("WebSocket connection closed, reconnecting...")
+                                break
+                    finally:
+                        # Clean up heartbeat task when connection is lost
+                        heartbeat_task.cancel()
                         try:
-                            message = await websocket.recv()
-                            await self.handle_message(websocket, message)
-                        except websockets.exceptions.ConnectionClosed:
-                            logger.warning("WebSocket connection closed, reconnecting...")
-                            break
+                            await heartbeat_task
+                        except asyncio.CancelledError:
+                            pass
                             
             except Exception as e:
                 logger.error(f"WebSocket error: {e}")
