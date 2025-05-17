@@ -116,8 +116,22 @@ def check_admin_user():
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     
     try:
+        # First check if password column exists in the users table
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.columns 
+                WHERE table_name = 'users' AND column_name = 'password'
+            ) as has_password_column;
+        """)
+        result = cursor.fetchone()
+        has_password_column = result and result.get("has_password_column", False)
+        
         # Check if admin user exists
-        cursor.execute("SELECT id, email, password FROM users WHERE email = %s", (ADMIN_EMAIL,))
+        if has_password_column:
+            cursor.execute("SELECT id, email, password FROM users WHERE email = %s", (ADMIN_EMAIL,))
+        else:
+            cursor.execute("SELECT id, email FROM users WHERE email = %s", (ADMIN_EMAIL,))
+            
         user = cursor.fetchone()
         
         if not user:
@@ -126,11 +140,16 @@ def check_admin_user():
         
         # Print user details
         logger.info(f"✅ Admin user found:")
-        logger.info(f"   - ID: {user['id']}")
-        logger.info(f"   - Email: {user['email']}")
+        logger.info(f"   - ID: {user.get('id', 'Unknown')}")
+        logger.info(f"   - Email: {user.get('email', 'Unknown')}")
         
         # Generate a test token
-        token = create_access_token({"sub": str(user["id"])})
+        user_id = str(user.get("id", ""))
+        if not user_id:
+            logger.error("❌ Could not get user ID from database result")
+            return False
+            
+        token = create_access_token({"sub": user_id})
         decoded = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
         
         logger.info(f"🔑 Test JWT token generated:")
@@ -144,14 +163,16 @@ def check_admin_user():
                 WHERE constraint_name = 'usage_logs_user_id_fkey'
             ) AS has_fk;
         """)
-        has_fk = cursor.fetchone()["has_fk"]
+        result = cursor.fetchone()
+        has_fk = result and result.get("has_fk", False)
         
         if has_fk:
             logger.info("✅ Foreign key constraint 'usage_logs_user_id_fkey' exists")
             
             # Check if any usage logs exist for this user
             cursor.execute("SELECT COUNT(*) AS count FROM usage_logs WHERE user_id = %s", (user['id'],))
-            log_count = cursor.fetchone()["count"]
+            result = cursor.fetchone()
+            log_count = result.get("count", 0) if result else 0
             logger.info(f"📊 Usage logs for this user: {log_count}")
         
         return True
@@ -172,6 +193,27 @@ def reset_admin_user():
         # Begin transaction
         conn.autocommit = False
         
+        # First check if password column exists in the users table
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.columns 
+                WHERE table_name = 'users' AND column_name = 'password'
+            ) as has_password_column;
+        """)
+        result = cursor.fetchone()
+        has_password_column = result and result.get("has_password_column", False)
+        
+        if not has_password_column:
+            logger.error("❌ Password column does not exist in users table. This may be a different authentication method.")
+            logger.info("Adding password column to users table...")
+            try:
+                cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS password VARCHAR;")
+                logger.info("✅ Password column added successfully")
+                has_password_column = True
+            except Exception as e:
+                logger.error(f"❌ Failed to add password column: {e}")
+                return False
+        
         # Check if admin user exists
         cursor.execute("SELECT id, email FROM users WHERE email = %s", (ADMIN_EMAIL,))
         user = cursor.fetchone()
@@ -179,19 +221,26 @@ def reset_admin_user():
         # Hash the password
         hashed_password = hash_password(ADMIN_PASSWORD)
         
-        if user:
+        if user and user.get("id"):
             # Update existing user
-            logger.info(f"🔄 Updating existing admin user (ID: {user['id']})")
-            cursor.execute(
-                "UPDATE users SET password = %s, updated_at = NOW() WHERE id = %s RETURNING id",
-                (hashed_password, user['id'])
-            )
-            updated_id = cursor.fetchone()["id"]
-            logger.info(f"✅ Admin user updated successfully (ID: {updated_id})")
+            user_id = user.get("id")
+            logger.info(f"🔄 Updating existing admin user (ID: {user_id})")
             
-            # Generate JWT token for this user
-            token = create_access_token({"sub": str(updated_id)})
-            logger.info(f"🔑 JWT token: {token}")
+            if has_password_column:
+                cursor.execute(
+                    "UPDATE users SET password = %s, updated_at = NOW() WHERE id = %s RETURNING id",
+                    (hashed_password, user_id)
+                )
+                result = cursor.fetchone()
+                updated_id = result.get("id") if result else user_id
+                logger.info(f"✅ Admin user updated successfully (ID: {updated_id})")
+                
+                # Generate JWT token for this user
+                token = create_access_token({"sub": str(updated_id)})
+                logger.info(f"🔑 JWT token: {token}")
+            else:
+                logger.error("❌ Cannot update user without password column")
+                return False
         else:
             # Create new admin user
             logger.info(f"➕ Creating new admin user")
@@ -211,7 +260,11 @@ def reset_admin_user():
             # Set default username to "admin" for the admin user
             admin_username = "admin"
             
-            if columns["has_is_admin"] and columns["has_is_active"] and columns["has_username"]:
+            has_is_admin = columns and columns.get("has_is_admin", False)
+            has_is_active = columns and columns.get("has_is_active", False)
+            has_username = columns and columns.get("has_username", False)
+            
+            if has_is_admin and has_is_active and has_username:
                 cursor.execute(
                     """
                     INSERT INTO users (email, username, password, is_admin, is_active) 
@@ -219,7 +272,7 @@ def reset_admin_user():
                     """,
                     (ADMIN_EMAIL, admin_username, hashed_password)
                 )
-            elif columns["has_username"]:
+            elif has_username:
                 # Schema with username but without admin flags
                 cursor.execute(
                     """
@@ -238,34 +291,42 @@ def reset_admin_user():
                     """,
                     (ADMIN_EMAIL, hashed_password)
                 )
+            
+            result = cursor.fetchone()    
+            new_id = result.get("id") if result else None
+            
+            if new_id:
+                logger.info(f"✅ Admin user created successfully (ID: {new_id})")
                 
-            new_id = cursor.fetchone()["id"]
-            logger.info(f"✅ Admin user created successfully (ID: {new_id})")
-            
-            # Generate JWT token for this user
-            token = create_access_token({"sub": str(new_id)})
-            logger.info(f"🔑 JWT token: {token}")
-            
-            # Add default subscription for this user if needed
-            cursor.execute("""
-                SELECT EXISTS (
-                    SELECT 1 FROM information_schema.tables
-                    WHERE table_name = 'subscriptions'
-                ) AS has_subscriptions;
-            """)
-            
-            if cursor.fetchone()["has_subscriptions"]:
-                try:
-                    cursor.execute(
-                        """
-                        INSERT INTO subscriptions (user_id, tier_id, start_date, active)
-                        VALUES (%s, 1, NOW(), TRUE)
-                        """,
-                        (new_id,)
-                    )
-                    logger.info(f"✅ Default subscription created for admin user")
-                except Exception as e:
-                    logger.warning(f"⚠️ Could not create subscription: {e}")
+                # Generate JWT token for this user
+                token = create_access_token({"sub": str(new_id)})
+                logger.info(f"🔑 JWT token: {token}")
+                
+                # Add default subscription for this user if needed
+                cursor.execute("""
+                    SELECT EXISTS (
+                        SELECT 1 FROM information_schema.tables
+                        WHERE table_name = 'subscriptions'
+                    ) AS has_subscriptions;
+                """)
+                
+                result = cursor.fetchone()
+                has_subscriptions = result and result.get("has_subscriptions", False)
+                
+                if has_subscriptions:
+                    try:
+                        cursor.execute(
+                            """
+                            INSERT INTO subscriptions (user_id, tier_id, start_date, active)
+                            VALUES (%s, 1, NOW(), TRUE)
+                            """,
+                            (new_id,)
+                        )
+                        logger.info(f"✅ Default subscription created for admin user")
+                    except Exception as e:
+                        logger.warning(f"⚠️ Could not create subscription: {e}")
+            else:
+                logger.error("❌ Failed to create admin user - could not get new ID")
         
         # Commit the transaction
         conn.commit()
@@ -308,24 +369,28 @@ def verify_token_generation():
             return False
             
         # Generate token
-        user_id = str(user["id"])
+        user_id = str(user.get("id", ""))
+        if not user_id:
+            logger.error("❌ Could not get user ID from database result")
+            return False
+            
         token = create_access_token({"sub": user_id})
         
         # Verify token
         try:
             decoded = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-            if decoded["sub"] == user_id:
+            if decoded.get("sub") == user_id:
                 logger.info(f"✅ Token validation successful!")
                 logger.info(f"   - User ID in database: {user_id}")
-                logger.info(f"   - User ID in token: {decoded['sub']}")
-                logger.info(f"   - Token expiry: {datetime.fromtimestamp(decoded['exp'])}")
+                logger.info(f"   - User ID in token: {decoded.get('sub')}")
+                logger.info(f"   - Token expiry: {datetime.fromtimestamp(decoded.get('exp', 0))}")
                 logger.info(f"   - Example curl command to test API:")
                 logger.info(f'     curl -H "Authorization: Bearer {token}" https://probeops.com/api/user')
                 return True
             else:
                 logger.error(f"❌ Token validation failed - User ID mismatch")
                 logger.error(f"   - User ID in database: {user_id}")
-                logger.error(f"   - User ID in token: {decoded['sub']}")
+                logger.error(f"   - User ID in token: {decoded.get('sub', 'not found')}")
                 return False
         except Exception as e:
             logger.error(f"❌ Token validation failed: {e}")
