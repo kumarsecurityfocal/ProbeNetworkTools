@@ -34,10 +34,6 @@ args = "Rebuild Frontend"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Rebuild Frontend Fixed"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Auth Fixer"
 
 [[workflows.workflow.tasks]]
@@ -84,15 +80,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd frontend && npm run build"
-
-[[workflows.workflow]]
-name = "Rebuild Frontend Fixed"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd frontend && npx vite build --outDir=../public"
+args = "cd frontend && npx vite build"
 
 [[workflows.workflow]]
 name = "Auth Fixer"

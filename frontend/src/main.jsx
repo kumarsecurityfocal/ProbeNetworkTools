@@ -7,7 +7,9 @@ import { applyGlobalNodeNamePatch } from './utils/domNodeSafety';
 import './index.css';
 
 // Apply safety patch to prevent toLowerCase errors
-applyGlobalNodeNamePatch();
+if (typeof window !== 'undefined') {
+  applyGlobalNodeNamePatch();
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
