@@ -51,23 +51,6 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Special handling for the /app route - automatically log in as admin
-app.get('/app', (req, res) => {
-  console.log('Auto-login for /app route');
-  
-  // Set auth cookie directly - similar to what the real login would do
-  const token = createValidToken("admin@probeops.com");
-  res.cookie('auth_token', token, {
-    httpOnly: true,
-    secure: true,
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    path: '/'
-  });
-  
-  // Redirect to admin dashboard
-  res.redirect('/admin');
-});
-
 app.get('/troubleshooting', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
