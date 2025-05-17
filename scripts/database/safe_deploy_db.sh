@@ -186,8 +186,56 @@ fi
 
 echo "Step 3: Running migrations"
 echo "-------------------------"
-echo "Applying database migrations..."
+echo "Checking if database is fresh and needs stamping..."
 
+# Check if alembic_version table exists and has any entries
+PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p')
+export PGPASSWORD
+
+# Try to count rows in alembic_version table, redirect errors to /dev/null
+VERSION_COUNT=$(psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT COUNT(*) FROM alembic_version;" 2>/dev/null || echo "table_not_found")
+
+if [ "$VERSION_COUNT" = "table_not_found" ] || [ "$VERSION_COUNT" -eq 0 ]; then
+    echo -e "${YELLOW}Fresh database detected with no migration history.${NC}"
+    echo "Checking for base migration to stamp..."
+    
+    # Find the base migration using the migration manager
+    BASE_MIGRATION=$(python3 -c "
+import sys
+sys.path.append('$SCRIPT_DIR')
+from migration_manager import MigrationManager
+manager = MigrationManager()
+base_migrations = []
+for script in manager.script_directory.get_revisions():
+    if script.down_revision is None:
+        base_migrations.append(script.revision)
+if base_migrations:
+    print(base_migrations[0])
+else:
+    print('')
+")
+    
+    if [ -n "$BASE_MIGRATION" ]; then
+        echo -e "${YELLOW}Found base migration: $BASE_MIGRATION${NC}"
+        echo "Would you like to stamp the database with this base migration? (y/n)"
+        read -r stamp_choice
+        
+        if [ "$stamp_choice" = "y" ]; then
+            echo "Stamping database with base migration: $BASE_MIGRATION"
+            python3 "$SCRIPT_DIR/migration_manager.py" --stamp "$BASE_MIGRATION"
+            if [ $? -eq 0 ]; then
+                echo -e "${GREEN}Database stamped successfully!${NC}"
+            else
+                echo -e "${RED}Failed to stamp database.${NC}"
+                echo "Proceeding with regular migration process."
+            fi
+        fi
+    else
+        echo -e "${YELLOW}No base migration found. Proceeding with regular migration process.${NC}"
+    fi
+fi
+
+echo "Applying database migrations..."
 python3 "$SCRIPT_DIR/migration_manager.py" --apply
 
 if [ $? -ne 0 ]; then

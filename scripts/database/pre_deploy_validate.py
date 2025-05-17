@@ -76,6 +76,28 @@ class DeploymentValidator:
         Returns:
             Boolean indicating if the validation passed
         """
+        # First, explicitly check for a base migration
+        base_migrations = []
+        for script in self.migration_manager.script_directory.get_revisions():
+            if script.down_revision is None:
+                base_migrations.append(script.revision)
+        
+        if not base_migrations:
+            self.issues.append("Missing base migration (one with down_revision=None)")
+            self.validation_passed = False
+            logger.error("Migration issue: Missing base migration (one with down_revision=None)")
+            logger.error("Create a base migration file with down_revision=None that creates all initial tables")
+            return False
+            
+        if len(base_migrations) > 1:
+            self.issues.append(f"Multiple base migrations found: {', '.join(base_migrations)}")
+            self.validation_passed = False
+            logger.error(f"Migration issue: Multiple base migrations found: {', '.join(base_migrations)}")
+            return False
+        
+        logger.info(f"Found base migration: {base_migrations[0]}")
+        
+        # Continue with the regular validation
         success, issues = self.migration_manager.check_migrations()
         if not success:
             self.issues.extend(issues)

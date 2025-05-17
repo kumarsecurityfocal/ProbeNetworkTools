@@ -190,6 +190,26 @@ class MigrationManager:
         except Exception as e:
             logger.error(f"Migration failed: {str(e)}")
             return False
+            
+    def stamp_revision(self, revision: str) -> bool:
+        """
+        Stamp the database with a specific revision without running migrations.
+        This is useful for marking a database as being at a certain revision,
+        typically used for fresh databases that already have the schema.
+        
+        Args:
+            revision: The revision to stamp
+            
+        Returns:
+            Boolean indicating if the stamp was successful
+        """
+        try:
+            command.stamp(self.alembic_cfg, revision)
+            logger.info(f"Successfully stamped database with revision: {revision}")
+            return True
+        except Exception as e:
+            logger.error(f"Stamping failed: {str(e)}")
+            return False
     
     def reset_database(self) -> bool:
         """
@@ -280,6 +300,11 @@ def parse_args():
         "--env",
         default=".env.db",
         help="Specify a .env file to load (default: .env.db)"
+    )
+    parser.add_argument(
+        "--stamp",
+        metavar="REVISION",
+        help="Stamp the database with the specified revision without running migrations"
     )
     return parser.parse_args()
 

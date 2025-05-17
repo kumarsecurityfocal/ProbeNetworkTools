@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '20250515_add_tier_limits'
-down_revision = None
+down_revision = '20250514_create_base_schema'
 branch_labels = None
 depends_on = None
 
