@@ -569,7 +569,28 @@ if [ -d "backend/alembic" ]; then
     cd backend
     log_info "Running Alembic migrations..."
     
+    # First make sure script_location is correct in alembic.ini
+    if grep -q "script_location = backend/alembic" alembic.ini; then
+        log_warning "Fixing incorrect script_location path in alembic.ini..."
+        sed -i 's|script_location = backend/alembic|script_location = alembic|g' alembic.ini
+        log_info "Updated alembic.ini with correct script_location path"
+    fi
+    
+    # Check if alembic directory exists
+    if [ ! -d "alembic" ]; then
+        log_error "Alembic directory not found in backend folder"
+        echo "[DATABASE_ERROR] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Alembic directory not found in backend folder" >> "../$LOG_FILE"
+        
+        # Check if it exists in a nested path
+        if [ -d "backend/alembic" ]; then
+            log_warning "Found alembic directory at backend/alembic, moving it to correct location..."
+            mv backend/alembic ./alembic
+            log_info "Moved alembic directory to correct location"
+        fi
+    fi
+    
     # Try regular upgrade first
+    log_info "Running Alembic migrations from $(pwd)..."
     MIGRATION_OUTPUT=$(python3 -m alembic upgrade head 2>&1)
     MIGRATION_STATUS=$?
     
