@@ -21,14 +21,7 @@ import {
   DialogActions,
   CircularProgress,
   Switch,
-  FormControlLabel,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip
+  FormControlLabel
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -40,35 +33,8 @@ import {
   FilterList as FilterListIcon
 } from '@mui/icons-material';
 import { useApi } from '../hooks/useApi';
-
-// Safe wrapper to prevent toLowerCase errors
-const SafeTable = (props) => {
-  // Apply defensive patching before rendering the table
-  React.useEffect(() => {
-    // Ensure nodeName handling is safe
-    if (typeof Node !== 'undefined' && Node.prototype) {
-      try {
-        Object.defineProperty(Node.prototype, 'nodeName', {
-          get: function() {
-            try {
-              const val = this.tagName || '';
-              return typeof val === 'string' ? val : '';
-            } catch (e) {
-              console.warn('Safe nodeName access error handled');
-              return '';
-            }
-          },
-          configurable: true
-        });
-      } catch (err) {
-        console.error('Failed to patch Node.prototype.nodeName:', err);
-      }
-    }
-  }, []);
-  
-  // Return the wrapped table
-  return <Table {...props} />;
-};
+import SimpleTokenTable from './SimpleTokenTable';
+import { normalizeUrl } from '../utils/urlUtils';
 
 const ProbeNodeTokenGenerator = () => {
   const { api } = useApi();
