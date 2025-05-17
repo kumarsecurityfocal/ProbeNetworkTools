@@ -212,8 +212,11 @@ if [ "$VERSION_COUNT" = "table_not_found" ] || [ "$VERSION_COUNT" -eq 0 ]; then
     echo -e "${YELLOW}Fresh database detected with no migration history.${NC}"
     echo "Checking for base migration to stamp..."
     
+    # Create a temporary file to capture the output
+    TMP_OUTPUT=$(mktemp)
+    
     # Find the base migration using the migration manager
-    BASE_MIGRATION=$(python3 -c "
+    python3 -c "
 import sys
 sys.path.append('$SCRIPT_DIR')
 from migration_manager import MigrationManager
@@ -223,10 +226,16 @@ for script in manager.script_directory.walk_revisions():
     if script.down_revision is None:
         base_migrations.append(script.revision)
 if base_migrations:
-    print(base_migrations[0])
+    print(f'MIGRATION_ID={base_migrations[0]}')
 else:
-    print('')
-")
+    print('MIGRATION_ID=')
+" > "$TMP_OUTPUT" 2>/dev/null
+
+    # Extract just the migration ID from the output using grep
+    BASE_MIGRATION=$(grep -o 'MIGRATION_ID=.*' "$TMP_OUTPUT" | cut -d= -f2)
+    
+    # Remove temporary file
+    rm "$TMP_OUTPUT"
     
     if [ -n "$BASE_MIGRATION" ]; then
         echo -e "${YELLOW}Found base migration: $BASE_MIGRATION${NC}"
@@ -249,7 +258,8 @@ from alembic import op
 import re
 
 # Import the migration file
-migration_file = "$PROJECT_ROOT/backend/alembic/versions/$BASE_MIGRATION.py"
+base_migration = "$BASE_MIGRATION"
+migration_file = f"{PROJECT_ROOT}/backend/alembic/versions/{base_migration}.py"
 print(f"Loading migration from: {migration_file}")
 
 if not os.path.exists(migration_file):
