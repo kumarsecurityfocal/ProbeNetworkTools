@@ -50,6 +50,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import ProbeNodesManagement from './ProbeNodesManagement';
 import ProbeNodeTokenGenerator from './ProbeNodeTokenGenerator';
+import TokenManager from './TokenManager';
 import { 
   getAllSubscriptions, 
   getSubscriptionTiers, 
@@ -1463,15 +1464,10 @@ const AdminPanel = () => {
         )}
       </TabPanel>
 
-      {/* Probe Nodes Management Tab - REORGANIZED: Token Generation First */}
+      {/* Probe Nodes Management Tab - Using New Safe Token Manager */}
       <TabPanel value={tabValue} index={3}>
         <Box sx={{ mb: 4 }}>
-          <Paper sx={{ p: 3, mb: 4 }}>
-            <Typography variant="h6" gutterBottom>
-              Generate New Probe Node Tokens
-            </Typography>
-            <ProbeNodeTokenGenerator />
-          </Paper>
+          <TokenManager />
           
           <Divider sx={{ my: 4 }} />
           
