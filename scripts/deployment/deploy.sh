@@ -628,91 +628,41 @@ if [ -d "backend/alembic" ]; then
         log_error "Alembic migrations failed"
         echo "[DATABASE_ERROR] $(date +"%Y-%m-%d %H:%M:%S.%3N") - $MIGRATION_OUTPUT" >> "$LOG_FILE"
         
-        # Try the traditional safe_deploy_db.sh as fallback
-        log_warning "Trying traditional migration approach as fallback..."
-        DB_MIGRATION_SCRIPT="scripts/database/safe_deploy_db.sh"
+        # Do not attempt any fallback migrations
+        log_error "Database migration failed. No fallback will be attempted as requested."
+        echo "[DATABASE_ERROR] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Database migration failed - no fallbacks attempted" >> "$LOG_FILE"
         
-        if [ -f "$DB_MIGRATION_SCRIPT" ]; then
-            log_info "Found database migration script at $DB_MIGRATION_SCRIPT"
-            
-            # Make sure the script is executable
-            chmod +x "$DB_MIGRATION_SCRIPT"
-            
-            # Run the database migration script
-            log_info "Running database migration script..."
-            if "./$DB_MIGRATION_SCRIPT"; then
-                log_success "Fallback database migration completed successfully"
-            else
-                log_error "Fallback database migration also failed!"
-                echo "[DATABASE_ERROR] $(date +"%Y-%m-%d %H:%M:%S.%3N") - All database migration methods failed" >> "$LOG_FILE"
-                
-                # Ask the user if they want to continue despite the migration failure
-                echo -e "${RED}All database migration methods failed. This may cause application issues.${NC}"
-                echo -e "${YELLOW}Would you like to continue with deployment anyway? (y/n)${NC}"
-                read -r continue_response
-                
-                if [[ ! "$continue_response" =~ ^[Yy]$ ]]; then
-                    log_error "Deployment aborted due to database migration failure"
-                    echo "[DEPLOYMENT_ABORTED] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Deployment aborted due to database migration failure" >> "$LOG_FILE"
-                    exit 1
-                else
-                    log_warning "Continuing deployment despite database migration failure"
-                    echo "[DATABASE_WARNING] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Continuing deployment despite database migration failure" >> "$LOG_FILE"
-                fi
-            fi
+        # Ask the user if they want to continue despite the migration failure
+        echo -e "${RED}Database migration failed. This may cause application issues.${NC}"
+        echo -e "${YELLOW}Would you like to continue with deployment anyway? (y/n)${NC}"
+        read -r continue_response
+        
+        if [[ ! "$continue_response" =~ ^[Yy]$ ]]; then
+            log_error "Deployment aborted due to database migration failure"
+            echo "[DEPLOYMENT_ABORTED] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Deployment aborted due to database migration failure" >> "$LOG_FILE"
+            exit 1
         else
-            # Ask the user if they want to continue despite the migration failure
-            echo -e "${RED}Database migration failed and no fallback script found. This may cause application issues.${NC}"
-            echo -e "${YELLOW}Would you like to continue with deployment anyway? (y/n)${NC}"
-            read -r continue_response
-            
-            if [[ ! "$continue_response" =~ ^[Yy]$ ]]; then
-                log_error "Deployment aborted due to database migration failure"
-                echo "[DEPLOYMENT_ABORTED] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Deployment aborted due to database migration failure" >> "$LOG_FILE"
-                exit 1
-            else
-                log_warning "Continuing deployment despite database migration failure"
-                echo "[DATABASE_WARNING] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Continuing deployment despite database migration failure" >> "$LOG_FILE"
-            fi
+            log_warning "Continuing deployment despite database migration failure"
+            echo "[DATABASE_WARNING] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Continuing deployment despite database migration failure" >> "$LOG_FILE"
         fi
     fi
 else
-    # If Alembic directory not found, try the traditional approach
-    log_warning "Alembic directory not found. Using traditional migration approach..."
+    # Alembic directory not found, this is an error
+    log_error "Alembic directory not found in expected location."
+    echo "[DATABASE_ERROR] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Alembic directory not found" >> "$LOG_FILE"
     
-    # Check if the database migration script exists
-    DB_MIGRATION_SCRIPT="scripts/database/safe_deploy_db.sh"
-    if [ -f "$DB_MIGRATION_SCRIPT" ]; then
-        log_info "Found database migration script at $DB_MIGRATION_SCRIPT"
-        
-        # Make sure the script is executable
-        chmod +x "$DB_MIGRATION_SCRIPT"
-        
-        # Run the database migration script
-        log_info "Running database migration script..."
-        if "./$DB_MIGRATION_SCRIPT"; then
-            log_success "Database migration completed successfully"
-        else
-            log_error "Database migration failed!"
-            echo "[DATABASE_ERROR] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Database migration failed" >> "$LOG_FILE"
-            
-            # Ask the user if they want to continue despite the migration failure
-            echo -e "${RED}Database migration failed. This may cause application issues.${NC}"
-            echo -e "${YELLOW}Would you like to continue with deployment anyway? (y/n)${NC}"
-            read -r continue_response
-            
-            if [[ ! "$continue_response" =~ ^[Yy]$ ]]; then
-                log_error "Deployment aborted due to database migration failure"
-                echo "[DEPLOYMENT_ABORTED] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Deployment aborted due to database migration failure" >> "$LOG_FILE"
-                exit 1
-            else
-                log_warning "Continuing deployment despite database migration failure"
-                echo "[DATABASE_WARNING] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Continuing deployment despite database migration failure" >> "$LOG_FILE"
-            fi
-        fi
+    # Ask the user if they want to continue without running migrations
+    echo -e "${RED}Alembic directory not found. Database migrations cannot be run.${NC}"
+    echo -e "${YELLOW}Would you like to continue with deployment anyway? (y/n)${NC}"
+    read -r continue_response
+    
+    if [[ ! "$continue_response" =~ ^[Yy]$ ]]; then
+        log_error "Deployment aborted due to missing Alembic directory"
+        echo "[DEPLOYMENT_ABORTED] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Deployment aborted due to missing Alembic directory" >> "$LOG_FILE"
+        exit 1
     else
-        log_warning "No database migration scripts found - skipping database migrations"
-        echo "[DATABASE_WARNING] $(date +"%Y-%m-%d %H:%M:%S.%3N") - No database migration scripts found" >> "$LOG_FILE"
+        log_warning "Continuing deployment despite missing Alembic directory"
+        echo "[DATABASE_WARNING] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Continuing deployment despite missing Alembic directory" >> "$LOG_FILE"
     fi
 fi
 
