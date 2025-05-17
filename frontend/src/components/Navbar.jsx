@@ -40,6 +40,7 @@ import {
   Search as SearchIcon,
   HelpOutline as HelpIcon,
   Settings as SettingsIcon,
+  SettingsRemote as ProbeManagementIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import Logo from './Logo';
@@ -93,6 +94,7 @@ const Navbar = ({ darkMode, toggleDarkMode, sidebarCollapsed, toggleSidebar }) =
   // Admin-only navigation items
   const adminNavItems = [
     { name: 'Admin Panel', path: '/admin', icon: <AdminIcon fontSize="small" /> },
+    { name: 'Probe Management', path: '/probe-management', icon: <ProbeManagementIcon fontSize="small" /> },
     { name: 'Troubleshooting', path: '/troubleshooting', icon: <HelpIcon fontSize="small" /> },
     { name: 'Database Admin', path: '/database', icon: <SettingsIcon fontSize="small" /> },
   ];

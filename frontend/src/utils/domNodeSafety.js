@@ -4,6 +4,42 @@
  */
 
 /**
+ * Apply global patch to safely handle toLowerCase on node names
+ * This helps prevent the "Ce.nodeName.toLowerCase is not a function" error
+ */
+export function applyGlobalNodeNamePatch() {
+  console.log("Applying global safe patches for toLowerCase error prevention");
+  
+  // Only run in browser environment
+  if (typeof window !== 'undefined' && typeof Node !== 'undefined') {
+    try {
+      // Add a failsafe for Node.prototype.nodeName
+      const originalNodeNameDescriptor = Object.getOwnPropertyDescriptor(Node.prototype, 'nodeName');
+      
+      if (originalNodeNameDescriptor && originalNodeNameDescriptor.get) {
+        // Create a safer version that ensures nodeName is always a string
+        Object.defineProperty(Node.prototype, 'nodeName', {
+          get: function() {
+            try {
+              const name = originalNodeNameDescriptor.get.call(this);
+              return typeof name === 'string' ? name : String(name);
+            } catch (err) {
+              console.warn('Error accessing nodeName:', err);
+              return '';
+            }
+          },
+          configurable: true
+        });
+        
+        console.log("Patched Node.prototype.nodeName for safety");
+      }
+    } catch (err) {
+      console.error("Failed to apply global DOM safety patches:", err);
+    }
+  }
+}
+
+/**
  * Safely check if a value is a valid DOM node
  * @param {any} node - The value to check
  * @returns {boolean} - True if the value is a valid DOM node
