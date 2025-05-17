@@ -375,21 +375,33 @@ def update_migration_files(migrations, id_mapping, dry_run=False):
         file_path = migration["file_path"]
         content = migration["content"]
         
-        # Update revision
-        content = re.sub(
-            r'(revision\s*=\s*[\'"])(.*?)([\'"])',
-            f'\\1{new_id}\\3',
-            content
-        )
+        # Update revision (using string replacement instead of regex substitution)
+        revision_pattern = re.compile(r'revision\s*=\s*[\'"].*?[\'"]')
+        match = revision_pattern.search(content)
+        if match:
+            old_revision_str = match.group(0)
+            new_revision_str = f'revision = "{new_id}"'
+            content = content.replace(old_revision_str, new_revision_str)
         
         # Update down_revision if it exists and has a mapping
         if migration["down_revision"] and migration["down_revision"] in id_mapping:
             new_down_rev = id_mapping[migration["down_revision"]]
-            content = re.sub(
-                r'(down_revision\s*=\s*[\'"])(.*?)([\'"])',
-                f'\\1{new_down_rev}\\3',
-                content
-            )
+            
+            # Try to find down_revision with string literals first
+            down_revision_pattern = re.compile(r'down_revision\s*=\s*[\'"].*?[\'"]')
+            match = down_revision_pattern.search(content)
+            if match:
+                old_down_revision_str = match.group(0)
+                new_down_revision_str = f'down_revision = "{new_down_rev}"'
+                content = content.replace(old_down_revision_str, new_down_revision_str)
+            else:
+                # Try to find down_revision that might be None
+                down_revision_pattern = re.compile(r'down_revision\s*=\s*None')
+                match = down_revision_pattern.search(content)
+                if match:
+                    old_down_revision_str = match.group(0)
+                    new_down_revision_str = f'down_revision = "{new_down_rev}"'
+                    content = content.replace(old_down_revision_str, new_down_revision_str)
         
         # Create new filename
         filename_prefix = file_path.stem.split('_', 1)[-1] if '_' in file_path.stem else file_path.stem
