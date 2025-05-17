@@ -58,6 +58,19 @@ mkdir -p "$BACKUP_DIR"
 
 echo -e "${YELLOW}ProbeOps Safe Database Deployment${NC}"
 echo "============================================="
+
+# Check and fix Alembic configuration paths
+CONFIG_HELPER_SCRIPT="$SCRIPT_DIR/config_helper.py"
+if [ -f "$CONFIG_HELPER_SCRIPT" ]; then
+    echo "Running Alembic configuration helper..."
+    if python3 "$CONFIG_HELPER_SCRIPT"; then
+        echo -e "${GREEN}Alembic configuration checked/fixed successfully${NC}"
+    else
+        echo -e "${YELLOW}Warning: Could not verify Alembic configuration${NC}"
+    fi
+else
+    echo -e "${YELLOW}Alembic configuration helper not found at $CONFIG_HELPER_SCRIPT${NC}"
+fi
 echo "Starting database deployment process..."
 
 # Check if DATABASE_URL is set
