@@ -64,15 +64,23 @@ const ProbeNodeTokenGenerator = () => {
       setNodeUuid(generateNodeUuid());
     }
   }, [nodeName, advancedMode]);
+  
+  // Defensive check to prevent toLowerCase errors when nodeName might be undefined or null
+  const getSafeNodeName = () => {
+    return typeof nodeName === 'string' ? nodeName : '';
+  };
 
   // Handle token generation
   const handleGenerateToken = async () => {
-    if (!nodeName.trim()) {
+    const safeNodeName = getSafeNodeName();
+    
+    if (!safeNodeName.trim()) {
       setError('Node name is required');
       return;
     }
 
-    if (advancedMode && !nodeUuid.trim()) {
+    const safeNodeUuid = typeof nodeUuid === 'string' ? nodeUuid : '';
+    if (advancedMode && !safeNodeUuid.trim()) {
       setError('Node UUID is required in advanced mode');
       return;
     }
