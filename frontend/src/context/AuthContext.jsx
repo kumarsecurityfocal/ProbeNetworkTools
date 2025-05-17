@@ -107,35 +107,8 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log("DEBUG AUTH CONTEXT: Login attempt for user:", username);
       
-      // Direct admin login - if we're using the fixed credentials for admin
-      if (username === 'admin@probeops.com' && password === 'probeopS1@') {
-        console.log("DEBUG AUTH CONTEXT: Using direct admin login");
-        
-        // Create admin user object
-        const adminUser = {
-          id: 1,
-          username: 'admin',
-          email: 'admin@probeops.com',
-          is_admin: true,
-          is_active: true,
-          email_verified: true,
-          created_at: '2023-05-01T00:00:00.000Z'
-        };
-        
-        // Create a mock token for direct admin access
-        const mockToken = 'admin-direct-access-token';
-        
-        // Store directly in localStorage for persistence
-        localStorage.setItem('probeops_user', JSON.stringify(adminUser));
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('probeops_token', mockToken); // Store the token!
-        
-        // Update state
-        setUser(adminUser);
-        setIsAuthenticated(true);
-        
-        return adminUser;
-      }
+      // We no longer use direct admin login
+      // All users, including admin, must go through proper JWT authentication
       
       // Regular API login flow
       const response = await loginApi(username, password);
