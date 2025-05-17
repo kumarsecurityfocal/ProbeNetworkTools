@@ -221,12 +221,219 @@ else:
         read -r stamp_choice
         
         if [ "$stamp_choice" = "y" ]; then
-            echo "Stamping database with base migration: $BASE_MIGRATION"
-            python3 "$SCRIPT_DIR/migration_manager.py" --stamp "$BASE_MIGRATION"
-            if [ $? -eq 0 ]; then
-                echo -e "${GREEN}Database stamped successfully!${NC}"
+            echo "Creating tables for base migration: $BASE_MIGRATION"
+            
+            # First, we need to find and run the SQL from the base migration to create tables
+            # Create a temporary Python script to extract and run migration SQL
+            TMP_SCRIPT=$(mktemp)
+            cat > "$TMP_SCRIPT" <<EOF
+import sys
+import importlib.util
+import sqlalchemy as sa
+from sqlalchemy import text
+import os
+from alembic import op
+import re
+
+# Import the migration file
+migration_file = "$PROJECT_ROOT/backend/alembic/versions/$BASE_MIGRATION.py"
+print(f"Loading migration from: {migration_file}")
+
+if not os.path.exists(migration_file):
+    print(f"Migration file not found: {migration_file}")
+    sys.exit(1)
+
+# Special handling for alembic migrations
+# First read the file contents to extract all CREATE TABLE statements
+with open(migration_file, 'r') as f:
+    content = f.read()
+
+# Connect to database
+database_url = os.environ.get("DATABASE_URL")
+if not database_url:
+    print("DATABASE_URL not found in environment variables")
+    sys.exit(1)
+
+engine = sa.create_engine(database_url)
+print("Connected to database")
+
+# Create a context for executing SQL
+with engine.connect() as connection:
+    transaction = connection.begin()
+    try:
+        # First approach: Try to extract and run SQL directly from upgrade() function content
+        create_table_pattern = r'op\.create_table\(\s*[\'"]([^\'"]+)[\'"]'
+        table_names = re.findall(create_table_pattern, content)
+        
+        if table_names:
+            print(f"Found tables to create: {', '.join(table_names)}")
+            
+            # Load the migration module
+            spec = importlib.util.spec_from_file_location("migration", migration_file)
+            migration = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(migration)
+            
+            # Setup Alembic operation context using SQLAlchemy connection
+            from alembic.operations import Operations
+            from alembic.migration import MigrationContext
+            
+            context = MigrationContext.configure(connection)
+            op_obj = Operations(context)
+            
+            # Execute the migration's upgrade function with our op object
+            print("Running upgrade() function from migration to create tables")
+            old_op = op._proxy
+            op._proxy = op_obj
+            try:
+                migration.upgrade()
+                print("Table creation successful!")
+                transaction.commit()
+                sys.exit(0)
+            except Exception as e:
+                print(f"Error running migration directly: {str(e)}")
+                # We'll try the alternative approach
+                transaction.rollback()
+                transaction = connection.begin()
+            finally:
+                op._proxy = old_op
+        
+        # Second approach: Directly execute CREATE TABLE statements with SQL
+        print("Attempting to create tables using direct SQL statements...")
+        
+        # Tables in the order they should be created (handling foreign key dependencies)
+        ordered_tables = ["users", "subscription_tiers", "api_keys", "subscriptions", 
+                           "diagnostics", "usage_logs", "probe_nodes"]
+        
+        # Base SQL templates for each table (simplified versions to just create the tables)
+        sql_templates = {
+            "users": """
+                CREATE TABLE users (
+                    id SERIAL PRIMARY KEY,
+                    email VARCHAR(255) NOT NULL UNIQUE,
+                    username VARCHAR(255) NOT NULL UNIQUE,
+                    password VARCHAR(255) NOT NULL,
+                    is_admin BOOLEAN DEFAULT FALSE,
+                    is_active BOOLEAN DEFAULT TRUE,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+                );
+            """,
+            "subscription_tiers": """
+                CREATE TABLE subscription_tiers (
+                    id SERIAL PRIMARY KEY,
+                    name VARCHAR(255) NOT NULL,
+                    price FLOAT NOT NULL,
+                    features JSONB,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+                );
+            """,
+            "api_keys": """
+                CREATE TABLE api_keys (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL REFERENCES users(id),
+                    key VARCHAR(255) NOT NULL UNIQUE,
+                    name VARCHAR(255) NOT NULL,
+                    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+                    expires_at TIMESTAMP WITH TIME ZONE,
+                    revoked BOOLEAN DEFAULT FALSE NOT NULL
+                );
+            """,
+            "subscriptions": """
+                CREATE TABLE subscriptions (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL REFERENCES users(id),
+                    tier_id INTEGER NOT NULL REFERENCES subscription_tiers(id),
+                    start_date TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+                    end_date TIMESTAMP WITH TIME ZONE,
+                    active BOOLEAN DEFAULT TRUE NOT NULL,
+                    payment_status VARCHAR(50),
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+                );
+            """,
+            "diagnostics": """
+                CREATE TABLE diagnostics (
+                    id SERIAL PRIMARY KEY,
+                    tool VARCHAR(50) NOT NULL,
+                    target VARCHAR(255) NOT NULL,
+                    result TEXT,
+                    status VARCHAR(50) NOT NULL,
+                    user_id INTEGER NOT NULL REFERENCES users(id),
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+                    execution_time INTEGER
+                );
+            """,
+            "usage_logs": """
+                CREATE TABLE usage_logs (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL REFERENCES users(id),
+                    action VARCHAR(255) NOT NULL,
+                    details JSONB,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+                );
+            """,
+            "probe_nodes": """
+                CREATE TABLE IF NOT EXISTS probe_nodes (
+                    id SERIAL PRIMARY KEY,
+                    name VARCHAR(255) NOT NULL,
+                    ip_address VARCHAR(255) NOT NULL,
+                    status VARCHAR(50) NOT NULL,
+                    last_seen TIMESTAMP WITH TIME ZONE,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+                    region VARCHAR(255),
+                    active BOOLEAN DEFAULT TRUE NOT NULL
+                );
+            """
+        }
+        
+        # Create tables
+        for table in ordered_tables:
+            if table in sql_templates:
+                try:
+                    print(f"Creating table: {table}")
+                    connection.execute(text(sql_templates[table]))
+                    print(f"Created table: {table}")
+                except Exception as e:
+                    print(f"Error creating table {table}: {str(e)}")
+                    if "already exists" in str(e):
+                        print(f"Table {table} already exists, skipping")
+                    else:
+                        # Only fail on errors other than 'table already exists'
+                        transaction.rollback()
+                        sys.exit(1)
+        
+        # Commit the transaction
+        transaction.commit()
+        print("All tables created successfully!")
+    except Exception as e:
+        transaction.rollback()
+        print(f"Error creating tables: {str(e)}")
+        sys.exit(1)
+EOF
+
+            # Run the script to create tables
+            echo "Running Python script to create tables..."
+            PYTHONPATH="$PROJECT_ROOT" python3 "$TMP_SCRIPT"
+            TABLES_RESULT=$?
+            
+            # Clean up temp script
+            rm "$TMP_SCRIPT"
+            
+            if [ $TABLES_RESULT -eq 0 ]; then
+                echo -e "${GREEN}Tables created successfully!${NC}"
+                # Now stamp the database
+                echo "Stamping database with base migration: $BASE_MIGRATION"
+                python3 "$SCRIPT_DIR/migration_manager.py" --stamp "$BASE_MIGRATION"
+                if [ $? -eq 0 ]; then
+                    echo -e "${GREEN}Database stamped successfully!${NC}"
+                else
+                    echo -e "${RED}Failed to stamp database.${NC}"
+                    echo "Proceeding with regular migration process."
+                fi
             else
-                echo -e "${RED}Failed to stamp database.${NC}"
+                echo -e "${RED}Failed to create tables from base migration.${NC}"
                 echo "Proceeding with regular migration process."
             fi
         fi
