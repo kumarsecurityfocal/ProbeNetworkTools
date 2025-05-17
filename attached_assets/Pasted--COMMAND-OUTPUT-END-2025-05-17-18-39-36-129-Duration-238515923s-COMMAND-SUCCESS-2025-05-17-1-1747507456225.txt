@@ -1,0 +1,40 @@
+[COMMAND_OUTPUT_END] 2025-05-17 18:39:36.129 (Duration: .238515923s)
+[COMMAND_SUCCESS] 2025-05-17 18:39:36.130 - DURATION: .238515923s
+[2025-05-17 18:39:36.132] ✅ All existing containers stopped and removed
+[SUCCESS] 2025-05-17 18:39:36.132 - All existing containers stopped and removed
+[2025-05-17 18:39:36.135] ℹ️ Step 10.5: Running database migrations with Alembic hash-based IDs...
+[INFO] 2025-05-17 18:39:36.135 - Step 10.5: Running database migrations with Alembic hash-based IDs...
+[DATABASE] 2025-05-17 18:39:36.138 - Starting enhanced database migration process
+[2025-05-17 18:39:36.140] ℹ️ Ensuring latest environment files are available for database migrations...
+[INFO] 2025-05-17 18:39:36.140 - Ensuring latest environment files are available for database migrations...
+[2025-05-17 18:39:36.143] ℹ️ Copying main .env file from environment directory...
+[INFO] 2025-05-17 18:39:36.143 - Copying main .env file from environment directory...
+[2025-05-17 18:39:36.146] ℹ️ Running: Copying main .env file before migration
+[INFO] 2025-05-17 18:39:36.146 - Running: Copying main .env file before migration
+[COMMAND_START] 2025-05-17 18:39:36.149 - cp /home/ubuntu/environment/.env .env
+$ cp /home/ubuntu/environment/.env .env
+[COMMAND_OUTPUT_BEGIN] 2025-05-17 18:39:36.161
+
+[COMMAND_OUTPUT_END] 2025-05-17 18:39:36.162 (Duration: .004487970s)
+[COMMAND_SUCCESS] 2025-05-17 18:39:36.164 - DURATION: .004487970s
+[2025-05-17 18:39:36.165] ✅ Main .env file copied successfully
+[SUCCESS] 2025-05-17 18:39:36.165 - Main .env file copied successfully
+[2025-05-17 18:39:36.169] ℹ️ Copying backend .env.backend file from environment directory...
+[INFO] 2025-05-17 18:39:36.169 - Copying backend .env.backend file from environment directory...
+[2025-05-17 18:39:36.172] ℹ️ Running: Copying backend .env.backend file before migration
+[INFO] 2025-05-17 18:39:36.172 - Running: Copying backend .env.backend file before migration
+[COMMAND_START] 2025-05-17 18:39:36.175 - cp /home/ubuntu/environment/.env.backend backend/.env.backend
+$ cp /home/ubuntu/environment/.env.backend backend/.env.backend
+[COMMAND_OUTPUT_BEGIN] 2025-05-17 18:39:36.186
+
+[COMMAND_OUTPUT_END] 2025-05-17 18:39:36.188 (Duration: .004422654s)
+[COMMAND_SUCCESS] 2025-05-17 18:39:36.189 - DURATION: .004422654s
+[2025-05-17 18:39:36.191] ✅ Backend .env.backend file copied successfully
+[SUCCESS] 2025-05-17 18:39:36.191 - Backend .env.backend file copied successfully
+[2025-05-17 18:39:36.196] ℹ️ Using Alembic hash-based ID migrations...
+[INFO] 2025-05-17 18:39:36.196 - Using Alembic hash-based ID migrations...
+[2025-05-17 18:39:36.203] ℹ️ Creating database backup to database_backups/probeops_backup_20250517_183936.sql...
+[INFO] 2025-05-17 18:39:36.203 - Creating database backup to database_backups/probeops_backup_20250517_183936.sql...
+[2025-05-17 18:39:36.431] ✅ Database backup created successfully
+[SUCCESS] 2025-05-17 18:39:36.431 - Database backup created successfully
+ubuntu@ip-172-16-0-80:~/ProbeNetworkTools$

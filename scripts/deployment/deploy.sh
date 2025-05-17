@@ -615,12 +615,18 @@ if [ -d "backend/alembic" ]; then
         log_warning "pg_dump not available or DATABASE_URL not set. Skipping backup."
     fi
     
+    echo "[DATABASE] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Starting Alembic migration..." >> "$LOG_FILE"
+    
     # Change to backend directory and run Alembic migration
-    cd backend
-    log_info "Running Alembic migrations..."
+    cd backend || { 
+        log_error "Failed to change to backend directory!"
+        cd ..
+        return 1
+    }
+    log_info "Running Alembic migrations from $(pwd)..."
     
     # First make sure script_location is correct in alembic.ini
-    if grep -q "script_location = backend/alembic" alembic.ini; then
+    if [ -f "alembic.ini" ] && grep -q "script_location = backend/alembic" alembic.ini; then
         log_warning "Fixing incorrect script_location path in alembic.ini..."
         sed -i 's|script_location = backend/alembic|script_location = alembic|g' alembic.ini
         log_info "Updated alembic.ini with correct script_location path"
@@ -639,10 +645,19 @@ if [ -d "backend/alembic" ]; then
         fi
     fi
     
+    # Verify alembic is installed
+    if ! command -v alembic &> /dev/null && ! python3 -m alembic --version &> /dev/null; then
+        log_warning "Alembic command not found, installing it..."
+        pip3 install alembic
+        log_info "Alembic installed"
+    fi
+    
     # Try regular upgrade first
     log_info "Running Alembic migrations from $(pwd)..."
+    set +e  # Temporarily disable exit on error
     MIGRATION_OUTPUT=$(python3 -m alembic upgrade head 2>&1)
     MIGRATION_STATUS=$?
+    set -e  # Re-enable exit on error
     
     # Check if we have multiple heads
     if echo "$MIGRATION_OUTPUT" | grep -q "multiple heads"; then
