@@ -5,21 +5,59 @@ This document outlines the steps to deploy a ProbeOps probe node on a remote ser
 ## Prerequisites
 
 - A Linux server with internet access
-- Docker and Docker Compose (automatically installed if missing)
+- Python 3.8+ (or Docker for containerized deployment)
 - A valid ProbeOps account with admin access
 - A registration token generated from the ProbeOps admin panel
 
-## Deployment Steps
+## Deployment Methods
 
-### 1. Generate a Registration Token
+ProbeOps now supports two deployment methods:
+
+1. **Token-Based Deployment (Recommended)**: Uses a single JWT token that contains all configuration
+2. **Parameter-Based Deployment**: Uses individual environment variables or command line parameters
+
+## Token-Based Deployment (Recommended)
+
+### 1. Generate a Probe Node Token
 
 1. Log in to your ProbeOps admin panel
-2. Navigate to "Probe Node Management"
-3. Click "Create Registration Token"
-4. Set a description and expiry time
-5. Save the token information for the next step
+2. Navigate to "Probe Management" → "Generate Tokens" tab
+3. Complete the token generation form:
+   - Node Name: A friendly name for this probe node
+   - Node Description: Optional details about this node
+   - Expiry Period: How long the token should remain valid (30 days recommended)
+   - Heartbeat Interval: How often the node sends status updates (15 seconds default)
+   - Log Level: Verbosity of logging (INFO recommended)
+4. Click "Generate Token"
+5. Copy the displayed JWT token - you'll need this for deployment
 
-### 2. Set Environment Variables
+### 2. Deploy Using Token
+
+On your target server:
+
+```bash
+# Clone the repository
+git clone https://github.com/your-organization/ProbeNetworkTools.git
+cd ProbeNetworkTools/probe
+
+# Option 1: Direct Python Execution
+export PROBEOPS_TOKEN="your-jwt-token-from-step-1"
+python run_probe_node_token.py --token "$PROBEOPS_TOKEN"
+
+# Option 2: Using the Deployment Script
+chmod +x deploy-probe.sh
+./deploy-probe.sh --token "your-jwt-token-from-step-1"
+```
+
+The deployment script will:
+- Install required dependencies
+- Configure the probe as a system service (if applicable)
+- Start the probe node process
+- Verify connectivity to the backend
+
+## Parameter-Based Deployment (Legacy Method)
+
+### 1. Set Environment Variables
 
 On your target server, set the following environment variables:
 
@@ -34,66 +72,95 @@ export PROBEOPS_HEARTBEAT_INTERVAL="15"  # Seconds between heartbeats
 export PROBEOPS_LOG_LEVEL="INFO"         # Log verbosity (DEBUG, INFO, WARNING, ERROR)
 ```
 
-### 3. Run the Deployment Script
+### 2. Run the Deployment Script
 
 ```bash
 chmod +x deploy-probe.sh
 ./deploy-probe.sh
 ```
 
-The script will:
-- Verify environment variables
-- Install Docker and Docker Compose if needed
-- Create necessary configuration files
-- Pull the latest probe node code
-- Build and start the Docker container
-- Verify the probe node's connection to the backend
+## Containerized Deployment
 
-### 4. Verify Deployment
+For Docker-based deployment:
+
+```bash
+# Clone the repository
+git clone https://github.com/your-organization/ProbeNetworkTools.git
+cd ProbeNetworkTools
+
+# Create environment file
+echo "PROBEOPS_TOKEN=your-jwt-token-from-step-1" > .env.probe
+
+# Start the container
+docker compose -f docker-compose.probe.yml up -d
+```
+
+## Verifying Deployment
 
 After deployment, you can:
 
-- Check container status: `docker ps`
-- View logs: `docker-compose -f docker-compose.probe.yml logs -f`
-- Monitor the probe in your ProbeOps admin panel
+- Check service status (for systemd): `systemctl status probeops-node`
+- View logs: `journalctl -u probeops-node -f`
+- If using Docker: `docker compose -f docker-compose.probe.yml logs -f`
+- Monitor the probe in your ProbeOps admin panel under "Probe Management" → "Probe Nodes"
 
-### 5. Post-Deployment Configuration
+## Managing Tokens
 
-The probe node will automatically:
-- Connect to your ProbeOps backend via WebSocket on port 443
-- Authenticate using the provided API key
-- Send regular heartbeats to indicate its status
-- Execute diagnostic commands when instructed by the backend
+To manage existing probe node tokens:
 
-### 6. Troubleshooting
+1. Navigate to "Probe Management" → "Manage Tokens" tab
+2. Here you can:
+   - View all existing tokens and their status
+   - Revoke tokens (disable them while keeping history)
+   - Permanently delete tokens (completely remove them)
+   - Copy token values for redeployment
+
+## Troubleshooting
 
 If you encounter connectivity issues:
 
-1. Run the verification script:
+1. Check the probe logs:
    ```bash
-   ./verify-probe-connection.sh --url https://yourdomain.probeops.com
+   # For systemd service
+   journalctl -u probeops-node -f
+   
+   # For Docker deployment
+   docker compose -f docker-compose.probe.yml logs -f
    ```
 
-2. Check the probe logs:
-   ```bash
-   docker-compose -f docker-compose.probe.yml logs -f
-   ```
-
-3. Verify the backend is accessible:
+2. Verify the backend is accessible:
    ```bash
    curl -v https://yourdomain.probeops.com/health
    ```
 
-4. Ensure your firewall allows outbound connections on port 443
+3. Ensure your firewall allows outbound connections on port 443 (HTTPS)
 
-### 7. Updating the Probe Node
+4. Check token validity in the "Manage Tokens" interface
+
+## Updating the Probe Node
 
 To update your probe node:
 
 ```bash
+# Stop the current service
+systemctl stop probeops-node
+
+# Pull latest code
+git pull
+
+# Update dependencies
+pip install -r requirements.txt
+
+# Restart the service
+systemctl start probeops-node
+```
+
+For Docker deployment:
+
+```bash
 # Pull latest changes
-docker-compose -f docker-compose.probe.yml pull
+docker compose -f docker-compose.probe.yml pull
 
 # Restart the container
-docker-compose -f docker-compose.probe.yml up -d
+docker compose -f docker-compose.probe.yml up -d
 ```
