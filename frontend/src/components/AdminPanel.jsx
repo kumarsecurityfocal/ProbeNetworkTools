@@ -32,6 +32,7 @@ import {
   IconButton,
   Tooltip
 } from '@mui/material';
+import Divider from '@mui/material/Divider';
 import {
   Person as PersonIcon,
   CardMembership as SubscriptionIcon,
