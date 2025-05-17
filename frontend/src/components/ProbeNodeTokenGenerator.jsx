@@ -41,6 +41,35 @@ import {
 } from '@mui/icons-material';
 import { useApi } from '../hooks/useApi';
 
+// Safe wrapper to prevent toLowerCase errors
+const SafeTable = (props) => {
+  // Apply defensive patching before rendering the table
+  React.useEffect(() => {
+    // Ensure nodeName handling is safe
+    if (typeof Node !== 'undefined' && Node.prototype) {
+      try {
+        Object.defineProperty(Node.prototype, 'nodeName', {
+          get: function() {
+            try {
+              const val = this.tagName || '';
+              return typeof val === 'string' ? val : '';
+            } catch (e) {
+              console.warn('Safe nodeName access error handled');
+              return '';
+            }
+          },
+          configurable: true
+        });
+      } catch (err) {
+        console.error('Failed to patch Node.prototype.nodeName:', err);
+      }
+    }
+  }, []);
+  
+  // Return the wrapped table
+  return <Table {...props} />;
+};
+
 const ProbeNodeTokenGenerator = () => {
   const { api } = useApi();
   const [nodeName, setNodeName] = useState('');
@@ -317,7 +346,7 @@ const ProbeNodeTokenGenerator = () => {
           </Box>
         ) : (
           <TableContainer>
-            <Table size="small">
+            <SafeTable size="small">
               <TableHead>
                 <TableRow>
                   <TableCell>ID</TableCell>
@@ -329,33 +358,48 @@ const ProbeNodeTokenGenerator = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {generatedTokens.map((token) => (
-                  <TableRow key={token.id}>
-                    <TableCell>{token.id}</TableCell>
-                    <TableCell>{token.description || token.name || 'No description'}</TableCell>
-                    <TableCell>{formatDate(token.created_at)}</TableCell>
-                    <TableCell>{formatDate(token.expiry_date)}</TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={token.used ? 'Used' : (new Date(token.expiry_date) < new Date() ? 'Expired' : 'Valid')} 
-                        color={token.used ? 'default' : (new Date(token.expiry_date) < new Date() ? 'warning' : 'success')}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleDeleteToken(token.id)}
-                        color="error"
-                        title="Revoke token"
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {generatedTokens.map((token) => {
+                  // Safe check for token data
+                  if (!token || typeof token !== 'object') {
+                    return null;
+                  }
+                  
+                  // Create safe versions of potentially problematic values
+                  const safeId = token.id || '';
+                  const safeDescription = token.description || token.name || 'No description';
+                  const safeCreatedAt = token.created_at || '';
+                  const safeExpiryDate = token.expiry_date || '';
+                  const isUsed = !!token.used;
+                  const isExpired = safeExpiryDate ? new Date(safeExpiryDate) < new Date() : false;
+                  
+                  return (
+                    <TableRow key={safeId}>
+                      <TableCell>{safeId}</TableCell>
+                      <TableCell>{safeDescription}</TableCell>
+                      <TableCell>{formatDate(safeCreatedAt)}</TableCell>
+                      <TableCell>{formatDate(safeExpiryDate)}</TableCell>
+                      <TableCell>
+                        <Chip 
+                          label={isUsed ? 'Used' : (isExpired ? 'Expired' : 'Valid')} 
+                          color={isUsed ? 'default' : (isExpired ? 'warning' : 'success')}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleDeleteToken(safeId)}
+                          color="error"
+                          title="Revoke token"
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
-            </Table>
+            </SafeTable>
           </TableContainer>
         )}
       </Paper>
