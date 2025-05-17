@@ -20,18 +20,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Add this to parse form data
 
-// JWT helper function to create valid tokens with 7-day expiration
+// JWT helper function to create valid tokens
 function createValidToken(email = "admin@probeops.com") {
-  // Make a robust JWT token with proper claims for admin
   const payload = {
     sub: email,
-    exp: Math.floor(Date.now() / 1000) + (86400 * 7), // 7 days (extended from 24 hours)
-    // Add additional claims required by the backend validation
-    user_id: email === "admin@probeops.com" ? 1 : 2,
-    username: email === "admin@probeops.com" ? "admin" : email.split('@')[0],
-    is_admin: email === "admin@probeops.com",
-    is_active: true,
-    iat: Math.floor(Date.now() / 1000) // issued at time
+    exp: Math.floor(Date.now() / 1000) + 86400 // 24 hours
   };
   return jwt.sign(payload, JWT_SECRET, { algorithm: 'HS256' });
 }
@@ -624,13 +617,7 @@ app.use((req, res, next) => {
   }
   // Handle specific routes directly
   else if (url.startsWith('/login') || url.startsWith('/token') || 
-      url.startsWith('/api/login') || url.startsWith('/api/token') ||
-      url.startsWith('/api/api/login') || url.startsWith('/api/auth/login')) {
-    // Fix doubled API prefixes by normalizing the URL
-    if (url.startsWith('/api/api/')) {
-      req.url = req.url.replace('/api/api/', '/api/');
-      console.log(`Normalized doubled API prefix, new URL: ${req.url}`);
-    }
+      url.startsWith('/api/login') || url.startsWith('/api/token')) {
     return handleLogin(req, res);
   } 
   else if (url.startsWith('/users/me')) {
@@ -744,65 +731,10 @@ function handleLogin(req, res) {
   
   // Special handling for admin user - generate valid token
   if (username === 'admin@probeops.com' && password === 'probeopS1@') {
-    console.log('Admin login detected - generating valid signed token with extended expiration');
+    console.log('Admin login detected - generating valid signed token');
     
-    // Create a properly signed token using our function with 7-day expiration
+    // Create a properly signed token using our function
     const token = createValidToken("admin@probeops.com");
-    
-    // Try to use auth-fix.js for more reliable token generation if available
-    try {
-      console.log('Attempting to use auth-fix service for enhanced token reliability');
-      const http = require('http');
-      const options = {
-        hostname: 'localhost',
-        port: 5000,
-        path: '/api/admin/session',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      };
-      
-      const authFixReq = http.request(options, (authFixRes) => {
-        let data = '';
-        authFixRes.on('data', (chunk) => {
-          data += chunk;
-        });
-        
-        authFixRes.on('end', () => {
-          try {
-            if (authFixRes.statusCode === 200) {
-              console.log('Successfully obtained enhanced token from auth-fix service');
-              const enhancedResponse = JSON.parse(data);
-              return res.json(enhancedResponse);
-            } else {
-              // Fall back to standard token if auth-fix service fails
-              console.log('Auth-fix service returned non-200 status, falling back to standard token');
-              throw new Error('Non-200 status from auth-fix service');
-            }
-          } catch (parseError) {
-            console.error('Error parsing auth-fix response:', parseError);
-            // Continue with standard token approach
-            throw parseError;
-          }
-        });
-      });
-      
-      authFixReq.on('error', (error) => {
-        console.error('Error communicating with auth-fix service:', error.message);
-        console.log('Falling back to standard token generation');
-        // Continue with standard token approach (fallthrough)
-      });
-      
-      authFixReq.end();
-      return; // Return here to avoid double-response if using auth-fix
-    } catch (authFixError) {
-      console.error('Auth-fix service error:', authFixError.message);
-      console.log('Falling back to standard token generation');
-      // Continue with standard token approach (fallthrough)
-    }
-    
-    // Standard token generation (fallback)
     
     // Return a valid token response
     return res.json({
