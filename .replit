@@ -92,7 +92,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd frontend && npx vite build --outDir=../public"
+args = "cd frontend && npm run build"
 
 [[workflows.workflow]]
 name = "Auth Fixer"

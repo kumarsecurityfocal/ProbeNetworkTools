@@ -1,5 +1,11 @@
-// Import our patch to fix toLowerCase errors before React loads
+// Import our patches to fix toLowerCase errors before React loads
 import './App.patch.js';
+import { applyGlobalNodeFix } from './patchNodeLowerCase';
+
+// Apply the global Node fix immediately
+if (typeof window !== 'undefined') {
+  applyGlobalNodeFix();
+}
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
