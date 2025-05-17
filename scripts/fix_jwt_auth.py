@@ -20,6 +20,8 @@ import sys
 import json
 import argparse
 import logging
+import re
+from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 
@@ -39,8 +41,33 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Load DATABASE_URL from .env.db file if it exists
+def load_env_from_file():
+    # Find the project root directory
+    current_dir = Path(__file__).resolve().parent
+    project_root = current_dir.parent.parent  # Go up to project root
+    env_db_path = project_root / ".env.db"
+    
+    if env_db_path.exists():
+        logger.info(f"Loading environment from {env_db_path}")
+        with open(env_db_path, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    # Parse environment variable
+                    match = re.match(r'^([A-Za-z0-9_]+)=(.*)$', line)
+                    if match:
+                        key, value = match.groups()
+                        if key == "DATABASE_URL" and value:
+                            logger.info(f"Found DATABASE_URL in .env.db file")
+                            return value
+    return None
+
 # Configuration
-DB_URL = os.environ.get("DATABASE_URL")
+DB_URL = load_env_from_file() or os.environ.get("DATABASE_URL")
+if not DB_URL:
+    logger.warning("DATABASE_URL not found in environment or .env.db file")
+
 JWT_SECRET = os.environ.get("JWT_SECRET", "super-secret-key-change-in-production")
 JWT_ALGORITHM = "HS256"
 ADMIN_EMAIL = "admin@probeops.com"
@@ -175,20 +202,35 @@ def reset_admin_user():
                     EXISTS (SELECT 1 FROM information_schema.columns 
                            WHERE table_name = 'users' AND column_name = 'is_admin') as has_is_admin,
                     EXISTS (SELECT 1 FROM information_schema.columns 
-                           WHERE table_name = 'users' AND column_name = 'is_active') as has_is_active
+                           WHERE table_name = 'users' AND column_name = 'is_active') as has_is_active,
+                    EXISTS (SELECT 1 FROM information_schema.columns 
+                           WHERE table_name = 'users' AND column_name = 'username') as has_username
             """)
             columns = cursor.fetchone()
             
-            if columns["has_is_admin"] and columns["has_is_active"]:
+            # Set default username to "admin" for the admin user
+            admin_username = "admin"
+            
+            if columns["has_is_admin"] and columns["has_is_active"] and columns["has_username"]:
                 cursor.execute(
                     """
-                    INSERT INTO users (email, password, is_admin, is_active) 
-                    VALUES (%s, %s, TRUE, TRUE) RETURNING id
+                    INSERT INTO users (email, username, password, is_admin, is_active) 
+                    VALUES (%s, %s, %s, TRUE, TRUE) RETURNING id
                     """,
-                    (ADMIN_EMAIL, hashed_password)
+                    (ADMIN_EMAIL, admin_username, hashed_password)
+                )
+            elif columns["has_username"]:
+                # Schema with username but without admin flags
+                cursor.execute(
+                    """
+                    INSERT INTO users (email, username, password) 
+                    VALUES (%s, %s, %s) RETURNING id
+                    """,
+                    (ADMIN_EMAIL, admin_username, hashed_password)
                 )
             else:
-                # Simpler schema without those columns
+                # Older schema without username (should not happen with current schema)
+                logger.warning("Users table missing username column, which is required!")
                 cursor.execute(
                     """
                     INSERT INTO users (email, password) 
