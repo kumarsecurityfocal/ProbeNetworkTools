@@ -569,12 +569,43 @@ if [ -d "backend/alembic" ]; then
     cd backend
     log_info "Running Alembic migrations..."
     
-    if python3 -m alembic upgrade head; then
+    # Try regular upgrade first
+    MIGRATION_OUTPUT=$(python3 -m alembic upgrade head 2>&1)
+    MIGRATION_STATUS=$?
+    
+    # Check if we have multiple heads
+    if echo "$MIGRATION_OUTPUT" | grep -q "multiple heads"; then
+        log_warning "Multiple Alembic migration heads detected. Attempting to merge..."
+        
+        # Get the heads
+        HEADS=$(python3 -m alembic heads)
+        log_info "Found migration heads: $HEADS"
+        
+        # Create a merge migration
+        MERGE_MESSAGE="merge_$(date +%Y%m%d%H%M%S)"
+        log_info "Creating merge migration: $MERGE_MESSAGE"
+        python3 -m alembic merge heads -m "$MERGE_MESSAGE"
+        
+        # Run the merge migration
+        log_info "Running merge migration..."
+        if python3 -m alembic upgrade head; then
+            log_success "Alembic merge migration completed successfully"
+            MIGRATION_STATUS=0
+        else
+            log_error "Alembic merge migration failed"
+            MIGRATION_STATUS=1
+        fi
+    fi
+    
+    # Return to previous directory
+    cd ..
+    
+    # Check if migration was successful
+    if [ $MIGRATION_STATUS -eq 0 ]; then
         log_success "Alembic migrations completed successfully"
-        cd ..
     else
         log_error "Alembic migrations failed"
-        cd ..
+        echo "[DATABASE_ERROR] $(date +"%Y-%m-%d %H:%M:%S.%3N") - $MIGRATION_OUTPUT" >> "$LOG_FILE"
         
         # Try the traditional safe_deploy_db.sh as fallback
         log_warning "Trying traditional migration approach as fallback..."
