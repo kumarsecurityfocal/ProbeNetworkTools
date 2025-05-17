@@ -694,14 +694,18 @@ const ProbeNodesManagement = () => {
                       )}
                     </TableCell>
                     <TableCell>
-                      <IconButton 
-                        size="small" 
-                        color="error"
-                        onClick={() => handleRevokeToken(token.id, token.description)}
-                        disabled={token.is_used || dayjs(token.expires_at).isBefore(dayjs())}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
+                      <Tooltip title={token.is_used ? "Token already used" : "Delete Token"}>
+                        <span>
+                          <IconButton 
+                            size="small" 
+                            color="error"
+                            onClick={() => handleRevokeToken(token.id, token.description || `Token ${token.id}`)}
+                            disabled={token.is_used}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 ))}

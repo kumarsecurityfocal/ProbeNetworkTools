@@ -248,13 +248,40 @@ export const getRegistrationTokenDetails = async (tokenId) => {
  */
 export const revokeRegistrationToken = async (tokenId) => {
   try {
-    await axios.delete(
-      `${API_URL}/probe-nodes/registration-token/${tokenId}`,
-      { headers: getAuthHeader() }
-    );
-    return { success: true };
+    console.log(`Attempting to revoke token ${tokenId}...`);
+    try {
+      // First try the primary endpoint
+      await axios.delete(
+        `${API_URL}/probe-nodes/registration-token/${tokenId}`,
+        { headers: getAuthHeader() }
+      );
+      console.log("Successfully revoked token from primary endpoint");
+      return { success: true };
+    } catch (primaryError) {
+      console.error('Primary endpoint failed:', primaryError);
+      
+      // Try alternative endpoint with /tokens instead of /registration-token
+      try {
+        await axios.delete(
+          `${API_URL}/probe-nodes/tokens/${tokenId}`,
+          { headers: getAuthHeader() }
+        );
+        console.log("Successfully revoked token from alternative endpoint");
+        return { success: true };
+      } catch (altError) {
+        console.error('Alternative endpoint also failed:', altError);
+        
+        // Try with direct API path
+        await axios.delete(
+          `/api/probe-nodes/registration-token/${tokenId}`,
+          { headers: getAuthHeader() }
+        );
+        console.log("Successfully revoked token from direct API path");
+        return { success: true };
+      }
+    }
   } catch (error) {
-    console.error(`Error revoking registration token ${tokenId}:`, error);
+    console.error(`All attempts to revoke registration token ${tokenId} failed:`, error);
     throw error;
   }
 };

@@ -340,7 +340,7 @@ const ProbeNodeTokenGenerator = () => {
               variant="contained"
               startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <AddIcon />}
               onClick={handleGenerateToken}
-              disabled={loading || !nodeName.trim()}
+              disabled={loading || !getSafeNodeName().trim()}
             >
               Generate Token
             </Button>
@@ -393,6 +393,12 @@ const ProbeNodeTokenGenerator = () => {
               2. Run the following command to configure the probe node:<br />
               <Box sx={{ bgcolor: 'background.default', p: 1, borderRadius: 1, mt: 1, fontFamily: 'monospace' }}>
                 python run_probe_node_token.py --token "{generatedToken}"
+              </Box>
+              <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
+                Or use the deployment script:
+              </Typography>
+              <Box sx={{ bgcolor: 'background.default', p: 1, borderRadius: 1, mt: 0.5, fontFamily: 'monospace' }}>
+                ./deploy-probe.sh "{generatedToken}"
               </Box>
               <Typography variant="caption" sx={{ mt: 1 }}>
                 Node Configuration Parameters (included in token):
