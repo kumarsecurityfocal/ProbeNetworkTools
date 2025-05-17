@@ -8,7 +8,6 @@ import {
   Card, 
   CardContent, 
   CardHeader,
-  Divider,
   List,
   ListItem,
   ListItemText,
@@ -22,6 +21,7 @@ import {
   InputLabel,
   Chip
 } from '@mui/material';
+import Divider from '@mui/material/Divider';
 import { 
   NetworkCheck as NetworkIcon,
   VpnKey as ApiKeyIcon,
