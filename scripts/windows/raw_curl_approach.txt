@@ -1,0 +1,52 @@
+## Raw cURL Approaches for Windows Command Prompt
+
+Here are some alternative approaches for Windows, using very explicit methods that avoid escaping issues:
+
+### Approach 1: Use single quotes for the entire data string
+```
+curl -X POST https://probeops.com/api/login -H "Content-Type: application/json" -d '{"username":"admin@probeops.com","password":"probeopS1@"}'
+```
+
+### Approach 2: Use a file with correct encoding
+1. Create login.json with Notepad (make sure to save as UTF-8)
+2. Add this content exactly:
+```
+{"username":"admin@probeops.com","password":"probeopS1@"}
+```
+3. Run this command in the same folder:
+```
+curl -X POST https://probeops.com/api/login -H "Content-Type: application/json" -d @login.json
+```
+
+### Approach 3: Echo to file and use the file
+```
+echo {"username":"admin@probeops.com","password":"probeopS1@"} > login.json
+curl -X POST https://probeops.com/api/login -H "Content-Type: application/json" -d @login.json
+```
+
+### Approach 4: Verify your curl version
+```
+curl --version
+```
+Ensure you have a recent version of curl (7.55.0 or later recommended).
+
+### Approach 5: Use PowerShell instead of Command Prompt
+```powershell
+$body = @{
+    username = "admin@probeops.com"
+    password = "probeopS1@"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri "https://probeops.com/api/login" -Method Post -ContentType "application/json" -Body $body
+```
+
+### Approach 6: Check response headers and potential redirects
+```
+curl -v -X POST https://probeops.com/api/login -H "Content-Type: application/json" -d @login.json
+```
+
+### Approach 7: Inspect what data is actually being sent
+```
+curl --trace-ascii trace.txt -X POST https://probeops.com/api/login -H "Content-Type: application/json" -d @login.json
+```
+Then check trace.txt for the actual request data being sent.
