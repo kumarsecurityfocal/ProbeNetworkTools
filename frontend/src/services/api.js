@@ -14,8 +14,11 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = getToken();
-    if (token) {
+    // Filter out hardcoded tokens
+    if (token && token !== 'admin-direct-access-token' && token !== 'admin-direct-access') {
       config.headers['Authorization'] = `Bearer ${token}`;
+    } else {
+      console.warn('Invalid token detected, not sending authorization header');
     }
     return config;
   },
