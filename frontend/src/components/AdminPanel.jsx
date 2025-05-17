@@ -1467,7 +1467,7 @@ const AdminPanel = () => {
         <Box sx={{ mb: 4 }}>
           <ProbeNodesManagement />
         </Box>
-        <Divider sx={{ my: 4 }} />
+        <Box sx={{ my: 4, borderBottom: '1px solid rgba(0, 0, 0, 0.12)' }} />
         <Typography variant="h6" gutterBottom>
           Generate New Probe Node Tokens
         </Typography>
