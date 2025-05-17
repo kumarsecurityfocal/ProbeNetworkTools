@@ -341,9 +341,66 @@ log_success "Docker Compose configuration is valid"
 # Step 7: Clean and rebuild frontend assets
 log_info "Step 7: Cleaning and rebuilding frontend assets..."
 run_command "sudo rm -rf public/*" "Cleaning public directory"
+
+# Fix potential PostCSS configuration issue before building
+log_info "Checking and fixing PostCSS configuration..."
+if [ -f "frontend/postcss.config.js" ]; then
+    # Check if we need to update the PostCSS config for Tailwind CSS
+    if grep -q "tailwindcss" frontend/postcss.config.js; then
+        log_warning "Found potential PostCSS configuration issue, installing required dependency..."
+        run_command "cd frontend && npm install --save-dev @tailwindcss/postcss" "Installing @tailwindcss/postcss dependency"
+        
+        # Update the PostCSS config file
+        log_info "Updating PostCSS configuration to use @tailwindcss/postcss..."
+        sed -i 's/tailwindcss: {}/'\''@tailwindcss\/postcss'\'': {}/g' frontend/postcss.config.js
+        log_success "PostCSS configuration updated successfully"
+    fi
+fi
+
+# Install dependencies and build frontend
 run_command "cd frontend && npm install" "Installing frontend dependencies"
 run_command "cd frontend && npm run build" "Building frontend assets"
-log_success "Frontend assets built successfully"
+
+# Check if build succeeded, if not try with alternative configuration
+if [ $? -ne 0 ]; then
+    log_warning "Frontend build failed, attempting fix with @tailwindcss/postcss..."
+    run_command "cd frontend && npm install --save-dev @tailwindcss/postcss" "Installing @tailwindcss/postcss dependency"
+    
+    # Ensure PostCSS config is correct
+    cat > frontend/postcss.config.js << EOL
+export default {
+  plugins: {
+    '@tailwindcss/postcss': {},
+    autoprefixer: {},
+  },
+}
+EOL
+    log_info "PostCSS configuration updated, retrying build..."
+    run_command "cd frontend && npm run build" "Rebuilding frontend assets with fixed configuration"
+    
+    if [ $? -ne 0 ]; then
+        log_error "Frontend build failed again. Deployment may fail."
+        echo "[FRONTEND_ERROR] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Frontend build failed after configuration fix" >> "$LOG_FILE"
+        
+        # Ask user if they want to continue
+        echo -e "${RED}Frontend build failed. The application may not function correctly.${NC}"
+        echo -e "${YELLOW}Would you like to continue with deployment anyway? (y/n)${NC}"
+        read -r continue_response
+        
+        if [[ ! "$continue_response" =~ ^[Yy]$ ]]; then
+            log_error "Deployment aborted due to frontend build failure"
+            echo "[DEPLOYMENT_ABORTED] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Deployment aborted due to frontend build failure" >> "$LOG_FILE"
+            exit 1
+        else
+            log_warning "Continuing deployment despite frontend build failure"
+            echo "[FRONTEND_WARNING] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Continuing deployment despite frontend build failure" >> "$LOG_FILE"
+        fi
+    else
+        log_success "Frontend assets built successfully after configuration fix"
+    fi
+else
+    log_success "Frontend assets built successfully"
+fi
 
 # Step 8: Verify frontend assets
 log_info "Step 8: Verifying frontend assets..."
