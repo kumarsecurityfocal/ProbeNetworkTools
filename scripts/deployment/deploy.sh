@@ -559,16 +559,45 @@ if [ -d "backend/alembic" ]; then
     mkdir -p "$BACKUP_DIR"
     
     # Try to backup the database if possible
-    if command -v pg_dump &> /dev/null && [ -n "$DATABASE_URL" ]; then
+    if command -v pg_dump &> /dev/null; then
         BACKUP_FILE="$BACKUP_DIR/probeops_backup_$TIMESTAMP.sql"
         log_info "Creating database backup to $BACKUP_FILE..."
         
-        # Extract connection details from DATABASE_URL
-        DB_USER=$(echo $DATABASE_URL | sed -n 's/.*:\/\/\([^:]*\):.*/\1/p')
-        DB_PASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p')
-        DB_HOST=$(echo $DATABASE_URL | sed -n 's/.*@\([^:]*\):.*/\1/p')
-        DB_PORT=$(echo $DATABASE_URL | sed -n 's/.*:\([0-9]*\)\/.*/\1/p')
-        DB_NAME=$(echo $DATABASE_URL | sed -n 's/.*\/\([^?]*\).*/\1/p')
+        # Check if we can get the DATABASE_URL from environment
+        if [ -z "$DATABASE_URL" ]; then
+            # Try to get it from backend/.env.backend
+            if [ -f "backend/.env.backend" ]; then
+                DATABASE_URL=$(grep "DATABASE_URL" backend/.env.backend | cut -d= -f2-)
+                log_info "Found DATABASE_URL in backend/.env.backend"
+            fi
+            
+            # Try to get it from .env
+            if [ -z "$DATABASE_URL" ] && [ -f ".env" ]; then
+                DATABASE_URL=$(grep "DATABASE_URL" .env | cut -d= -f2-)
+                log_info "Found DATABASE_URL in .env"
+            fi
+            
+            # Try to get it from environment directory
+            if [ -z "$DATABASE_URL" ] && [ -f "/home/ubuntu/environment/.env.backend" ]; then
+                DATABASE_URL=$(grep "DATABASE_URL" /home/ubuntu/environment/.env.backend | cut -d= -f2-)
+                log_info "Found DATABASE_URL in /home/ubuntu/environment/.env.backend"
+            fi
+        fi
+        
+        if [ -n "$DATABASE_URL" ]; then
+            # Extract connection details from DATABASE_URL
+            DB_USER=$(echo $DATABASE_URL | sed -n 's/.*:\/\/\([^:]*\):.*/\1/p')
+            DB_PASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p')
+            DB_HOST=$(echo $DATABASE_URL | sed -n 's/.*@\([^:]*\):.*/\1/p')
+            DB_PORT=$(echo $DATABASE_URL | sed -n 's/.*:\([0-9]*\)\/.*/\1/p')
+            DB_NAME=$(echo $DATABASE_URL | sed -n 's/.*\/\([^?]*\).*/\1/p')
+            
+            # Log the extracted connection details (excluding password)
+            log_info "Database connection details: User: $DB_USER, Host: $DB_HOST, Port: $DB_PORT, Database: $DB_NAME"
+        else
+            log_warning "Could not find DATABASE_URL in any config files. Skipping backup."
+            return
+        fi
         
         # Use environment variables for authentication
         export PGPASSWORD=$DB_PASSWORD
