@@ -101,7 +101,7 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node auth-fix.js"
-waitForPort = 6000
+waitForPort = 5001
 
 [[workflows.workflow]]
 name = "DB Explorer"
@@ -118,6 +118,10 @@ run = ["sh", "-c", "cd frontend && npm install && npm run dev"]
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 5001
+externalPort = 3003
 
 [[ports]]
 localPort = 7000
