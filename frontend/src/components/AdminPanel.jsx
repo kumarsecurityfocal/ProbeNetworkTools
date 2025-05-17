@@ -1463,15 +1463,24 @@ const AdminPanel = () => {
         )}
       </TabPanel>
 
-      {/* Probe Nodes Management Tab - Combined Probe Nodes and Token Generation */}
+      {/* Probe Nodes Management Tab - REORGANIZED: Token Generation First */}
       <TabPanel value={tabValue} index={3}>
-        <Typography variant="h6" gutterBottom>
-          Generate New Probe Node Tokens
-        </Typography>
-        <ProbeNodeTokenGenerator />
-        <Divider sx={{ my: 4 }} />
         <Box sx={{ mb: 4 }}>
-          <ProbeNodesManagement />
+          <Paper sx={{ p: 3, mb: 4 }}>
+            <Typography variant="h6" gutterBottom>
+              Generate New Probe Node Tokens
+            </Typography>
+            <ProbeNodeTokenGenerator />
+          </Paper>
+          
+          <Divider sx={{ my: 4 }} />
+          
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              Manage Existing Probe Nodes
+            </Typography>
+            <ProbeNodesManagement />
+          </Paper>
         </Box>
       </TabPanel>
 
