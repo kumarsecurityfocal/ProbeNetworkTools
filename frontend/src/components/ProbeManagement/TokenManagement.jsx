@@ -27,7 +27,8 @@ import {
   VisibilityOff as VisibilityOffIcon,
   Key as KeyIcon,
   ContentCopy as CopyIcon,
-  Check as CheckIcon
+  Check as CheckIcon,
+  Block as BlockIcon
 } from '@mui/icons-material';
 import { useApi } from '../../hooks/useApi';
 
@@ -37,6 +38,7 @@ const TokenManagement = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [permanentDeleteDialogOpen, setPermanentDeleteDialogOpen] = useState(false);
   const [selectedToken, setSelectedToken] = useState(null);
   const [tokenVisibility, setTokenVisibility] = useState({});
   const [copiedId, setCopiedId] = useState(null);
@@ -96,10 +98,32 @@ const TokenManagement = () => {
     }
   };
 
-  // Open delete confirmation dialog
+  // Open delete confirmation dialog (revoke)
   const openDeleteDialog = (token) => {
     setSelectedToken(token);
     setDeleteDialogOpen(true);
+  };
+  
+  // Open permanent delete confirmation dialog
+  const openPermanentDeleteDialog = (token) => {
+    setSelectedToken(token);
+    setPermanentDeleteDialogOpen(true);
+  };
+  
+  // Handle permanent token deletion
+  const handlePermanentDeleteToken = async () => {
+    if (!selectedToken) return;
+    
+    try {
+      // Add a URL parameter to indicate permanent delete
+      await api.delete(`/api/admin/probe-tokens/${selectedToken.id}?permanent=true`);
+      setTokens(tokens.filter(token => token.id !== selectedToken.id));
+      setPermanentDeleteDialogOpen(false);
+      setSelectedToken(null);
+    } catch (err) {
+      console.error('Error permanently deleting token:', err);
+      setError('Failed to permanently delete token: ' + (err.response?.data?.error || err.message));
+    }
   };
 
   // Toggle token visibility
@@ -249,14 +273,32 @@ const TokenManagement = () => {
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <IconButton
-                          color="error"
-                          size="small"
-                          onClick={() => openDeleteDialog(token)}
-                          disabled={token.revoked}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
+                        <Box sx={{ display: 'flex' }}>
+                          {/* Revoke token button */}
+                          <Tooltip title={token.revoked ? "Token already revoked" : "Revoke token"}>
+                            <span>
+                              <IconButton
+                                color="warning"
+                                size="small"
+                                onClick={() => openDeleteDialog(token)}
+                                disabled={token.revoked}
+                              >
+                                <BlockIcon fontSize="small" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                          
+                          {/* Permanently delete token button */}
+                          <Tooltip title="Permanently delete token">
+                            <IconButton
+                              color="error"
+                              size="small"
+                              onClick={() => openPermanentDeleteDialog(token)}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
                       </TableCell>
                     </TableRow>
                   );
