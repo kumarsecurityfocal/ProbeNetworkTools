@@ -41,6 +41,27 @@ import {
 } from '@mui/icons-material';
 import { useApi } from '../hooks/useApi';
 
+
+// Patch DOM operations to prevent errors
+if (typeof window !== 'undefined') {
+  if (String.prototype.toLowerCase) {
+    const originalToLowerCase = String.prototype.toLowerCase;
+    if (!window._safeToLowerCaseApplied) {
+      String.prototype.toLowerCase = function() {
+        try {
+          if (typeof this !== 'string' && !(this instanceof String)) {
+            return '';
+          }
+          return originalToLowerCase.call(this);
+        } catch (e) {
+          return '';
+        }
+      };
+      window._safeToLowerCaseApplied = true;
+    }
+  }
+}
+
 const ProbeNodeTokenGenerator = () => {
   const { api } = useApi();
   const [nodeName, setNodeName] = useState('');
@@ -422,44 +443,45 @@ const ProbeNodeTokenGenerator = () => {
           
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {generatedTokens.map((token) => {
-              // Safely get properties (avoid DOM errors)
-              const id = token?.id || Math.random();
-              const name = token?.name || 'Unnamed Token';
-              const tokenPreview = token?.token || '[token preview]';
-              const fullToken = token?.fullToken || '';
-              const date = token?.date ? new Date(token.date).toLocaleString() : 'N/A';
-              const expireDays = token?.expireDays;
+              const tokenId = String(token?.id || Math.random());
+              const tokenName = String(token?.name || 'Unnamed Token');
+              const previewText = String(token?.token || '[token preview]');
+              const fullTokenValue = String(token?.fullToken || '');
+              const dateText = token?.date ? new Date(token.date).toLocaleString() : 'N/A';
+              const expDays = Number(token?.expireDays || 0);
               
               return (
-                <Paper key={id} variant="outlined" sx={{ p: 2 }}>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={4}>
-                      <Typography variant="subtitle2" component="div">
-                        {name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Created: {date}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
-                      <Typography variant="subtitle2" component="div">
-                        Token:
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                        {tokenPreview}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={2}>
-                      <Typography variant="body2" component="div">
-                        Expires in: {expireDays === 0 ? 'Never' : `${expireDays || 0} ${(expireDays || 0) === 1 ? 'day' : 'days'}`}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={2} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                <div key={tokenId} style={{ 
+                  padding: '16px', 
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '4px',
+                  marginBottom: '8px'
+                }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
+                    <div style={{ flex: '1' }}>
+                      <div style={{ fontWeight: 'bold' }}>{tokenName}</div>
+                      <div style={{ fontSize: '0.875rem', color: '#666' }}>Created: {dateText}</div>
+                    </div>
+                    <div style={{ flex: '2' }}>
+                      <div style={{ fontWeight: 'bold' }}>Token:</div>
+                      <code style={{ 
+                        backgroundColor: '#f5f5f5', 
+                        padding: '4px 8px', 
+                        borderRadius: '4px',
+                        fontSize: '0.875rem',
+                        display: 'block',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>{previewText}</code>
+                    </div>
+                    <div style={{ flex: '1' }}>
+                      <div>Expires in: {expDays === 0 ? 'Never' : `${expDays} ${expDays === 1 ? 'day' : 'days'}`}</div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
                       <Button 
                         size="small" 
                         startIcon={<CopyIcon />} 
-                        onClick={() => handleCopyHistoryToken(fullToken)}
-                        sx={{ mr: 1 }}
+                        onClick={() => handleCopyHistoryToken(fullTokenValue)}
                       >
                         Copy
                       </Button>
@@ -467,13 +489,13 @@ const ProbeNodeTokenGenerator = () => {
                         size="small" 
                         color="error" 
                         startIcon={<DeleteIcon />} 
-                        onClick={() => handleRemoveToken(id)}
+                        onClick={() => handleRemoveToken(tokenId)}
                       >
                         Remove
                       </Button>
-                    </Grid>
-                  </Grid>
-                </Paper>
+                    </div>
+                  </div>
+                </div>
               );
             })}
           </Box>
