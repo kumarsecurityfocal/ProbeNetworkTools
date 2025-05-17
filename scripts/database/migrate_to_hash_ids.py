@@ -28,9 +28,9 @@ from alembic import command, script
 from alembic.runtime.migration import MigrationContext
 
 # Define configuration
-ALEMBIC_DIR = Path("../backend/alembic")
+ALEMBIC_DIR = Path("backend/alembic")
 VERSIONS_DIR = ALEMBIC_DIR / "versions"
-BACKUP_DIR = Path("../database_backups/migration_backups")
+BACKUP_DIR = Path("database_backups/migration_backups")
 ALEMBIC_CONFIG_PATH = ALEMBIC_DIR / "alembic.ini"
 
 # Basic logging setup
