@@ -91,11 +91,68 @@ echo "Backing up database to: $BACKUP_FILE"
 
 # Check if pg_dump is available
 if command -v pg_dump &> /dev/null; then
+    # Check PostgreSQL client version
+    PG_CLIENT_VERSION=$(pg_dump --version | grep -oP '\d+\.\d+')
+    PG_SERVER_VERSION_MAJOR=$(echo $DATABASE_URL | grep -oP 'postgres(?:ql)?://.*@.*:\d+/.*\?.*server_version=\K\d+' || echo "")
+    
+    if [ -z "$PG_SERVER_VERSION_MAJOR" ]; then
+        echo "Could not determine PostgreSQL server version from DATABASE_URL."
+        echo "Attempting to get version from server..."
+        
+        # Try to get the version from the server
+        PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p')
+        export PGPASSWORD
+        
+        PG_SERVER_VERSION=$(PGPASSWORD=$PGPASSWORD psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT current_setting('server_version')" 2>/dev/null)
+        PG_SERVER_VERSION_MAJOR=$(echo $PG_SERVER_VERSION | cut -d. -f1)
+        
+        unset PGPASSWORD
+    fi
+    
+    # Check for version mismatch
+    echo "PostgreSQL client version: $PG_CLIENT_VERSION"
+    echo "PostgreSQL server version: $PG_SERVER_VERSION_MAJOR.*"
+    
+    # Attempt to find or install matching PostgreSQL client tools
+    if [ ! -z "$PG_SERVER_VERSION_MAJOR" ] && [ "$PG_CLIENT_VERSION" != "$PG_SERVER_VERSION_MAJOR"* ]; then
+        echo -e "${YELLOW}WARNING: PostgreSQL version mismatch detected.${NC}"
+        echo "Server is version $PG_SERVER_VERSION_MAJOR.*, but client is version $PG_CLIENT_VERSION"
+        
+        if [ -x "$(command -v apt-get)" ]; then
+            echo "Attempting to install PostgreSQL $PG_SERVER_VERSION_MAJOR client tools..."
+            # Add PostgreSQL repository if not already present
+            if [ ! -f /etc/apt/sources.list.d/pgdg.list ]; then
+                echo "Adding PostgreSQL repository..."
+                echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+                wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+                sudo apt-get update
+            fi
+            
+            # Install matching PostgreSQL client
+            sudo apt-get install -y postgresql-client-$PG_SERVER_VERSION_MAJOR
+            
+            # Check if installation succeeded
+            if command -v pg_dump.$PG_SERVER_VERSION_MAJOR &> /dev/null; then
+                echo -e "${GREEN}Successfully installed PostgreSQL $PG_SERVER_VERSION_MAJOR client tools.${NC}"
+                PG_DUMP_CMD="pg_dump.$PG_SERVER_VERSION_MAJOR"
+            else
+                echo -e "${YELLOW}Failed to install matching PostgreSQL client. Proceeding with backup attempt.${NC}"
+                PG_DUMP_CMD="pg_dump"
+            fi
+        else
+            echo -e "${YELLOW}Package manager not found. Cannot install matching PostgreSQL client.${NC}"
+            PG_DUMP_CMD="pg_dump"
+        fi
+    else
+        PG_DUMP_CMD="pg_dump"
+    fi
+    
     # Use environment variables for authentication to avoid password prompt
     PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p')
     export PGPASSWORD
     
-    pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -F p > "$BACKUP_FILE"
+    echo "Running backup with $PG_DUMP_CMD..."
+    $PG_DUMP_CMD -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -F p > "$BACKUP_FILE"
     
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}Backup created successfully!${NC}"
@@ -103,7 +160,15 @@ if command -v pg_dump &> /dev/null; then
         gzip "$BACKUP_FILE"
         echo "Backup compressed to: ${BACKUP_FILE}.gz"
     else
-        echo -e "${YELLOW}WARNING: Failed to create backup. Proceeding without backup.${NC}"
+        echo -e "${YELLOW}WARNING: Failed to create backup. This might be due to PostgreSQL version mismatch.${NC}"
+        echo "Proceeding without backup. Consider manually backing up your database before continuing."
+        echo "Would you like to continue without a backup? (y/n)"
+        read -r continue_choice
+        
+        if [ "$continue_choice" != "y" ]; then
+            echo "Aborting deployment."
+            exit 1
+        fi
     fi
     
     # Unset password

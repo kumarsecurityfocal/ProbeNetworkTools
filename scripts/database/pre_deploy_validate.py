@@ -58,8 +58,9 @@ class DeploymentValidator:
             Boolean indicating if the connection was successful
         """
         try:
+            import sqlalchemy as sa
             with self.migration_manager.engine.connect() as conn:
-                conn.execute("SELECT 1")
+                conn.execute(sa.text("SELECT 1"))
             logger.info("Database connection successful")
             return True
         except Exception as e:
