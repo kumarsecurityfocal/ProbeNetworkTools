@@ -122,9 +122,13 @@ export const AuthProvider = ({ children }) => {
           created_at: '2023-05-01T00:00:00.000Z'
         };
         
+        // Create a mock token for direct admin access
+        const mockToken = 'admin-direct-access-token';
+        
         // Store directly in localStorage for persistence
         localStorage.setItem('probeops_user', JSON.stringify(adminUser));
         localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('probeops_token', mockToken); // Store the token!
         
         // Update state
         setUser(adminUser);
@@ -134,7 +138,25 @@ export const AuthProvider = ({ children }) => {
       }
       
       // Regular API login flow
-      const user = await loginApi(username, password);
+      const response = await loginApi(username, password);
+      console.log("DEBUG AUTH CONTEXT: Login API response:", response);
+      
+      // Extract the user from the response
+      let user = response;
+      
+      // If the response includes both token and user object
+      if (response && response.access_token) {
+        console.log("DEBUG AUTH CONTEXT: Token received:", response.access_token.substring(0, 10) + "...");
+        
+        // Ensure the token is properly saved
+        localStorage.setItem('probeops_token', response.access_token);
+        
+        // If the user object is nested in the response
+        if (response.user) {
+          user = response.user;
+        }
+      }
+      
       console.log("DEBUG AUTH CONTEXT: Login successful, user data:", user);
       
       // Explicitly check for admin status
