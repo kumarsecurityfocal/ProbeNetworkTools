@@ -617,7 +617,13 @@ app.use((req, res, next) => {
   }
   // Handle specific routes directly
   else if (url.startsWith('/login') || url.startsWith('/token') || 
-      url.startsWith('/api/login') || url.startsWith('/api/token')) {
+      url.startsWith('/api/login') || url.startsWith('/api/token') ||
+      url.startsWith('/api/api/login') || url.startsWith('/api/auth/login')) {
+    // Fix doubled API prefixes by normalizing the URL
+    if (url.startsWith('/api/api/')) {
+      req.url = req.url.replace('/api/api/', '/api/');
+      console.log(`Normalized doubled API prefix, new URL: ${req.url}`);
+    }
     return handleLogin(req, res);
   } 
   else if (url.startsWith('/users/me')) {
