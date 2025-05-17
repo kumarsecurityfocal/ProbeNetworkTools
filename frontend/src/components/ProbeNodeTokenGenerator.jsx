@@ -9,7 +9,6 @@ import {
   MenuItem,
   Select,
   InputLabel,
-  Divider,
   Alert,
   IconButton,
   Tooltip,
@@ -30,6 +29,7 @@ import {
   TableRow,
   Chip
 } from '@mui/material';
+import Divider from '@mui/material/Divider';
 import {
   Add as AddIcon,
   ContentCopy as CopyIcon,
