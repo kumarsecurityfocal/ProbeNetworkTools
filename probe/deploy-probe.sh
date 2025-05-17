@@ -3,7 +3,6 @@
 # This script deploys a ProbeOps probe node with token-based configuration
 
 # Default values
-PROBE_REPO="https://github.com/probeops/probe-node.git"
 INSTALL_DIR="/opt/probeops/probe"
 PYTHON_VERSION="3.9"
 
@@ -90,13 +89,22 @@ else
   exit 1
 fi
 
-# Clone repository (public access, no credentials needed)
-echo "Cloning probe repository..."
+# Update repository
+echo "Updating repository..."
 if [ -d ".git" ]; then
   echo "Repository already exists, updating..."
-  git pull
+  git pull origin main
 else
-  git clone --depth 1 "$PROBE_REPO" .
+  echo "Warning: No git repository found in current directory."
+  echo "This script should be run from within an existing probe repository."
+  echo "Please check your installation directory."
+  
+  read -p "Do you want to continue with the existing files? (y/n) " -n 1 -r
+  echo
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "Operation canceled"
+    exit 1
+  fi
 fi
 
 # Set up Python virtual environment

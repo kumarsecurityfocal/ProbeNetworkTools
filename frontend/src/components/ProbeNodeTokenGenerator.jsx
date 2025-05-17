@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -42,6 +42,9 @@ const ProbeNodeTokenGenerator = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [infoDialogOpen, setInfoDialogOpen] = useState(false);
+  const [advancedMode, setAdvancedMode] = useState(false);
+  const [nodeUuid, setNodeUuid] = useState('');
+  const [customApiKey, setCustomApiKey] = useState('');
 
   // Generate a random UUID for node
   const generateNodeUuid = () => {
@@ -50,6 +53,14 @@ const ProbeNodeTokenGenerator = () => {
            Math.random().toString(36).substring(2, 6);
   };
 
+  // Generate random values for node UUID and reset when node name changes
+  useEffect(() => {
+    if (!advancedMode) {
+      // Only auto-generate if not in advanced mode
+      setNodeUuid(generateNodeUuid());
+    }
+  }, [nodeName, advancedMode]);
+
   // Handle token generation
   const handleGenerateToken = async () => {
     if (!nodeName.trim()) {
@@ -57,40 +68,60 @@ const ProbeNodeTokenGenerator = () => {
       return;
     }
 
+    if (advancedMode && !nodeUuid.trim()) {
+      setError('Node UUID is required in advanced mode');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
-      const nodeUuid = generateNodeUuid();
+      // Use provided UUID or generate one
+      const finalNodeUuid = advancedMode && nodeUuid ? nodeUuid : generateNodeUuid();
       
-      // Create a new API key for this node
-      const keyResponse = await api.post('/api/keys', {
-        name: `Node: ${nodeName}`,
-        expiry_days: parseInt(expireDays, 10)
-      });
+      let apiKey;
       
-      // Get the API key from the response
-      const apiKey = keyResponse.data.key || keyResponse.data.token || keyResponse.data.value;
-      
-      if (!apiKey) {
-        throw new Error('Failed to generate API key');
+      if (advancedMode && customApiKey) {
+        // Use custom API key if provided in advanced mode
+        apiKey = customApiKey;
+      } else {
+        // Create a new API key for this node
+        const keyResponse = await api.post('/api/keys', {
+          name: `Node: ${nodeName}`,
+          expiry_days: parseInt(expireDays, 10)
+        });
+        
+        // Get the API key from the response
+        apiKey = keyResponse.data.key || keyResponse.data.token || keyResponse.data.value;
+        
+        if (!apiKey) {
+          throw new Error('Failed to generate API key');
+        }
       }
 
       // Register the node with the backend
-      const nodeResponse = await api.post('/api/nodes/register', {
-        node_uuid: nodeUuid,
-        name: nodeName,
-        description: nodeDescription,
-        metadata: {
-          created_at: new Date().toISOString(),
-          created_by: 'admin-panel',
-          pending_activation: true
-        }
-      });
+      // Modified to use the correct endpoint
+      try {
+        const nodeResponse = await api.post('/api/probe-nodes', {
+          node_uuid: finalNodeUuid,
+          name: nodeName,
+          description: nodeDescription,
+          metadata: {
+            created_at: new Date().toISOString(),
+            created_by: 'admin-panel',
+            pending_activation: true
+          }
+        });
+        console.log('Node registration successful:', nodeResponse.data);
+      } catch (registerError) {
+        console.warn('Node pre-registration failed, will continue with token generation:', registerError);
+        // Continue with token generation even if node registration fails
+      }
 
       // Now generate a token that combines the node UUID and API key
       const tokenResponse = await api.post('/api/admin/generate-probe-token', {
-        node_uuid: nodeUuid,
+        node_uuid: finalNodeUuid,
         api_key: apiKey,
         name: nodeName,
         description: nodeDescription,
@@ -155,6 +186,19 @@ const ProbeNodeTokenGenerator = () => {
         </Typography>
 
         <Box component="form" noValidate sx={{ mt: 1 }}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={advancedMode}
+                onChange={(e) => setAdvancedMode(e.target.checked)}
+                name="advancedMode"
+                color="primary"
+              />
+            }
+            label="Advanced Mode"
+            sx={{ mb: 2 }}
+          />
+
           <TextField
             margin="normal"
             required
@@ -183,6 +227,39 @@ const ProbeNodeTokenGenerator = () => {
             rows={2}
             sx={{ mb: 2 }}
           />
+
+          {advancedMode && (
+            <>
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="nodeUuid"
+                label="Node UUID"
+                name="nodeUuid"
+                autoComplete="off"
+                value={nodeUuid}
+                onChange={(e) => setNodeUuid(e.target.value)}
+                disabled={loading}
+                helperText="A unique identifier for this probe node"
+                sx={{ mb: 2 }}
+              />
+
+              <TextField
+                margin="normal"
+                fullWidth
+                id="customApiKey"
+                label="Custom API Key (Optional)"
+                name="customApiKey"
+                autoComplete="off"
+                value={customApiKey}
+                onChange={(e) => setCustomApiKey(e.target.value)}
+                disabled={loading}
+                helperText="If left empty, a new API key will be automatically generated"
+                sx={{ mb: 2 }}
+              />
+            </>
+          )}
 
           <FormControl fullWidth sx={{ mb: 3 }}>
             <InputLabel id="expiration-label">Token Expiration</InputLabel>
