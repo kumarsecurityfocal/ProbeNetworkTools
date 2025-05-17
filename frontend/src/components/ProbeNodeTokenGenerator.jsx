@@ -304,69 +304,12 @@ const ProbeNodeTokenGenerator = () => {
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
             <CircularProgress />
           </Box>
-        ) : generatedTokens.length === 0 ? (
-          <Box sx={{ textAlign: 'center', p: 3, bgcolor: 'background.default', borderRadius: 1 }}>
-            <Typography color="text.secondary">
-              No tokens found. Generate a new token below.
-            </Typography>
-          </Box>
         ) : (
-          <TableContainer>
-            <SafeTable size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell>Created</TableCell>
-                  <TableCell>Expires</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {generatedTokens.map((token) => {
-                  // Safe check for token data
-                  if (!token || typeof token !== 'object') {
-                    return null;
-                  }
-                  
-                  // Create safe versions of potentially problematic values
-                  const safeId = token.id || '';
-                  const safeDescription = token.description || token.name || 'No description';
-                  const safeCreatedAt = token.created_at || '';
-                  const safeExpiryDate = token.expiry_date || '';
-                  const isUsed = !!token.used;
-                  const isExpired = safeExpiryDate ? new Date(safeExpiryDate) < new Date() : false;
-                  
-                  return (
-                    <TableRow key={safeId}>
-                      <TableCell>{safeId}</TableCell>
-                      <TableCell>{safeDescription}</TableCell>
-                      <TableCell>{formatDate(safeCreatedAt)}</TableCell>
-                      <TableCell>{formatDate(safeExpiryDate)}</TableCell>
-                      <TableCell>
-                        <Chip 
-                          label={isUsed ? 'Used' : (isExpired ? 'Expired' : 'Valid')} 
-                          color={isUsed ? 'default' : (isExpired ? 'warning' : 'success')}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleDeleteToken(safeId)}
-                          color="error"
-                          title="Revoke token"
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </SafeTable>
-          </TableContainer>
+          <TokenList 
+            tokens={generatedTokens} 
+            onDeleteToken={handleDeleteToken} 
+            formatDate={formatDate}
+          />
         )}
       </Paper>
       
