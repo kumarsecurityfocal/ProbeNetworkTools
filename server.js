@@ -98,7 +98,15 @@ function handleNodes(req, res) {
 // Endpoint for generating probe node tokens
 app.post('/api/admin/generate-probe-token', (req, res) => {
   try {
-    const { node_uuid, api_key, name, description, expiry_days } = req.body;
+    const { 
+      node_uuid, 
+      api_key, 
+      name, 
+      description, 
+      expiry_days,
+      heartbeat_interval,
+      log_level
+    } = req.body;
     
     // Validate required parameters
     if (!node_uuid || !api_key) {
@@ -123,7 +131,8 @@ app.post('/api/admin/generate-probe-token', (req, res) => {
       NODE_DESCRIPTION: description || '',
       
       // Additional configuration
-      LOG_LEVEL: 'info',
+      HEARTBEAT_INTERVAL: heartbeat_interval || 15,
+      LOG_LEVEL: log_level || 'INFO',
       AUTH_TYPE: 'token',
       
       // Standard JWT claims

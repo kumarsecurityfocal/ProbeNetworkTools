@@ -63,7 +63,8 @@ def decode_token(token):
             'api_key': payload.get('API_KEY'),
             'backend_url': payload.get('BACKEND_URL'),
             'node_name': payload.get('NODE_NAME', f"Node-{payload.get('NODE_UUID', 'unknown')[:8]}"),
-            'log_level': payload.get('LOG_LEVEL', 'info').upper(),
+            'log_level': payload.get('LOG_LEVEL', 'INFO').upper(),
+            'heartbeat_interval': int(payload.get('HEARTBEAT_INTERVAL', 15)),
         }
         
         # Validate required fields
@@ -92,6 +93,7 @@ class ProbeNode:
         self.api_key = config['api_key']
         self.backend_url = config['backend_url'].rstrip('/')
         self.node_name = config['node_name']
+        self.heartbeat_interval = config['heartbeat_interval']
         
         # Authorization header
         self.headers = {
