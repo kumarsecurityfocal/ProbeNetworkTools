@@ -18,6 +18,7 @@ import Reports from './components/Reports';
 import Footer from './components/Footer';
 import TroubleshootingPanel from './components/TroubleshootingPanel';
 import DatabaseAdminPanel from './components/DatabaseAdminPanel';
+import ProbeManagement from './components/ProbeManagement';
 
 // Direct Access Pages
 import DatabasePage from './pages/DatabasePage';
@@ -143,6 +144,7 @@ function App() {
               <Route path="/reports" element={<Reports />} />
               <Route path="/troubleshooting" element={<TroubleshootingPanel />} />
               <Route path="/database" element={<DatabaseAdminPanel />} />
+              <Route path="/probe-management" element={<ProbeManagement />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </Box>

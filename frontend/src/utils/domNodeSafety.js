@@ -1,74 +1,84 @@
 /**
- * DOM Node Type Safety Utilities
- * 
- * This module provides safety utilities to handle potential issues with
- * DOM node operations, particularly with the toLowerCase method.
+ * Utility functions to safely handle DOM node operations
+ * and prevent errors like "Ce.nodeName.toLowerCase is not a function"
  */
 
 /**
- * Safely gets a lowercase value from a DOM node's nodeName property
- * @param {Node} node - The DOM node
- * @returns {string} The lowercase nodeName or a safe fallback
+ * Safely check if a value is a valid DOM node
+ * @param {any} node - The value to check
+ * @returns {boolean} - True if the value is a valid DOM node
  */
-export const getNodeNameSafely = (node) => {
-  if (!node) return '';
+export const isValidDomNode = (node) => {
+  return (
+    node !== null &&
+    typeof node === 'object' &&
+    typeof node.nodeName === 'string'
+  );
+};
+
+/**
+ * Safely get node name in lowercase
+ * @param {any} node - DOM node or object
+ * @returns {string|null} - Lowercase node name or null if invalid
+ */
+export const safeNodeName = (node) => {
+  if (!isValidDomNode(node)) {
+    return null;
+  }
   
   try {
-    // First check if nodeName exists and is a string
-    if (node.nodeName && typeof node.nodeName === 'string') {
-      return node.nodeName.toLowerCase();
-    }
-    
-    // If nodeName exists but is not a string (shouldn't happen, but just in case)
-    if (node.nodeName && node.nodeName.toString) {
-      return node.nodeName.toString().toLowerCase();
-    }
-    
-    // If we can't get the nodeName, return a safe default
-    return '';
-  } catch (error) {
-    console.error('Error getting lowercase nodeName:', error);
-    return '';
+    return typeof node.nodeName === 'string' 
+      ? node.nodeName.toLowerCase() 
+      : null;
+  } catch (err) {
+    console.error('Error getting node name:', err);
+    return null;
   }
 };
 
 /**
- * Applies a global patch to prevent toLowerCase errors on Node.prototype
- * This is used as a global fix for React/MUI components that might access 
- * nodeName.toLowerCase directly
+ * Safely check if a node has a specific tag name
+ * @param {any} node - DOM node to check
+ * @param {string} tagName - Tag name to compare with (case insensitive)
+ * @returns {boolean} - True if node has the specified tag
  */
-export const applyGlobalNodeNamePatch = () => {
+export const isNodeOfType = (node, tagName) => {
+  if (!isValidDomNode(node) || !tagName) {
+    return false;
+  }
+  
+  const nodeName = safeNodeName(node);
+  return nodeName === tagName.toLowerCase();
+};
+
+/**
+ * Get safe DOM attributes as an object
+ * @param {any} node - DOM node
+ * @returns {Object|null} - Node attributes as object or null if invalid
+ */
+export const getSafeNodeAttributes = (node) => {
+  if (!isValidDomNode(node) || !node.attributes) {
+    return null;
+  }
+  
   try {
-    console.log("Applying global safe patches for toLowerCase error prevention");
-    
-    // Only apply the patch if it hasn't been applied yet
-    if (typeof Node !== 'undefined' && Node.prototype) {
-      // Create a safe version of toLowerCase for the nodeName
-      const originalNodeNameGetter = Object.getOwnPropertyDescriptor(Node.prototype, 'nodeName')?.get;
-      
-      if (originalNodeNameGetter) {
-        Object.defineProperty(Node.prototype, 'nodeName', {
-          get: function() {
-            const name = originalNodeNameGetter.call(this);
-            
-            // If name is not a string or doesn't have toLowerCase, patch it
-            if (name && typeof name !== 'string' && !name.toLowerCase) {
-              Object.defineProperty(name, 'toLowerCase', {
-                value: function() { return String(this).toLowerCase(); },
-                writable: true,
-                configurable: true
-              });
-            }
-            
-            return name;
-          },
-          configurable: true
-        });
-        
-        console.log("Patched Node.prototype.nodeName for safety");
+    const attrs = {};
+    for (let i = 0; i < node.attributes.length; i++) {
+      const attr = node.attributes[i];
+      if (attr && attr.name && typeof attr.value !== 'undefined') {
+        attrs[attr.name] = attr.value;
       }
     }
-  } catch (error) {
-    console.error('Failed to apply Node.prototype patch:', error);
+    return attrs;
+  } catch (err) {
+    console.error('Error getting node attributes:', err);
+    return null;
   }
+};
+
+export default {
+  isValidDomNode,
+  safeNodeName,
+  isNodeOfType,
+  getSafeNodeAttributes
 };
