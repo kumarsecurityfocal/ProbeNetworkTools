@@ -2,7 +2,6 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <script src="/patch-react-dom.js"></script>
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ProbeOps - Network Operations Platform</title>
@@ -14,45 +13,7 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/icon?family=Material+Icons"
     />
-    <!-- DOM error protection script - loaded before React -->
-    <script>
-      // Protect against "(e.nodeName || "").toLowerCase is not a function" error
-      (function() {
-        // Save original methods
-        if (String.prototype.toLowerCase) {
-          const originalToLowerCase = String.prototype.toLowerCase;
-          
-          // Override String.prototype.toLowerCase
-          String.prototype.toLowerCase = function() {
-            try {
-              if (typeof this !== 'string' && !(this instanceof String)) {
-                console.warn('toLowerCase called on non-string:', this);
-                return '';
-              }
-              return originalToLowerCase.call(this);
-            } catch (e) {
-              console.warn('Protected toLowerCase from error:', e);
-              return '';
-            }
-          };
-        }
-        
-        // Add global error handler for DOM node errors
-        window.addEventListener('error', function(event) {
-          if (event.error && 
-              (event.error.toString().includes('toLowerCase is not a function') ||
-               event.error.toString().includes('nodeName'))) {
-            console.warn('DOM property error intercepted and prevented');
-            event.preventDefault();
-            event.stopPropagation();
-            return true;
-          }
-        }, true);
-        
-        console.log('DOM protection script applied successfully');
-      })();
-    </script>
-    <script type="module" crossorigin src="/assets/index-pjjxB2gb.js"></script>
+    <script type="module" crossorigin src="/assets/index-Bp45MIV_.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-qBFA6vrd.css">
   </head>
   <body>

@@ -12,19 +12,52 @@
  * with nodeName.toLowerCase() and similar issues
  */
 export const applyReactDOMPatches = () => {
-  // HARDCORE PATCHING: Replace the problematic toLowerCase function 
-  // on the String prototype with a fully protected version
-  if (typeof String !== 'undefined' && String.prototype) {
+  // Apply Node prototype patches to prevent toLowerCase issues
+  if (typeof Node !== 'undefined' && Node.prototype) {
+    // Save the original Object.getOwnPropertyDescriptor for nodeName
+    const originalNodeNameDescriptor = Object.getOwnPropertyDescriptor(Node.prototype, 'nodeName');
+    
+    // Define a safer nodeName property that always returns a string
+    if (originalNodeNameDescriptor && originalNodeNameDescriptor.get) {
+      Object.defineProperty(Node.prototype, 'nodeName', {
+        get: function() {
+          try {
+            const value = originalNodeNameDescriptor.get.call(this);
+            return value === null || value === undefined ? '' : String(value);
+          } catch (e) {
+            console.warn('Safe nodeName accessor caught error', e);
+            return '';
+          }
+        },
+        configurable: true
+      });
+    }
+  }
+  
+  // Patch Element prototype methods
+  if (typeof Element !== 'undefined' && Element.prototype) {
+    // Save original methods
+    const originalGetAttribute = Element.prototype.getAttribute;
+    
+    // Patch getAttribute to ensure it returns strings
+    Element.prototype.getAttribute = function(attr) {
+      try {
+        const value = originalGetAttribute.call(this, attr);
+        return value === null ? null : String(value);
+      } catch (e) {
+        console.warn('Safe getAttribute patch caught error:', e);
+        return null;
+      }
+    };
+  }
+  
+  // Create safer versions of common operations on String
+  if (typeof String.prototype.toLowerCase !== 'undefined') {
     const originalToLowerCase = String.prototype.toLowerCase;
     
-    // Complete override of toLowerCase to handle ANY possible error
+    // Override String.prototype.toLowerCase to handle null and undefined
     String.prototype.toLowerCase = function() {
       try {
-        // First check if 'this' is actually a string
-        if (typeof this !== 'string' && !(this instanceof String)) {
-          console.warn('toLowerCase called on non-string:', this);
-          return '';
-        }
         return originalToLowerCase.call(this);
       } catch (e) {
         console.warn('Safe toLowerCase patch caught error:', e);
@@ -33,80 +66,19 @@ export const applyReactDOMPatches = () => {
     };
   }
   
-  // Patch Node.prototype to ensure nodeName is ALWAYS a string
-  if (typeof Node !== 'undefined' && Node.prototype) {
-    try {
-      // Replace the native getter completely
-      Object.defineProperty(Node.prototype, 'nodeName', {
-        get: function() {
-          try {
-            // Direct access to native DOM property via this.constructor 
-            const value = this._nodeName || this.constructor.prototype.nodeName;
-            return typeof value === 'string' ? value : '';
-          } catch (e) {
-            console.warn('Protected nodeName access failed:', e);
-            return '';  // Return empty string as safe fallback
-          }
-        },
-        configurable: true
-      });
-    } catch (e) {
-      console.warn('Could not patch Node.prototype.nodeName:', e);
-    }
-  }
-  
-  // Patch Element.prototype
-  if (typeof Element !== 'undefined' && Element.prototype) {
-    // Save original methods
-    const originalGetAttribute = Element.prototype.getAttribute;
-    
-    // Super-safe getAttribute patcher
-    Element.prototype.getAttribute = function(attr) {
-      try {
-        if (!this || typeof this.getAttribute !== 'function') {
-          return null;
-        }
-        const value = originalGetAttribute.call(this, attr);
-        return value === null || value === undefined ? null : String(value);
-      } catch (e) {
-        console.warn('Safe getAttribute patch caught error:', e);
-        return null;
-      }
-    };
-  }
-  
-  // Global handler for MUI-specific issues
+  // Add global error handler for DOM-related issues
   if (typeof window !== 'undefined') {
-    // Protect specific MUI operations
-    if (typeof window.muiSafeOperations === 'undefined') {
-      window.muiSafeOperations = {
-        // Safe toLowerCase specifically designed for MUI
-        safeToLowerCase: function(value) {
-          if (!value) return '';
-          if (typeof value === 'string') return value.toLowerCase();
-          if (typeof value === 'object' && value !== null) {
-            return String(value).toLowerCase();
-          }
-          return '';
-        }
-      };
-    }
-    
-    // Comprehensive error handler
     window.addEventListener('error', function(event) {
-      // Broader catch for DOM errors
-      if (event.error && (
-        event.error.toString().includes('toLowerCase is not a function') ||
-        event.error.toString().includes('Cannot read properties of null') ||
-        event.error.toString().includes('nodeName') ||
-        event.error.toString().includes('undefined is not an object')
-      )) {
+      // Check if it's a toLowerCase error on potentially null values
+      if (event.error && 
+          (event.error.toString().includes('toLowerCase is not a function') ||
+           event.error.toString().includes('Cannot read properties of null'))) {
         console.warn('DOM property error intercepted and prevented');
         event.preventDefault();
         event.stopPropagation();
         return true; // Prevent the error from propagating
       }
-    }, true); // Capture phase to catch before reaching components
+    });
   }
   
   console.log('React DOM patches applied successfully');
