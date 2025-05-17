@@ -301,29 +301,42 @@ with engine.connect() as connection:
             migration = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(migration)
             
-            # Setup Alembic operation context using SQLAlchemy connection
-            from alembic.operations import Operations
-            from alembic.migration import MigrationContext
+            # Use Alembic's command API to properly run the migrations
+            from alembic import command
+            from alembic.config import Config
+            import tempfile
             
-            context = MigrationContext.configure(connection)
-            op_obj = Operations(context)
+            # Create a temporary alembic.ini file
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.ini', delete=False) as tmp_config_file:
+                tmp_config_path = tmp_config_file.name
+                tmp_config_file.write(f"""
+[alembic]
+script_location = {PROJECT_ROOT}/backend/alembic
+prepend_sys_path = .
+
+[logging]
+level = INFO
+                """)
+                
+            # Configure Alembic
+            alembic_cfg = Config(tmp_config_path)
+            alembic_cfg.set_main_option("sqlalchemy.url", os.environ.get("DATABASE_URL"))
             
-            # Execute the migration's upgrade function with our op object
-            print("Running upgrade() function from migration to create tables")
-            old_op = op._proxy
-            op._proxy = op_obj
             try:
-                migration.upgrade()
+                # Use the upgrade command to properly initialize the DB with first revision
+                print("Using Alembic to properly create all tables")
+                command.upgrade(alembic_cfg, f"{base_migration}")
                 print("Table creation successful!")
-                transaction.commit()
+                
+                # We'll later stamp this revision, but we don't need to sys.exit() here
+                # as we want to continue with stamping to ensure alembic_version table is set
+                os.unlink(tmp_config_path)
                 sys.exit(0)
             except Exception as e:
-                print(f"Error running migration directly: {str(e)}")
+                print(f"Error running Alembic migration: {str(e)}")
                 # We'll try the alternative approach
-                transaction.rollback()
-                transaction = connection.begin()
-            finally:
-                op._proxy = old_op
+                os.unlink(tmp_config_path)
+                # Continue to SQL approach
         
         # Second approach: Directly execute CREATE TABLE statements with SQL
         print("Attempting to create tables using direct SQL statements...")
