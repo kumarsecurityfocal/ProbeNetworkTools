@@ -47,6 +47,8 @@ const ProbeNodeTokenGenerator = () => {
   const [advancedMode, setAdvancedMode] = useState(false);
   const [nodeUuid, setNodeUuid] = useState('');
   const [customApiKey, setCustomApiKey] = useState('');
+  const [heartbeatInterval, setHeartbeatInterval] = useState(15);
+  const [logLevel, setLogLevel] = useState('INFO');
 
   // Generate a random UUID for node
   const generateNodeUuid = () => {
@@ -127,7 +129,9 @@ const ProbeNodeTokenGenerator = () => {
         api_key: apiKey,
         name: nodeName,
         description: nodeDescription,
-        expiry_days: expireDays
+        expiry_days: expireDays,
+        heartbeat_interval: heartbeatInterval,
+        log_level: logLevel
       });
 
       // Set the generated token
@@ -299,7 +303,7 @@ const ProbeNodeTokenGenerator = () => {
                 </Select>
               </FormControl>
             </>
-          )
+          )}
 
           <FormControl fullWidth sx={{ mb: 3 }}>
             <InputLabel id="expiration-label">Token Expiration</InputLabel>
@@ -396,8 +400,8 @@ const ProbeNodeTokenGenerator = () => {
                 NODE_UUID: {nodeUuid}<br />
                 NODE_NAME: {nodeName}<br />
                 BACKEND_URL: {window.location.origin}<br />
-                HEARTBEAT_INTERVAL: 15 seconds<br />
-                LOG_LEVEL: INFO
+                HEARTBEAT_INTERVAL: {heartbeatInterval} seconds<br />
+                LOG_LEVEL: {logLevel}
               </Box>
             </Typography>
           </Box>
