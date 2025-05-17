@@ -1,0 +1,13 @@
+ubuntu@ip-172-16-0-80:~/ProbeNetworkTools$ export DATABASE_URL=postgresql+psycop                                                                                                             g2://postgres:Wscps4565*@probeops-db.cj7djvax3zud.us-east-1.rds.amazonaws.com:54                                                                                                             32/probeops
+ubuntu@ip-172-16-0-80:~/ProbeNetworkTools$ export JWT_SECRET=super-secret-key-ch                                                                                                             ange-in-production
+ubuntu@ip-172-16-0-80:~/ProbeNetworkTools$ python3 scripts/fix_jwt_auth.py --che                                                                                                             ck
+2025-05-17 11:17:26,550 - ERROR - ❌ Database connection failed: invalid dsn: mi                                                                                                             ssing "=" after "postgresql+psycopg2://postgres:Wscps4565*@probeops-db.cj7djvax3                                                                                                             zud.us-east-1.rds.amazonaws.com:5432/probeops" in connection info string
+
+ubuntu@ip-172-16-0-80:~/ProbeNetworkTools$ export DATABASE_URL=postgresql://post                                                                                                             gres:Wscps4565*@probeops-db.cj7djvax3zud.us-east-1.rds.amazonaws.com:5432/probeo                                                                                                             ps
+ubuntu@ip-172-16-0-80:~/ProbeNetworkTools$ python3 scripts/fix_jwt_auth.py --che                                                                                                             ck
+2025-05-17 11:18:10,619 - INFO - 📊 Database connection established successfully
+2025-05-17 11:18:10,620 - ERROR - ❌ Error checking admin user: relation "users"                                                                                                              does not exist
+LINE 1: SELECT id, email, password FROM users WHERE email = 'admin@p...
+                                        ^
+
+ubuntu@ip-172-16-0-80:~/ProbeNetworkTools$
