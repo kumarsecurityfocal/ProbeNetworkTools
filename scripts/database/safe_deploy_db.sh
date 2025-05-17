@@ -256,6 +256,11 @@ from sqlalchemy import text
 import os
 from alembic import op
 import re
+from pathlib import Path
+
+# Set project root
+PROJECT_ROOT = "$PROJECT_ROOT"
+print(f"Project root: {PROJECT_ROOT}")
 
 # Import the migration file
 base_migration = "$BASE_MIGRATION"
