@@ -342,7 +342,24 @@ const ProbeNodeTokenGenerator = () => {
               1. Install the probe node on your target server<br />
               2. Run the following command to configure the probe node:<br />
               <Box sx={{ bgcolor: 'background.default', p: 1, borderRadius: 1, mt: 1, fontFamily: 'monospace' }}>
-                python run_probe_node.py --token "YOUR_TOKEN_HERE"
+                python run_probe_node_token.py --token "{generatedToken}"
+              </Box>
+              <Typography variant="caption" sx={{ mt: 1 }}>
+                Node Configuration Parameters (included in token):
+              </Typography>
+              <Box sx={{ 
+                bgcolor: 'background.default', 
+                p: 1, 
+                borderRadius: 1, 
+                mt: 0.5, 
+                fontFamily: 'monospace',
+                fontSize: '0.75rem'
+              }}>
+                NODE_UUID: {nodeUuid}<br />
+                NODE_NAME: {nodeName}<br />
+                BACKEND_URL: {window.location.origin}<br />
+                HEARTBEAT_INTERVAL: 15 seconds<br />
+                LOG_LEVEL: INFO
               </Box>
             </Typography>
           </Box>
