@@ -45,8 +45,8 @@ export PROBEOPS_TOKEN="your-jwt-token-from-step-1"
 python run_probe_node_token.py --token "$PROBEOPS_TOKEN"
 
 # Option 2: Using the Deployment Script
-chmod +x deploy-probe.sh
-./deploy-probe.sh --token "your-jwt-token-from-step-1"
+chmod +x ./scripts/deploy-probe.sh
+./scripts/deploy-probe.sh --token "your-jwt-token-from-step-1"
 ```
 
 The deployment script will:
@@ -75,8 +75,8 @@ export PROBEOPS_LOG_LEVEL="INFO"         # Log verbosity (DEBUG, INFO, WARNING, 
 ### 2. Run the Deployment Script
 
 ```bash
-chmod +x deploy-probe.sh
-./deploy-probe.sh
+chmod +x ./scripts/deploy-probe.sh
+./scripts/deploy-probe.sh
 ```
 
 ## Containerized Deployment
@@ -92,7 +92,7 @@ cd ProbeNetworkTools
 echo "PROBEOPS_TOKEN=your-jwt-token-from-step-1" > .env.probe
 
 # Start the container
-docker compose -f docker-compose.probe.yml up -d
+docker compose -f scripts/docker-compose.probe.yml up -d
 ```
 
 ## Verifying Deployment
@@ -101,7 +101,7 @@ After deployment, you can:
 
 - Check service status (for systemd): `systemctl status probeops-node`
 - View logs: `journalctl -u probeops-node -f`
-- If using Docker: `docker compose -f docker-compose.probe.yml logs -f`
+- If using Docker: `docker compose -f scripts/docker-compose.probe.yml logs -f`
 - Monitor the probe in your ProbeOps admin panel under "Probe Management" → "Probe Nodes"
 
 ## Managing Tokens
