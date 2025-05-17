@@ -12,10 +12,11 @@ This script verifies that the database schema is ready for deployment:
 Run before deployment to avoid database-related failures.
 
 Usage:
-    python pre_deploy_validate.py [--fix]
+    python pre_deploy_validate.py [--fix] [--env ENV_FILE]
 
 Options:
     --fix    Attempt to fix issues when possible
+    --env    Specify a .env file to load (default: .env.db)
 """
 
 import os
@@ -43,9 +44,9 @@ logger = logging.getLogger('pre_deploy_validate')
 class DeploymentValidator:
     """Validates database readiness before deployment."""
     
-    def __init__(self):
+    def __init__(self, env_file='.env.db'):
         """Initialize the deployment validator."""
-        self.migration_manager = MigrationManager()
+        self.migration_manager = MigrationManager(env_file=env_file)
         self.issues = []
         self.validation_passed = True
         
@@ -234,12 +235,17 @@ def parse_args():
         action="store_true",
         help="Attempt to fix issues when possible"
     )
+    parser.add_argument(
+        "--env",
+        default=".env.db",
+        help="Specify a .env file to load (default: .env.db)"
+    )
     return parser.parse_args()
 
 def main():
     """Main entry point."""
     args = parse_args()
-    validator = DeploymentValidator()
+    validator = DeploymentValidator(env_file=args.env)
     validator.run_full_validation(fix_issues=args.fix)
 
 if __name__ == "__main__":

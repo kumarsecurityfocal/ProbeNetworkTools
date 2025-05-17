@@ -8,12 +8,13 @@ This script ensures migrations are applied in the correct order and tracks
 which migrations have been applied.
 
 Usage:
-    python migration_manager.py [--check] [--apply] [--reset]
+    python migration_manager.py [--check] [--apply] [--reset] [--env ENV_FILE]
 
 Options:
     --check     Check if all required migrations exist and can be applied
     --apply     Apply all pending migrations
     --reset     Reset the database and apply all migrations from scratch (USE WITH CAUTION)
+    --env       Specify a .env file to load (default: .env.db)
 """
 
 import os
@@ -25,6 +26,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple
+from dotenv import load_dotenv
 
 # Try to import alembic components, install if missing
 try:
@@ -61,12 +63,24 @@ VERSIONS_DIR = PROJECT_ROOT / "backend" / "alembic" / "versions"
 class MigrationManager:
     """Manages database migrations for ProbeOps."""
     
-    def __init__(self):
+    def __init__(self, env_file='.env.db'):
         """Initialize the migration manager."""
+        # Load environment variables from the specified file
+        self._load_env_file(env_file)
+        
         self._validate_paths()
         self.alembic_cfg = Config(str(ALEMBIC_INI))
         self.script_directory = ScriptDirectory.from_config(self.alembic_cfg)
         self.engine = self._get_database_engine()
+        
+    def _load_env_file(self, env_file):
+        """Load environment variables from the specified file."""
+        env_path = PROJECT_ROOT / env_file
+        if env_path.exists():
+            logger.info(f"Loading environment from {env_path}")
+            load_dotenv(dotenv_path=env_path)
+        else:
+            logger.warning(f"Environment file {env_path} not found, using current environment variables")
         
     def _validate_paths(self):
         """Validate that all required paths exist."""
@@ -260,12 +274,17 @@ def parse_args():
         action="store_true",
         help="Ensure a base migration exists"
     )
+    parser.add_argument(
+        "--env",
+        default=".env.db",
+        help="Specify a .env file to load (default: .env.db)"
+    )
     return parser.parse_args()
 
 def main():
     """Main entry point."""
     args = parse_args()
-    manager = MigrationManager()
+    manager = MigrationManager(env_file=args.env)
     
     if args.check:
         success, issues = manager.check_migrations()

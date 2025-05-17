@@ -9,6 +9,7 @@ set -e
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+ENV_FILE=".env.db"
 BACKUP_DIR="$PROJECT_ROOT/database_backups"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_FILE="$BACKUP_DIR/probeops_backup_$TIMESTAMP.sql"
@@ -18,6 +19,32 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --env=*)
+      ENV_FILE="${1#*=}"
+      shift
+      ;;
+    --env)
+      ENV_FILE="$2"
+      shift 2
+      ;;
+    *)
+      echo "Unknown option: $1"
+      exit 1
+      ;;
+  esac
+done
+
+# Load environment variables from .env.db file if it exists
+if [ -f "$PROJECT_ROOT/$ENV_FILE" ]; then
+    echo "Loading environment from $PROJECT_ROOT/$ENV_FILE"
+    export $(grep -v '^#' "$PROJECT_ROOT/$ENV_FILE" | xargs)
+else
+    echo "Environment file $ENV_FILE not found, using current environment variables"
+fi
 
 # Create backup directory if it doesn't exist
 mkdir -p "$BACKUP_DIR"
@@ -29,7 +56,7 @@ echo "Starting database deployment process..."
 # Check if DATABASE_URL is set
 if [ -z "$DATABASE_URL" ]; then
     echo -e "${RED}ERROR: DATABASE_URL environment variable is not set${NC}"
-    echo "Please set the DATABASE_URL environment variable and try again."
+    echo "Please create a $ENV_FILE file with DATABASE_URL or set it in your environment."
     exit 1
 fi
 
