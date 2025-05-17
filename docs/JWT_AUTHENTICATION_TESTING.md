@@ -4,6 +4,49 @@ This document provides command-line tools and scripts to test, debug, and fix JW
 
 ## Testing JWT Authentication from Command Line
 
+### Login API Examples
+
+#### Direct Login to Backend API Using cURL
+
+```bash
+# Linux/macOS
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin", "password":"probeopS1@"}' \
+  http://localhost:8000/login
+
+# Windows Command Prompt
+curl -X POST -H "Content-Type: application/json" -d "{\"username\":\"admin\",\"password\":\"probeopS1@\"}" http://localhost:8000/login
+```
+
+Expected Response:
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer"
+}
+```
+
+If authentication fails, you might get:
+```json
+{
+  "detail": "Incorrect username or password"
+}
+```
+
+#### Using Backend Login Route to Test Authentication
+
+```bash
+# Linux/macOS
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@probeops.com", "password":"probeopS1@"}' \
+  http://localhost:8000/auth/login
+
+# Windows Command Prompt
+curl -X POST -H "Content-Type: application/json" -d "{\"email\":\"admin@probeops.com\",\"password\":\"probeopS1@\"}" http://localhost:8000/auth/login
+```
+
 ### Linux/macOS Commands
 
 #### 1. Check if admin user exists
