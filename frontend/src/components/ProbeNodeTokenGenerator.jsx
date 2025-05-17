@@ -188,6 +188,23 @@ const ProbeNodeTokenGenerator = () => {
         </Typography>
 
         <Box component="form" noValidate sx={{ mt: 1 }}>
+          <Box sx={{ 
+            p: 2, 
+            bgcolor: 'background.default', 
+            borderRadius: 1,
+            mb: 2
+          }}>
+            <Typography variant="subtitle2" color="primary" gutterBottom>
+              Connection Configuration
+            </Typography>
+            <Typography variant="body2">
+              <strong>Backend URL:</strong> {window.location.origin}
+            </Typography>
+            <Typography variant="body2">
+              <strong>Node UUID:</strong> {nodeUuid}
+            </Typography>
+          </Box>
+
           <FormControlLabel
             control={
               <Switch
@@ -197,7 +214,7 @@ const ProbeNodeTokenGenerator = () => {
                 color="primary"
               />
             }
-            label="Advanced Mode"
+            label="Advanced Configuration Mode"
             sx={{ mb: 2 }}
           />
 
@@ -246,22 +263,43 @@ const ProbeNodeTokenGenerator = () => {
                 helperText="A unique identifier for this probe node"
                 sx={{ mb: 2 }}
               />
-
-              <TextField
-                margin="normal"
-                fullWidth
-                id="customApiKey"
-                label="Custom API Key (Optional)"
-                name="customApiKey"
-                autoComplete="off"
-                value={customApiKey}
-                onChange={(e) => setCustomApiKey(e.target.value)}
-                disabled={loading}
-                helperText="If left empty, a new API key will be automatically generated"
-                sx={{ mb: 2 }}
-              />
+              
+              <FormControl fullWidth margin="normal" sx={{ mb: 2 }}>
+                <InputLabel id="heartbeat-interval-label">Heartbeat Interval</InputLabel>
+                <Select
+                  labelId="heartbeat-interval-label"
+                  id="heartbeatInterval"
+                  value={heartbeatInterval || 15}
+                  label="Heartbeat Interval"
+                  onChange={(e) => setHeartbeatInterval(e.target.value)}
+                  disabled={loading}
+                >
+                  <MenuItem value={5}>5 Seconds</MenuItem>
+                  <MenuItem value={15}>15 Seconds</MenuItem>
+                  <MenuItem value={30}>30 Seconds</MenuItem>
+                  <MenuItem value={60}>1 Minute</MenuItem>
+                  <MenuItem value={300}>5 Minutes</MenuItem>
+                </Select>
+              </FormControl>
+              
+              <FormControl fullWidth margin="normal" sx={{ mb: 2 }}>
+                <InputLabel id="log-level-label">Log Level</InputLabel>
+                <Select
+                  labelId="log-level-label"
+                  id="logLevel"
+                  value={logLevel || "INFO"}
+                  label="Log Level"
+                  onChange={(e) => setLogLevel(e.target.value)}
+                  disabled={loading}
+                >
+                  <MenuItem value="DEBUG">DEBUG - Verbose logging</MenuItem>
+                  <MenuItem value="INFO">INFO - Standard logging</MenuItem>
+                  <MenuItem value="WARNING">WARNING - Only warnings and errors</MenuItem>
+                  <MenuItem value="ERROR">ERROR - Only errors</MenuItem>
+                </Select>
+              </FormControl>
             </>
-          )}
+          )
 
           <FormControl fullWidth sx={{ mb: 3 }}>
             <InputLabel id="expiration-label">Token Expiration</InputLabel>
