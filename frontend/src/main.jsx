@@ -1,3 +1,6 @@
+// Import our patch to fix toLowerCase errors before React loads
+import './App.patch.js';
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';

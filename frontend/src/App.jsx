@@ -215,7 +215,8 @@ function App() {
         
         {isAppRoute && <Footer />}
       </div>
-    </ThemeProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 
