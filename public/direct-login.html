@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ProbeOps - Login</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: #f5f5f5;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .login-container {
+      display: flex;
+      width: 100%;
+      max-width: 1000px;
+      height: 500px;
+      background-color: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .form-section {
+      flex: 1;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .hero-section {
+      flex: 1;
+      background-color: #2196f3;
+      color: white;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      margin-bottom: 40px;
+    }
+    
+    .logo-icon {
+      display: flex;
+      margin-right: 10px;
+    }
+    
+    .logo-icon span {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin: 0 2px;
+    }
+    
+    .red { background-color: #f44336; }
+    .yellow { background-color: #ffc107; }
+    .green { background-color: #4caf50; }
+    .blue { background-color: #2196f3; }
+    
+    .logo-text {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    
+    h1 {
+      font-size: 28px;
+      margin-bottom: 30px;
+      color: #333;
+    }
+    
+    h2 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    
+    p {
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #555;
+    }
+    
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    
+    input:focus {
+      outline: none;
+      border-color: #2196f3;
+    }
+    
+    button {
+      background-color: #2196f3;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+      font-weight: 500;
+    }
+    
+    button:hover {
+      background-color: #1976d2;
+    }
+    
+    .error-message {
+      color: #f44336;
+      margin-top: 20px;
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="form-section">
+      <div class="logo">
+        <div class="logo-icon">
+          <span class="red"></span>
+          <span class="yellow"></span>
+          <span class="green"></span>
+          <span class="blue"></span>
+        </div>
+        <div class="logo-text">ProbeOps</div>
+      </div>
+      
+      <h1>Welcome back</h1>
+      
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" placeholder="Enter your username">
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Enter your password">
+      </div>
+      
+      <button id="login-button">Sign In</button>
+      
+      <div id="error-message" class="error-message"></div>
+    </div>
+    
+    <div class="hero-section">
+      <h2>Network Diagnostics Platform</h2>
+      <p>Access your advanced network probes and diagnostic tools. Monitor infrastructure health, analyze connectivity, and ensure optimal performance.</p>
+      <p>Quickly diagnose and troubleshoot network issues with our comprehensive suite of tools.</p>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const loginButton = document.getElementById('login-button');
+      const errorMessage = document.getElementById('error-message');
+      const usernameInput = document.getElementById('username');
+      const passwordInput = document.getElementById('password');
+      
+      loginButton.addEventListener('click', async function() {
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value.trim();
+        
+        if (!username || !password) {
+          errorMessage.textContent = 'Please enter both username and password';
+          return;
+        }
+        
+        errorMessage.textContent = '';
+        loginButton.innerHTML = '<span class="loading"></span> Signing in...';
+        loginButton.disabled = true;
+        
+        try {
+          const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok) {
+            // Store auth token in localStorage
+            localStorage.setItem('token', data.token);
+            // Redirect to dashboard
+            window.location.href = '/admin';
+          } else {
+            errorMessage.textContent = data.message || 'Invalid username or password';
+            loginButton.innerHTML = 'Sign In';
+            loginButton.disabled = false;
+          }
+        } catch (error) {
+          console.error('Login error:', error);
+          errorMessage.textContent = 'An error occurred during login';
+          loginButton.innerHTML = 'Sign In';
+          loginButton.disabled = false;
+        }
+      });
+      
+      // Enable enter key to submit form
+      passwordInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          loginButton.click();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
