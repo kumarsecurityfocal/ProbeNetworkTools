@@ -80,111 +80,45 @@ export const loginUser = async (username, password) => {
     formData.append('username', username);
     formData.append('password', password);
     
-    // DEBUG: Adding additional logging to track authentication issues
-    console.log("DEBUG AUTH: Starting authentication process");
+    console.log("Starting authentication process");
     
-    // For direct login for admin with hardcoded credentials
-    if (username === 'admin@probeops.com' && password === 'probeopS1@') {
-      console.log("DEBUG AUTH: Using admin direct authentication");
-      
-      // Create a user object and store it directly - bypass JWT verification
-      const adminUser = {
-        id: 1,
-        username: 'admin',
-        email: 'admin@probeops.com',
-        is_admin: true,
-        is_active: true,
-        email_verified: true,
-        created_at: '2023-05-01T00:00:00.000Z'
-      };
-      
-      // Save user to localStorage directly
-      localStorage.setItem('probeops_user', JSON.stringify(adminUser));
-      localStorage.setItem('isAuthenticated', 'true');
-      
-      // Return the necessary response for the auth flow
-      return {
-        access_token: 'admin-direct-access',
-        token_type: 'bearer',
-        user: adminUser
-      };
-    }
+    // Always use consistent endpoint for login
+    // This prevents the 404 errors on fallback endpoints
+    const endpoint = '/login';
+    console.log(`Authenticating with endpoint: ${endpoint}`);
     
-    // Try multiple endpoints to find one that works
-    const endpoints = [
-      '/api/login',
-      '/login',
-      '/api/auth/login',
-      '/login/json'
-    ];
-    
-    let lastError = null;
-    
-    // Try each endpoint in sequence
-    for (const endpoint of endpoints) {
-      try {
-        console.log(`DEBUG AUTH: Trying to authenticate with endpoint: ${endpoint}`);
-        
-        const response = await api.post(endpoint, 
-          formData.toString(),
-          {
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded'
-            }
+    try {
+      const response = await api.post(endpoint, 
+        formData.toString(),
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
           }
-        );
-        
-        console.log(`DEBUG AUTH: Login successful with endpoint ${endpoint}`);
-        console.log("DEBUG AUTH: Response data:", response.data);
-        
-        return response.data;
-      } catch (error) {
-        lastError = error;
-        console.log(`DEBUG AUTH: Endpoint ${endpoint} failed:`, error.message);
-        if (error.response) {
-          console.log(`DEBUG AUTH: Status: ${error.response.status}, Data:`, error.response.data);
         }
-        // Continue to the next endpoint
+      );
+      
+      console.log(`Login successful with endpoint ${endpoint}`);
+      console.log("Response data:", response.data);
+      
+      // Ensure the token is properly stored in localStorage
+      if (response.data && response.data.access_token) {
+        localStorage.setItem('probeops_token', response.data.access_token);
+        console.log("Access token stored in localStorage:", 
+          response.data.access_token.substring(0, 10) + '...');
+      } else {
+        console.error("No access token in response");
       }
+      
+      return response.data;
+    } catch (error) {
+      console.error(`Authentication failed:`, error.message);
+      if (error.response) {
+        console.error(`Status: ${error.response.status}, Data:`, error.response.data);
+      }
+      throw error;
     }
-    
-    // If we've tried all endpoints and none worked, create a direct storage approach for admin
-    if (username === 'admin@probeops.com' && password === 'probeopS1@') {
-      console.log("DEBUG AUTH: All endpoints failed, using admin fallback");
-      
-      // Create a user object and store it directly - bypass JWT verification
-      const adminUser = {
-        id: 1,
-        username: 'admin',
-        email: 'admin@probeops.com',
-        is_admin: true,
-        is_active: true,
-        email_verified: true,
-        created_at: '2023-05-01T00:00:00.000Z'
-      };
-      
-      // Save user to localStorage directly
-      localStorage.setItem('probeops_user', JSON.stringify(adminUser));
-      localStorage.setItem('isAuthenticated', 'true');
-      
-      // Route user directly to dashboard
-      setTimeout(() => {
-        window.location.href = '/dashboard';
-      }, 100);
-      
-      return {
-        access_token: 'admin-direct-access-fallback',
-        token_type: 'bearer',
-        user: adminUser
-      };
-    }
-    
-    // Otherwise, throw the last error
-    console.error("DEBUG AUTH: All authentication endpoints failed");
-    throw lastError;
   } catch (error) {
     console.log("Login error:", error);
-    console.log("Auth error:", error);
     return handleApiError(error);
   }
 };
@@ -205,10 +139,18 @@ export const registerUser = async (username, email, password) => {
 export const getUserProfile = async () => {
   try {
     console.log("Fetching user profile...");
-    // Use /users/me without the /api prefix to match the backend route
-    const response = await api.get('/users/me');
-    console.log("User profile response:", response.data);
-    return response.data;
+    // First try the standard endpoint
+    try {
+      const response = await api.get('/users/me');
+      console.log("User profile response:", response.data);
+      return response.data;
+    } catch (firstError) {
+      console.log("First user profile attempt failed, trying alternative endpoint");
+      // Try alternative endpoint
+      const altResponse = await api.get('/user');
+      console.log("Alternative user profile response:", altResponse.data);
+      return altResponse.data;
+    }
   } catch (error) {
     console.log("Error fetching user profile:", error);
     return handleApiError(error);

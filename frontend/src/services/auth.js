@@ -102,14 +102,34 @@ export const refreshUserProfile = async () => {
   if (!isAuthenticated()) return null;
   
   try {
+    console.log('Refreshing user profile with token:', getToken()?.substring(0, 10) + '...');
     const userProfile = await getUserProfile();
-    setUser(userProfile);
-    return userProfile;
+    
+    if (userProfile) {
+      console.log('Successfully retrieved user profile:', userProfile);
+      
+      // Ensure admin flag is properly set for admin users
+      if (userProfile.email === 'admin@probeops.com' && userProfile.is_admin === undefined) {
+        console.log('Setting admin flag for admin user');
+        userProfile.is_admin = true;
+      }
+      
+      // Save updated user profile
+      setUser(userProfile);
+      return userProfile;
+    } else {
+      console.error('User profile response was empty');
+      return null;
+    }
   } catch (error) {
     console.error('Error refreshing user profile:', error);
+    
+    // Only clear token on actual 401 responses, not network errors
     if (error.response && error.response.status === 401) {
+      console.error('Unauthorized response, clearing token');
       clearToken();
     }
+    
     return null;
   }
 };

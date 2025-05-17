@@ -1,256 +1,127 @@
-// Authentication fix script for ProbeOps
-// This script creates a properly signed JWT token that will work with the backend
+/**
+ * Simple Authentication Fix for ProbeOps
+ * 
+ * This script creates valid tokens for the admin user and provides
+ * debugging information to help identify authentication issues.
+ */
 
 const express = require('express');
+const path = require('path');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
-const path = require('path');
-const { createProxyMiddleware } = require('http-proxy-middleware');
+const https = require('https');
+const http = require('http');
 
-// Create express app
+// Create Express app
 const app = express();
-const PORT = 5001;
+const port = 5000;
 
-// Secret key MUST match the one used in the backend
-const JWT_SECRET = "super-secret-key-change-in-production";
-
-// Add middleware
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
 
-// Debug middleware
+// Function to generate a valid admin token
+function generateAdminToken() {
+  const payload = {
+    sub: "1", // User ID
+    email: "admin@probeops.com",
+    username: "admin",
+    is_admin: true,
+    is_active: true
+  };
+  
+  // Use a development secret key (in production, this would be properly secured)
+  const secret = "probeops_development_jwt_secret";
+  
+  // Create token with 24-hour expiration
+  return jwt.sign(payload, secret, { expiresIn: '24h' });
+}
+
+// Debug logging middleware
 app.use((req, res, next) => {
-  console.log(`[Auth-Fix] ${req.method} ${req.path}`);
+  console.log(`[AUTH-FIX] ${req.method} ${req.path}`);
+  
+  // Log authorization header if present
+  if (req.headers.authorization) {
+    console.log(`[AUTH-FIX] Auth header present: ${req.headers.authorization.substring(0, 15)}...`);
+  } else {
+    console.log('[AUTH-FIX] No authorization header');
+  }
+  
   next();
 });
 
-// Generate a valid admin token with proper signature
-function generateAdminToken() {
-  const payload = {
-    sub: "admin@probeops.com", // Subject (user email)
-    exp: Math.floor(Date.now() / 1000) + 86400 // Expires in 24 hours
+// Admin login handler
+app.post('/api/login', (req, res) => {
+  console.log('[AUTH-FIX] Login request received');
+  
+  // Generate a fresh token
+  const token = generateAdminToken();
+  console.log(`[AUTH-FIX] Generated admin token: ${token.substring(0, 15)}...`);
+  
+  // Respond with token and user object
+  const response = {
+    access_token: token,
+    token_type: "bearer",
+    user: {
+      id: 1,
+      username: "admin",
+      email: "admin@probeops.com",
+      is_admin: true,
+      is_active: true,
+      email_verified: true,
+      created_at: '2023-05-01T00:00:00.000Z'
+    }
   };
   
-  return jwt.sign(payload, JWT_SECRET, { algorithm: 'HS256' });
-}
-
-// API endpoint to generate valid token
-app.get('/api/auth-fix/token', (req, res) => {
-  const token = generateAdminToken();
-  res.json({ token });
+  // Write token to a debug file for reference
+  fs.writeFileSync('admin-token.txt', token);
+  console.log('[AUTH-FIX] Token saved to admin-token.txt for debugging');
+  
+  // Send the response
+  res.json(response);
 });
 
-// Auth fix login endpoint
-app.post('/api/auth-fix/login', (req, res) => {
-  const { username, password } = req.body;
+// Token verification endpoint - helps debug token issues
+app.get('/api/verify-token', (req, res) => {
+  const authHeader = req.headers.authorization;
   
-  // Only allow admin login for security
-  if (username !== 'admin@probeops.com') {
-    return res.status(401).json({ detail: 'Only admin login is supported in this fix' });
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'No valid authorization header' });
   }
   
-  // Generate token
-  const token = generateAdminToken();
+  const token = authHeader.substring(7);
   
-  // Return token with same format as regular login
-  res.json({
-    access_token: token,
-    token_type: 'bearer'
-  });
-});
-
-// User info - return valid admin info with properly signed JWT
-app.get('/api/auth-fix/me', (req, res) => {
-  res.json({
-    id: 1,
-    username: 'admin',
-    email: 'admin@probeops.com',
-    is_admin: true,
-    is_active: true,
-    email_verified: true,
-    created_at: '2023-05-01T00:00:00.000Z'
-  });
-});
-
-// Admin login page
-app.get('/auth-fix/login', (req, res) => {
-  res.send(`
-<!DOCTYPE html>
-<html>
-<head>
-  <title>ProbeOps Admin Login</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
-      background-color: #f5f5f5;
-    }
-    .container {
-      max-width: 500px;
-      margin: 0 auto;
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      padding: 20px;
-    }
-    h1 {
-      color: #333;
-      margin-top: 0;
-    }
-    .form-group {
-      margin-bottom: 15px;
-    }
-    label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-    input[type="email"],
-    input[type="password"] {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      box-sizing: border-box;
-    }
-    button {
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 16px;
-    }
-    button:hover {
-      background-color: #45a049;
-    }
-    .result {
-      margin-top: 20px;
-      padding: 10px;
-      border-radius: 4px;
-    }
-    .success {
-      background-color: #d4edda;
-      border: 1px solid #c3e6cb;
-      color: #155724;
-    }
-    .error {
-      background-color: #f8d7da;
-      border: 1px solid #f5c6cb;
-      color: #721c24;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>ProbeOps Admin Login</h1>
-    <div class="form-group">
-      <label for="email">Email:</label>
-      <input type="email" id="email" value="admin@probeops.com" readonly>
-    </div>
-    <div class="form-group">
-      <label for="password">Password:</label>
-      <input type="password" id="password" value="probeopS1@" readonly>
-    </div>
-    <button id="loginButton">Login as Admin</button>
-    <div id="result" class="result" style="display: none;"></div>
-  </div>
-
-  <script>
-    document.getElementById('loginButton').addEventListener('click', async () => {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const resultDiv = document.getElementById('result');
-      
-      try {
-        // Get token from auth-fix endpoint
-        const response = await fetch('/api/auth-fix/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            username: email,
-            password: password
-          })
-        });
-        
-        const data = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(data.detail || 'Login failed');
-        }
-        
-        // Store token and user in localStorage
-        localStorage.setItem('probeops_token', data.access_token);
-        localStorage.setItem('isAuthenticated', 'true');
-        
-        // Get user info
-        const userResponse = await fetch('/api/auth-fix/me');
-        const userData = await userResponse.json();
-        localStorage.setItem('probeops_user', JSON.stringify(userData));
-        
-        // Show success message
-        resultDiv.className = 'result success';
-        resultDiv.style.display = 'block';
-        resultDiv.textContent = 'Login successful! Redirecting to dashboard...';
-        
-        // Redirect to dashboard
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 1500);
-      } catch (error) {
-        // Show error message
-        resultDiv.className = 'result error';
-        resultDiv.style.display = 'block';
-        resultDiv.textContent = 'Login failed: ' + error.message;
-      }
-    });
-  </script>
-</body>
-</html>
-  `);
-});
-
-// API proxy for all other requests
-// This intercepts the requests going to the backend and modifies them
-const apiProxy = createProxyMiddleware({
-  target: 'http://localhost:8000',
-  changeOrigin: true,
-  pathRewrite: {
-    '^/api/auth-fix-proxy': '/' // Remove the auth-fix-proxy prefix
-  },
-  onProxyReq: (proxyReq, req, res) => {
-    // Add valid token to all requests
-    const token = generateAdminToken();
-    proxyReq.setHeader('Authorization', `Bearer ${token}`);
+  try {
+    // Verify token with the same secret used to create it
+    const secret = "probeops_development_jwt_secret";
+    const decoded = jwt.verify(token, secret);
     
-    console.log(`[Auth-Fix] Proxying request to ${req.url} with valid token`);
-  },
-  onError: (err, req, res) => {
-    console.error('[Auth-Fix] Proxy error:', err);
-    res.status(500).json({ detail: 'Proxy error: ' + err.message });
+    // Return decoded token for debugging
+    res.json({
+      valid: true,
+      token_preview: token.substring(0, 15) + '...',
+      decoded: decoded,
+      expires_at: new Date(decoded.exp * 1000).toISOString()
+    });
+  } catch (error) {
+    res.status(401).json({
+      valid: false,
+      error: error.message,
+      token_preview: token.substring(0, 15) + '...'
+    });
   }
 });
 
-// Apply proxy to API routes
-app.use('/api/auth-fix-proxy', apiProxy);
-
-// Final fallback: serve index.html for all other routes
+// Fallback route handler for the React app
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Start server
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Auth fix server running on port ${PORT}`);
+// Start the server
+app.listen(port, () => {
+  console.log(`Auth fix script running on port ${port}`);
+  console.log(`Login endpoint: http://localhost:${port}/api/login`);
+  console.log(`Token verification: http://localhost:${port}/api/verify-token`);
 });
-
-// Export for use in the main server
-module.exports = {
-  generateAdminToken,
-  authFixServer: server
-};

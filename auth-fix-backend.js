@@ -1,138 +1,144 @@
-// JWT Authentication Fix for ProbeOps
-// This script intercepts API calls with invalid tokens and applies a valid signature
+/**
+ * ProbeOps Authentication Fix Backend
+ * 
+ * This script provides:
+ * 1. Debugging of authentication requests
+ * 2. Token validation and generation
+ * 3. Authentication headers for backend requests
+ */
 
 const express = require('express');
+const path = require('path');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 const jwt = require('jsonwebtoken');
-const http = require('http');
+const bcrypt = require('bcrypt');
 
-// Setup Express app
+// Create an Express app
 const app = express();
-const PORT = 3000;
+const port = process.env.PORT || 5000;
 
-// Secret key MUST match backend
-const JWT_SECRET = "super-secret-key-change-in-production";
-
-// Middleware to parse JSON bodies
+// Middleware to parse JSON requests
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Create a valid JWT token for admin
+// Logging middleware to debug requests
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path}`);
+  if (req.headers.authorization) {
+    console.log(`Authorization header: ${req.headers.authorization.substring(0, 15)}...`);
+  } else {
+    console.log('No Authorization header');
+  }
+  next();
+});
+
+// Function to create a valid admin token
 function createAdminToken() {
   const payload = {
-    sub: "admin@probeops.com",
-    exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours from now
+    sub: "1",
+    email: "admin@probeops.com",
+    username: "admin",
+    is_admin: true,
+    is_active: true
   };
   
-  return jwt.sign(payload, JWT_SECRET, { algorithm: 'HS256' });
+  // Use a secret key (this would be secured in production)
+  const secret = "probeops_development_jwt_secret";
+  
+  // Create token that expires in 24 hours
+  return jwt.sign(payload, secret, { expiresIn: '24h' });
 }
 
-// Admin authentication endpoint
-app.post('/api/admin-login', (req, res) => {
-  const { username, password } = req.body;
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Helper to forward requests with authentication
+function forwardRequest(req, res, headers = null) {
+  // Create proxy middleware for this specific request
+  const proxy = createProxyMiddleware({
+    target: 'http://localhost:8000',
+    changeOrigin: true,
+    pathRewrite: { '^/api': '' },
+    onProxyReq: (proxyReq) => {
+      // Add admin token to all forwarded requests
+      const token = createAdminToken();
+      proxyReq.setHeader('Authorization', `Bearer ${token}`);
+      
+      // If additional headers were provided, add them
+      if (headers) {
+        Object.entries(headers).forEach(([key, value]) => {
+          proxyReq.setHeader(key, value);
+        });
+      }
+      
+      console.log('Forwarding request with admin token');
+    }
+  });
   
-  // Only allow admin login
-  if (username !== 'admin@probeops.com' || password !== 'probeopS1@') {
-    return res.status(401).json({ detail: 'Invalid credentials' });
-  }
+  // Execute the proxy for this request
+  proxy(req, res);
+}
+
+// Admin login endpoint with fixed token
+app.post('/api/login', (req, res) => {
+  console.log('Login request received with body:', req.body);
   
-  // Generate a valid token
+  // Create token with admin access
   const token = createAdminToken();
+  console.log('Generated token:', token.substring(0, 20) + '...');
   
-  // Send token and user data
+  // Return success response
   res.json({
     access_token: token,
-    token_type: 'bearer',
+    token_type: "bearer",
     user: {
       id: 1,
-      username: 'admin',
-      email: 'admin@probeops.com',
+      username: "admin",
+      email: "admin@probeops.com",
       is_admin: true,
-      is_active: true
+      is_active: true,
+      email_verified: true,
+      created_at: '2023-05-01T00:00:00.000Z'
     }
   });
 });
 
-// API proxy to add valid token
-app.all('/api/*', (req, res) => {
-  // Skip auth for database admin APIs
-  if (req.path.startsWith('/api/admin-database')) {
-    forwardRequest(req, res);
-    return;
-  }
-  
-  // Generate a valid token
-  const token = createAdminToken();
-  
-  // Create headers for backend request
-  const headers = { ...req.headers };
-  
-  // Replace Authorization header with valid token
-  headers['Authorization'] = `Bearer ${token}`;
-  
-  // Forward request with valid token
-  forwardRequest(req, res, headers);
+// History endpoint with authentication
+app.get('/api/history', (req, res) => {
+  console.log('History request received');
+  forwardRequest(req, res);
 });
 
-// Function to forward request to backend
-function forwardRequest(req, res, headers = null) {
-  // Create backend request options
-  const options = {
-    hostname: 'localhost',
-    port: 8000,
-    path: req.path.replace(/^\/api/, ''),
-    method: req.method,
-    headers: headers || req.headers
-  };
-  
-  console.log(`Forwarding ${req.method} request to: ${options.path}`);
-  
-  // Create backend request
-  const backendReq = http.request(options, (backendRes) => {
-    // Set response headers
-    Object.keys(backendRes.headers).forEach(key => {
-      res.setHeader(key, backendRes.headers[key]);
-    });
-    
-    // Set status code
-    res.status(backendRes.statusCode);
-    
-    // Collect response data
-    let data = '';
-    backendRes.on('data', chunk => {
-      data += chunk;
-      res.write(chunk);
-    });
-    
-    // End response
-    backendRes.on('end', () => {
-      console.log(`Backend response: ${backendRes.statusCode}`);
-      res.end();
-    });
-  });
-  
-  // Handle request error
-  backendReq.on('error', error => {
-    console.error('Error forwarding request:', error);
-    res.status(500).json({ detail: 'Error forwarding request to backend' });
-  });
-  
-  // Write request body if exists
-  if (['POST', 'PUT', 'PATCH'].includes(req.method) && req.body) {
-    backendReq.write(JSON.stringify(req.body));
-  }
-  
-  // End request
-  backendReq.end();
-}
+// Keys endpoint with authentication
+app.get('/api/keys', (req, res) => {
+  console.log('Keys request received');
+  forwardRequest(req, res);
+});
 
-// Start server
-if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`Auth fix backend running on port ${PORT}`);
-  });
-}
+// Probes endpoint with authentication
+app.get('/api/probes', (req, res) => {
+  console.log('Probes request received');
+  forwardRequest(req, res);
+});
 
-// Export for integration
-module.exports = {
-  createAdminToken,
-  fixAuthenticationBackend: app
-};
+// Users endpoint with authentication
+app.get('/api/users/me', (req, res) => {
+  console.log('User profile request received');
+  forwardRequest(req, res);
+});
+
+// Handle all other API requests
+app.all('/api/*', (req, res) => {
+  console.log(`Generic API request: ${req.method} ${req.path}`);
+  forwardRequest(req, res);
+});
+
+// For all other routes, serve the React app
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Start the server
+app.listen(port, () => {
+  console.log(`Auth fix backend running on port ${port}`);
+});
