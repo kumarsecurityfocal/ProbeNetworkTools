@@ -38,6 +38,13 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# Check for environment directory and copy .env.db if available
+if [ -f "$PROJECT_ROOT/../environment/.env.db" ]; then
+    echo "Found .env.db in environment directory, copying to home directory"
+    cp "$PROJECT_ROOT/../environment/.env.db" "$PROJECT_ROOT/$ENV_FILE"
+    echo "Successfully copied .env.db to $PROJECT_ROOT/$ENV_FILE"
+fi
+
 # Load environment variables from .env.db file if it exists
 if [ -f "$PROJECT_ROOT/$ENV_FILE" ]; then
     echo "Loading environment from $PROJECT_ROOT/$ENV_FILE"
