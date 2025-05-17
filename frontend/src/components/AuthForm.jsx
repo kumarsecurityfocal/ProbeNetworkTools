@@ -41,10 +41,10 @@ const AuthForm = ({ mode }) => {
   
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    // Make a complete copy of the form data before modifying
+    const updatedFormData = { ...formData };
+    updatedFormData[name] = value;
+    setFormData(updatedFormData);
     
     // Clear field-specific error when user types
     if (errors[name]) {
@@ -56,6 +56,10 @@ const AuthForm = ({ mode }) => {
     
     // Clear API error when user makes any change
     if (apiError) setApiError('');
+    
+    // Debug - log form state after update
+    console.log(`Updated ${name} field to: ${value}`);
+    console.log('Current form data:', updatedFormData);
   };
   
   const validate = () => {
@@ -86,22 +90,36 @@ const AuthForm = ({ mode }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validate()) return;
+    // Log form data to help with debugging
+    console.log('Submitting form with data:', formData);
+    
+    if (!validate()) {
+      console.log('Form validation failed');
+      return;
+    }
     
     setLoading(true);
     setApiError('');
     
+    // Cache form data to preserve in case of errors
+    const cachedFormData = { ...formData };
+    
     try {
       if (isLogin) {
-        await login(formData.username, formData.password);
+        console.log('Attempting login with:', cachedFormData.username);
+        await login(cachedFormData.username, cachedFormData.password);
         navigate('/dashboard');
       } else {
-        await register(formData.username, formData.email, formData.password);
+        console.log('Attempting registration for:', cachedFormData.username);
+        await register(cachedFormData.username, cachedFormData.email, cachedFormData.password);
         navigate('/login');
       }
     } catch (error) {
       console.error('Auth error:', error);
       setApiError(error.message || 'An error occurred. Please try again.');
+      
+      // Explicitly restore form data
+      setFormData(cachedFormData);
     } finally {
       setLoading(false);
     }
