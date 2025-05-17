@@ -528,6 +528,27 @@ log_success "All existing containers stopped and removed"
 log_info "Step 10.5: Running database migrations with Alembic hash-based IDs..."
 echo "[DATABASE] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Starting enhanced database migration process" >> "$LOG_FILE"
 
+# Ensure environment files are copied before running migrations
+log_info "Ensuring latest environment files are available for database migrations..."
+
+# Copy main .env file from environment directory if available
+if [ -f "/home/ubuntu/environment/.env" ]; then
+    log_info "Copying main .env file from environment directory..."
+    run_command "cp /home/ubuntu/environment/.env .env" "Copying main .env file before migration"
+    log_success "Main .env file copied successfully"
+else
+    log_warning "No main .env file found in environment directory, using existing file"
+fi
+
+# Copy backend .env.backend file from environment directory if available
+if [ -f "/home/ubuntu/environment/.env.backend" ]; then
+    log_info "Copying backend .env.backend file from environment directory..."
+    run_command "cp /home/ubuntu/environment/.env.backend backend/.env.backend" "Copying backend .env.backend file before migration"
+    log_success "Backend .env.backend file copied successfully"
+else
+    log_warning "No backend .env.backend file found in environment directory, using existing file"
+fi
+
 # Try to run Alembic migrations directly first (hash-based ID approach)
 if [ -d "backend/alembic" ]; then
     log_info "Using Alembic hash-based ID migrations..."
