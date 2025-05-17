@@ -413,58 +413,70 @@ const ProbeNodeTokenGenerator = () => {
         </Box>
       </Paper>
 
-      {/* Token History Display - SHOWN BELOW */}
+      {/* Token History Display - Simple Card Based Version */}
       {showTokenHistory && generatedTokens.length > 0 && (
         <Paper sx={{ mb: 3, p: 2 }}>
           <Typography variant="subtitle1" gutterBottom>
             Recent Generated Tokens
           </Typography>
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Token</TableCell>
-                  <TableCell>Created</TableCell>
-                  <TableCell>Expiry</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {generatedTokens.map((token) => (
-                  <TableRow key={token.id}>
-                    <TableCell>{getSafeElementProperty(token, 'name')}</TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                        {getSafeElementProperty(token, 'token')}
+          
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {generatedTokens.map((token) => {
+              // Safely get properties (avoid DOM errors)
+              const id = token?.id || Math.random();
+              const name = token?.name || 'Unnamed Token';
+              const tokenPreview = token?.token || '[token preview]';
+              const fullToken = token?.fullToken || '';
+              const date = token?.date ? new Date(token.date).toLocaleString() : 'N/A';
+              const expireDays = token?.expireDays;
+              
+              return (
+                <Paper key={id} variant="outlined" sx={{ p: 2 }}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={4}>
+                      <Typography variant="subtitle2" component="div">
+                        {name}
                       </Typography>
-                    </TableCell>
-                    <TableCell>
-                      {token && token.date ? new Date(token.date).toLocaleString() : 'N/A'}
-                    </TableCell>
-                    <TableCell>
-                      {token && token.expireDays === 0 ? 
-                        'Never' : 
-                        `${token.expireDays || 0} ${(token.expireDays || 0) === 1 ? 'day' : 'days'}`
-                      }
-                    </TableCell>
-                    <TableCell>
-                      <Tooltip title="Copy full token">
-                        <IconButton size="small" onClick={() => handleCopyHistoryToken(getSafeElementProperty(token, 'fullToken'))}>
-                          <CopyIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Remove from history">
-                        <IconButton size="small" onClick={() => handleRemoveToken(token.id)}>
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                      <Typography variant="body2" color="text.secondary">
+                        Created: {date}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={4}>
+                      <Typography variant="subtitle2" component="div">
+                        Token:
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                        {tokenPreview}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={2}>
+                      <Typography variant="body2" component="div">
+                        Expires in: {expireDays === 0 ? 'Never' : `${expireDays || 0} ${(expireDays || 0) === 1 ? 'day' : 'days'}`}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={2} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                      <Button 
+                        size="small" 
+                        startIcon={<CopyIcon />} 
+                        onClick={() => handleCopyHistoryToken(fullToken)}
+                        sx={{ mr: 1 }}
+                      >
+                        Copy
+                      </Button>
+                      <Button 
+                        size="small" 
+                        color="error" 
+                        startIcon={<DeleteIcon />} 
+                        onClick={() => handleRemoveToken(id)}
+                      >
+                        Remove
+                      </Button>
+                    </Grid>
+                  </Grid>
+                </Paper>
+              );
+            })}
+          </Box>
         </Paper>
       )}
 
