@@ -2,16 +2,21 @@ import * as React from 'react';
 import { 
   Box, 
   Typography, 
+  Paper,
+  IconButton,
+  Chip,
   Card,
   CardContent,
-  Grid,
-  Chip,
-  IconButton
+  Stack,
+  Grid
 } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
 
-// A simple list component that doesn't use Material-UI Table components
-function TokenList({ tokens = [], onDeleteToken, formatDate }) {
+/**
+ * A simple list implementation that avoids Material-UI Table components
+ * which are causing toLowerCase errors with DOM nodes.
+ */
+const TokenList = ({ tokens = [], onDeleteToken, formatDate }) => {
   if (!tokens || tokens.length === 0) {
     return (
       <Box sx={{ p: 2, textAlign: 'center' }}>
@@ -23,56 +28,43 @@ function TokenList({ tokens = [], onDeleteToken, formatDate }) {
   }
 
   return (
-    <Box sx={{ mt: 2 }}>
-      {/* Header */}
-      <Grid container spacing={1} sx={{ mb: 1, px: 2 }}>
-        <Grid item xs={1}>
-          <Typography variant="subtitle2">ID</Typography>
-        </Grid>
-        <Grid item xs={3}>
-          <Typography variant="subtitle2">Description</Typography>
-        </Grid>
-        <Grid item xs={2}>
-          <Typography variant="subtitle2">Created</Typography>
-        </Grid>
-        <Grid item xs={2}>
-          <Typography variant="subtitle2">Expires</Typography>
-        </Grid>
-        <Grid item xs={2}>
-          <Typography variant="subtitle2">Status</Typography>
-        </Grid>
-        <Grid item xs={2}>
-          <Typography variant="subtitle2" align="right">Actions</Typography>
-        </Grid>
-      </Grid>
-      
-      {/* Token items */}
+    <Stack spacing={1} sx={{ my: 2 }}>
       {tokens.map((token) => {
-        if (!token) return null;
+        // Safe check for token data
+        if (!token || typeof token !== 'object') {
+          return null;
+        }
         
+        // Create safe versions of potentially problematic values
         const safeId = token.id || '';
         const safeDescription = token.description || token.name || 'No description';
         const safeCreatedAt = token.created_at || '';
         const safeExpiryDate = token.expiry_date || '';
-        const isUsed = Boolean(token.used);
+        const isUsed = !!token.used;
         const isExpired = safeExpiryDate ? new Date(safeExpiryDate) < new Date() : false;
         
         return (
           <Card key={safeId} variant="outlined" sx={{ mb: 1 }}>
-            <CardContent sx={{ py: 2, px: 2, '&:last-child': { pb: 2 } }}>
+            <CardContent sx={{ pb: '8px !important', pt: 2, px: 2 }}>
               <Grid container spacing={1} alignItems="center">
                 <Grid item xs={1}>
-                  <Typography variant="body2">{safeId}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {safeId}
+                  </Typography>
                 </Grid>
+                
                 <Grid item xs={3}>
                   <Typography variant="body2">{safeDescription}</Typography>
                 </Grid>
+                
                 <Grid item xs={2}>
                   <Typography variant="body2">{formatDate(safeCreatedAt)}</Typography>
                 </Grid>
+                
                 <Grid item xs={2}>
                   <Typography variant="body2">{formatDate(safeExpiryDate)}</Typography>
                 </Grid>
+                
                 <Grid item xs={2}>
                   <Chip 
                     label={isUsed ? 'Used' : (isExpired ? 'Expired' : 'Valid')} 
@@ -80,6 +72,7 @@ function TokenList({ tokens = [], onDeleteToken, formatDate }) {
                     size="small"
                   />
                 </Grid>
+                
                 <Grid item xs={2} sx={{ textAlign: 'right' }}>
                   <IconButton
                     size="small"
@@ -95,8 +88,8 @@ function TokenList({ tokens = [], onDeleteToken, formatDate }) {
           </Card>
         );
       })}
-    </Box>
+    </Stack>
   );
-}
+};
 
 export default TokenList;
