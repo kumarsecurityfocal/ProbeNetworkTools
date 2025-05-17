@@ -31,7 +31,7 @@
             return value === null || value === undefined ? '' : String(value);
           } catch (e) {
             console.warn('Protected nodeName access from error:', e);
-            return ''; 
+            return '';
           }
         },
         configurable: true
@@ -53,4 +53,9 @@
   }, true);
 
   console.log('React DOM patch applied successfully.');
+
+  // Patch to fix React DevTools integration
+  if (window.parent !== window) {
+    window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = window.parent.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+  }
 })();
