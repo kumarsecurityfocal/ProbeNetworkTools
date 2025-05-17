@@ -245,7 +245,7 @@ class MigrationManager:
         """
         # Check if we have a base migration
         base_migrations = []
-        for script in self.script_directory.get_revisions("head"):
+        for script in self.script_directory.walk_revisions():
             if script.down_revision is None:
                 base_migrations.append(script.revision)
         

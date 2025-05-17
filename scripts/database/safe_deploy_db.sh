@@ -206,7 +206,7 @@ sys.path.append('$SCRIPT_DIR')
 from migration_manager import MigrationManager
 manager = MigrationManager()
 base_migrations = []
-for script in manager.script_directory.get_revisions():
+for script in manager.script_directory.walk_revisions():
     if script.down_revision is None:
         base_migrations.append(script.revision)
 if base_migrations:
