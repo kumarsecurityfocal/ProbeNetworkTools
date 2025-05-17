@@ -402,29 +402,111 @@ else
     log_success "Frontend assets built successfully"
 fi
 
-# Step 8: Verify frontend assets
+# Step 8: Verify and fix frontend assets
 log_info "Step 8: Verifying frontend assets..."
-if [ -d "public" ] && [ "$(ls -A public 2>/dev/null)" ]; then
+
+# Make sure the public directory exists
+if [ ! -d "public" ]; then
+    log_info "Creating missing public directory..."
+    mkdir -p public
+fi
+
+# Check if public directory has content
+if [ "$(ls -A public 2>/dev/null)" ]; then
     log_success "Frontend assets verified in public directory"
     run_command "ls -la public" "Listing frontend assets"
 else
-    log_error "Frontend assets not found in public directory!"
-    echo "[FRONTEND_ERROR] Frontend assets not found in public directory" >> "$LOG_FILE"
+    log_warning "Frontend assets not found in public directory! Attempting to locate them..."
     
-    # Try copying from frontend/dist if it exists
+    # Try copying from frontend/dist if it exists (Vite's default output directory)
     if [ -d "frontend/dist" ] && [ "$(ls -A frontend/dist 2>/dev/null)" ]; then
-        log_warning "Found assets in frontend/dist. Trying to copy..."
+        log_info "Found assets in frontend/dist. Copying to public directory..."
         run_command "cp -r frontend/dist/* public/" "Copying frontend assets from frontend/dist"
         
+        # Verify the copy succeeded
         if [ "$(ls -A public 2>/dev/null)" ]; then
-            log_success "Successfully copied frontend assets from frontend/dist"
+            log_success "Successfully copied frontend assets from frontend/dist to public directory"
+            run_command "ls -la public" "Listing copied frontend assets"
         else
-            log_error "Failed to copy frontend assets. Deployment may fail."
-            echo "[FRONTEND_ERROR] Failed to copy frontend assets" >> "$LOG_FILE"
+            log_error "Failed to copy frontend assets from frontend/dist. Deployment may fail."
+            echo "[FRONTEND_ERROR] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Failed to copy frontend assets from frontend/dist" >> "$LOG_FILE"
+            
+            # Ask user if they want to continue
+            echo -e "${RED}Frontend assets could not be copied. The application may not function correctly.${NC}"
+            echo -e "${YELLOW}Would you like to continue with deployment anyway? (y/n)${NC}"
+            read -r continue_response
+            
+            if [[ ! "$continue_response" =~ ^[Yy]$ ]]; then
+                log_error "Deployment aborted due to missing frontend assets"
+                echo "[DEPLOYMENT_ABORTED] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Deployment aborted due to missing frontend assets" >> "$LOG_FILE"
+                exit 1
+            else
+                log_warning "Continuing deployment despite missing frontend assets"
+                echo "[FRONTEND_WARNING] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Continuing deployment despite missing frontend assets" >> "$LOG_FILE"
+            fi
+        fi
+    # Try looking in frontend/build for React apps using Create React App
+    elif [ -d "frontend/build" ] && [ "$(ls -A frontend/build 2>/dev/null)" ]; then
+        log_info "Found assets in frontend/build. Copying to public directory..."
+        run_command "cp -r frontend/build/* public/" "Copying frontend assets from frontend/build"
+        
+        # Verify the copy succeeded
+        if [ "$(ls -A public 2>/dev/null)" ]; then
+            log_success "Successfully copied frontend assets from frontend/build to public directory"
+            run_command "ls -la public" "Listing copied frontend assets"
+        else
+            log_error "Failed to copy frontend assets from frontend/build. Deployment may fail."
+            echo "[FRONTEND_ERROR] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Failed to copy frontend assets from frontend/build" >> "$LOG_FILE"
+            
+            # Ask user if they want to continue
+            echo -e "${RED}Frontend assets could not be copied. The application may not function correctly.${NC}"
+            echo -e "${YELLOW}Would you like to continue with deployment anyway? (y/n)${NC}"
+            read -r continue_response
+            
+            if [[ ! "$continue_response" =~ ^[Yy]$ ]]; then
+                log_error "Deployment aborted due to missing frontend assets"
+                exit 1
+            else
+                log_warning "Continuing deployment despite missing frontend assets"
+            fi
         fi
     else
-        log_error "No frontend assets found in frontend/dist either!"
-        echo "[FRONTEND_ERROR] No frontend assets found in frontend/dist" >> "$LOG_FILE"
+        log_error "No frontend assets found in expected build directories (frontend/dist, frontend/build)"
+        echo "[FRONTEND_ERROR] $(date +"%Y-%m-%d %H:%M:%S.%3N") - No frontend assets found in expected build directories" >> "$LOG_FILE"
+        
+        # Last resort: try running the frontend build again
+        log_warning "Attempting to rebuild frontend as last resort..."
+        run_command "cd frontend && npm run build" "Rebuilding frontend assets"
+        
+        # Check if build succeeded and look for assets again
+        if [ -d "frontend/dist" ] && [ "$(ls -A frontend/dist 2>/dev/null)" ]; then
+            log_info "Rebuild successful. Copying newly built assets to public directory..."
+            run_command "cp -r frontend/dist/* public/" "Copying rebuilt frontend assets"
+            
+            if [ "$(ls -A public 2>/dev/null)" ]; then
+                log_success "Successfully copied rebuilt frontend assets to public directory"
+            else
+                log_error "Failed to copy rebuilt frontend assets. Deployment may fail."
+                echo "[FRONTEND_ERROR] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Failed to copy rebuilt frontend assets" >> "$LOG_FILE"
+            fi
+        else
+            log_error "Frontend rebuild failed or produced no assets. Deployment may fail."
+            echo "[FRONTEND_ERROR] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Frontend rebuild failed or produced no assets" >> "$LOG_FILE"
+            
+            # Ask user if they want to continue
+            echo -e "${RED}Frontend assets could not be found or built. The application may not function correctly.${NC}"
+            echo -e "${YELLOW}Would you like to continue with deployment anyway? (y/n)${NC}"
+            read -r continue_response
+            
+            if [[ ! "$continue_response" =~ ^[Yy]$ ]]; then
+                log_error "Deployment aborted due to missing frontend assets"
+                echo "[DEPLOYMENT_ABORTED] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Deployment aborted due to missing frontend assets" >> "$LOG_FILE"
+                exit 1
+            else
+                log_warning "Continuing deployment despite missing frontend assets"
+                echo "[FRONTEND_WARNING] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Continuing deployment despite missing frontend assets" >> "$LOG_FILE"
+            fi
+        fi
     fi
 fi
 
