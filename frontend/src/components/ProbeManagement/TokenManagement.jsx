@@ -338,8 +338,49 @@ const TokenManagement = () => {
           <Button onClick={() => setDeleteDialogOpen(false)}>
             Cancel
           </Button>
-          <Button onClick={handleDeleteToken} color="error" variant="contained">
+          <Button onClick={handleDeleteToken} color="warning" variant="contained">
             Revoke Token
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Permanent Delete Confirmation Dialog */}
+      <Dialog
+        open={permanentDeleteDialogOpen}
+        onClose={() => setPermanentDeleteDialogOpen(false)}
+      >
+        <DialogTitle>Permanently Delete Token</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to permanently delete this token? This action cannot be undone.
+            The token will be completely removed from the system.
+          </DialogContentText>
+          {selectedToken && (
+            <Box sx={{ mt: 2, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+              <Typography variant="body2">
+                <strong>Node Name:</strong> {selectedToken.name || 'Unnamed'}
+              </Typography>
+              <Typography variant="body2">
+                <strong>Node ID:</strong> {selectedToken.node_uuid}
+              </Typography>
+              <Typography variant="body2">
+                <strong>Created:</strong> {formatDate(selectedToken.created_at)}
+              </Typography>
+            </Box>
+          )}
+          {selectedToken && !selectedToken.revoked && (
+            <Alert severity="warning" sx={{ mt: 2 }}>
+              Warning: This token is still active. Consider revoking it first if you want to
+              disconnect probe nodes using it before permanent deletion.
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPermanentDeleteDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handlePermanentDeleteToken} color="error" variant="contained">
+            Delete Permanently
           </Button>
         </DialogActions>
       </Dialog>

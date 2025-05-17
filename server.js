@@ -385,16 +385,24 @@ app.get('/api/admin/probe-tokens', (req, res) => {
 // Support delete operation at both paths with a single handler
 app.delete(['/api/admin/probe-tokens/:id', '/admin/probe-tokens/:id'], (req, res) => {
   const { id } = req.params;
+  const { permanent } = req.query;
   const tokenIndex = global.probeTokens.findIndex(token => token.id === id);
   
   if (tokenIndex === -1) {
     return res.status(404).json({ error: 'Token not found' });
   }
   
-  // Mark token as revoked (soft delete)
-  global.probeTokens[tokenIndex].revoked = true;
-  
-  res.json({ success: true, message: 'Token revoked successfully' });
+  if (permanent === 'true') {
+    // Permanent delete - remove the token completely
+    console.log(`Permanently deleting token with ID: ${id}`);
+    global.probeTokens = global.probeTokens.filter(token => token.id !== id);
+    return res.json({ success: true, message: 'Token permanently deleted' });
+  } else {
+    // Soft delete - mark token as revoked
+    console.log(`Revoking token with ID: ${id}`);
+    global.probeTokens[tokenIndex].revoked = true;
+    return res.json({ success: true, message: 'Token revoked successfully' });
+  }
 });
 
 // Add probe-nodes endpoint
