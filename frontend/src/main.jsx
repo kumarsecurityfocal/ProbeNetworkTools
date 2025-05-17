@@ -14,6 +14,11 @@ import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import './index.css';
 
+// Apply React patches now that React is imported
+if (typeof window !== 'undefined' && window.__patchReactWhenAvailable) {
+  window.__patchReactWhenAvailable();
+}
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>

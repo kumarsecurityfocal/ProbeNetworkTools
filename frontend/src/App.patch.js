@@ -40,32 +40,6 @@
   } catch (error) {
     console.error('Failed to patch Node.prototype.nodeName:', error);
   }
-  
-  // Direct patch for Material-UI's React SVG component
-  // This is a targeted fix for the specific "je.nodeName.toLowerCase is not a function" error
-  const originalCreateElement = React.createElement;
-  React.createElement = function safeCreateElement(type, props, ...children) {
-    try {
-      // Handle component props that might cause toLowerCase errors
-      if (props && typeof type === 'string' && (type === 'svg' || type === 'path')) {
-        // Create safe props object
-        const safeProps = {...props};
-        
-        // Ensure nodeName is handled safely
-        if (safeProps.nodeName && typeof safeProps.nodeName !== 'string') {
-          safeProps.nodeName = String(safeProps.nodeName || '');
-        }
-        
-        return originalCreateElement(type, safeProps, ...children);
-      }
-      
-      return originalCreateElement(type, props, ...children);
-    } catch (err) {
-      console.error('React.createElement error patched:', err);
-      // Return a safe fallback element in case of error
-      return originalCreateElement('div', { className: 'error-fallback' }, null);
-    }
-  };
 
   // Add safe utility method to global scope for emergency use
   window.safeToLowerCase = function(value) {
@@ -78,4 +52,48 @@
       return '';
     }
   };
+  
+  // We'll patch React in another method after it's loaded
+  window.__patchReactWhenAvailable = function() {
+    if (typeof React === 'undefined') {
+      console.warn('React not available yet, will try patching later');
+      return false;
+    }
+    
+    try {
+      const originalCreateElement = React.createElement;
+      React.createElement = function safeCreateElement(type, props, ...children) {
+        try {
+          // Handle component props that might cause toLowerCase errors
+          if (props && typeof type === 'string' && (type === 'svg' || type === 'path')) {
+            // Create safe props object
+            const safeProps = {...props};
+            
+            // Ensure nodeName is handled safely
+            if (safeProps.nodeName && typeof safeProps.nodeName !== 'string') {
+              safeProps.nodeName = String(safeProps.nodeName || '');
+            }
+            
+            return originalCreateElement(type, safeProps, ...children);
+          }
+          
+          return originalCreateElement(type, props, ...children);
+        } catch (err) {
+          console.error('React.createElement error patched:', err);
+          // Return a safe fallback element in case of error
+          return originalCreateElement('div', { className: 'error-fallback' }, null);
+        }
+      };
+      console.log('React.createElement successfully patched');
+      return true;
+    } catch (error) {
+      console.error('Failed to patch React.createElement:', error);
+      return false;
+    }
+  };
+  
+  // Try to apply React patches if it's already available
+  if (typeof React !== 'undefined') {
+    window.__patchReactWhenAvailable();
+  }
 })();
