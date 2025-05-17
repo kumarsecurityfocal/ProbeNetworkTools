@@ -21,4 +21,5 @@ dependencies = [
     "requests>=2.32.3",
     "bcrypt>=4.3.0",
     "websockets>=15.0.1",
+    "pyjwt>=2.10.1",
 ]

@@ -256,6 +256,12 @@ async def main():
         # If token is provided, use it for configuration
         logger.info("Token provided, decoding configuration...")
         config = decode_token(args.token)
+        
+        # Set the log level according to the token configuration
+        log_level = config['log_level']
+        logging_level = getattr(logging, log_level, logging.INFO)
+        logger.setLevel(logging_level)
+        logger.info(f"Log level set to {log_level}")
     else:
         # Otherwise, use individual parameters
         logger.info("Using individual configuration parameters...")
