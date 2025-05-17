@@ -60,7 +60,10 @@ app.get('/database', (req, res) => {
 });
 
 // Endpoint for registering probe nodes
-app.post('/api/probe-nodes', (req, res) => {
+app.post('/api/probe-nodes', handleNodes);
+
+// Handler for probe node registration
+function handleNodes(req, res) {
   try {
     const { node_uuid, name, description, metadata } = req.body;
     
@@ -90,7 +93,7 @@ app.post('/api/probe-nodes', (req, res) => {
       detail: error.message 
     });
   }
-});
+}
 
 // Endpoint for generating probe node tokens
 app.post('/api/admin/generate-probe-token', (req, res) => {
