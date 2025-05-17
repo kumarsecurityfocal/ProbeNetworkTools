@@ -269,7 +269,9 @@ const AdminPanel = () => {
         console.log("DEBUG USERS: Current tab value:", tabValue);
         
         const token = localStorage.getItem('auth_token');
-        console.log("DEBUG USERS: Token available:", token ? `Yes (${token.substring(0, 10)}...)` : 'No');
+        // Safely check if token exists and is a string before using substring
+        const tokenPreview = token && typeof token === 'string' ? `Yes (${token.substring(0, 10)}...)` : 'No';
+        console.log("DEBUG USERS: Token available:", tokenPreview);
         
         console.log("DEBUG USERS: About to call getAllUsers()");
         const usersData = await getAllUsers();
@@ -913,8 +915,7 @@ const AdminPanel = () => {
           <Tab icon={<SubscriptionIcon />} label="Subscriptions" />
           <Tab icon={<PersonIcon />} label="Users" />
           <Tab icon={<SettingsIcon />} label="Tier Management" />
-          <Tab icon={<SettingsRemoteIcon />} label="Probe Nodes" />
-          <Tab icon={<AddIcon />} label="Generate Node Tokens" />
+          <Tab icon={<SettingsRemoteIcon />} label="Probe Nodes Management" />
         </Tabs>
       </Box>
 
@@ -1461,13 +1462,15 @@ const AdminPanel = () => {
         )}
       </TabPanel>
 
-      {/* Probe Nodes Tab */}
+      {/* Probe Nodes Management Tab - Combined Probe Nodes and Token Generation */}
       <TabPanel value={tabValue} index={3}>
-        <ProbeNodesManagement />
-      </TabPanel>
-
-      {/* Probe Token Generator Tab */}
-      <TabPanel value={tabValue} index={4}>
+        <Box sx={{ mb: 4 }}>
+          <ProbeNodesManagement />
+        </Box>
+        <Divider sx={{ my: 4 }} />
+        <Typography variant="h6" gutterBottom>
+          Generate New Probe Node Tokens
+        </Typography>
         <ProbeNodeTokenGenerator />
       </TabPanel>
 
