@@ -913,8 +913,6 @@ const AdminPanel = () => {
           <Tab icon={<SubscriptionIcon />} label="Subscriptions" />
           <Tab icon={<PersonIcon />} label="Users" />
           <Tab icon={<SettingsIcon />} label="Tier Management" />
-          <Tab icon={<SettingsRemoteIcon />} label="Probe Nodes" />
-          <Tab icon={<AddIcon />} label="Generate Node Tokens" />
         </Tabs>
       </Box>
 
@@ -1461,15 +1459,7 @@ const AdminPanel = () => {
         )}
       </TabPanel>
 
-      {/* Probe Nodes Tab */}
-      <TabPanel value={tabValue} index={3}>
-        <ProbeNodesManagement />
-      </TabPanel>
-
-      {/* Probe Token Generator Tab */}
-      <TabPanel value={tabValue} index={4}>
-        <ProbeNodeTokenGenerator />
-      </TabPanel>
+      {/* Tab panels for Probe Nodes and Token Generator removed as requested */}
 
       {/* Edit Subscription Dialog */}
       <Dialog open={editSubscriptionDialog} onClose={() => setEditSubscriptionDialog(false)}>
