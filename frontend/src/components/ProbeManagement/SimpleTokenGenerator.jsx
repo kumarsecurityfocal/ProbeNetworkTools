@@ -78,7 +78,7 @@ const SimpleTokenGenerator = () => {
       };
 
       // Make API request
-      const response = await api.post('/admin/generate-probe-token', requestData);
+      const response = await api.post('/api/admin/generate-probe-token', requestData);
       
       // Store token data
       setGeneratedToken(response.data.token);
