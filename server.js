@@ -365,10 +365,16 @@ app.post('/api/admin/execute-query', async (req, res) => {
   }
 });
 
-// Admin route for token management
+// Admin route for token management - ensure this is correctly registered
 app.get('/admin/probe-tokens', (req, res) => {
-  console.log('Serving probe tokens');
-  res.json(probeTokens);
+  console.log('Serving probe tokens:', JSON.stringify(probeTokens));
+  return res.status(200).json(probeTokens || []);
+});
+
+// Make the route available at both paths to ensure compatibility
+app.get('/api/admin/probe-tokens', (req, res) => {
+  console.log('Serving probe tokens via /api path:', JSON.stringify(probeTokens));
+  return res.status(200).json(probeTokens || []);
 });
 
 app.delete('/admin/probe-tokens/:id', (req, res) => {

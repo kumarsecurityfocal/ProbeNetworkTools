@@ -62,7 +62,9 @@ const TokenManagement = () => {
     setError('');
     
     try {
-      const response = await api.get('/admin/probe-tokens');
+      const response = await api.get('/api/admin/probe-tokens');
+      console.log('Token response:', response);
+      
       // Make sure we handle if the response is not an array
       if (Array.isArray(response.data)) {
         setTokens(response.data);
