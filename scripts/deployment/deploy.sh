@@ -748,9 +748,109 @@ fi
 log_info "Step 10.6: Running authentication check and JWT token validation..."
 
 # Create a function to check and fix JWT authentication issues
-# JWT authentication is now handled by the auth middleware
 jwt_helper() {
-    log_info "JWT authentication is now handled by auth middleware"
+    log_info "Running authentication fix for AWS deployment (May 18, 2025)"
+    
+    # Copy the auth-middleware-fix.js file to the server root if it exists
+    if [ -f "auth-middleware-fix.js" ]; then
+        log_info "Found auth-middleware-fix.js - ensuring it's included in deployment"
+        
+        # Make sure server.js is using the auth middleware fix
+        if grep -q "authMiddlewareFix" server.js; then
+            log_success "Authentication middleware already integrated in server.js"
+        else
+            log_info "Adding authentication middleware fix to server.js"
+            # Add require statement after other imports
+            sed -i '/const express = require/a const { authMiddlewareFix } = require("./auth-middleware-fix");' server.js
+            # Add middleware use statement after other middleware
+            sed -i '/app.use(express.json())/a app.use(authMiddlewareFix); // Auth middleware fix for form-urlencoded conversion' server.js
+            log_success "Authentication middleware fix added to server.js"
+        fi
+        
+        log_info "Testing authentication with form-urlencoded format..."
+        echo "[AUTH] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Testing authentication with form-urlencoded format" >> "$LOG_FILE"
+        curl -s -X POST http://localhost:8000/login \
+             -H "Content-Type: application/x-www-form-urlencoded" \
+             -d "username=admin@probeops.com&password=probeopS1@" > auth_test_result.log 2>&1
+         
+        if grep -q "access_token" auth_test_result.log; then
+            log_success "Authentication with form-urlencoded format successful"
+            echo "[AUTH_SUCCESS] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Authentication with form-urlencoded format successful" >> "$LOG_FILE"
+        else 
+            log_warning "Authentication with form-urlencoded format failed - check auth_test_result.log for details"
+            echo "[AUTH_WARNING] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Authentication with form-urlencoded format failed" >> "$LOG_FILE"
+        fi
+    else
+        log_warning "auth-middleware-fix.js not found - creating it now"
+        
+        # Create the auth-middleware-fix.js file with the necessary content
+        cat > auth-middleware-fix.js << 'EOL'
+/**
+ * ProbeOps Authentication Middleware Fix - VERSION 2.0 (May 18, 2025)
+ * 
+ * This module provides middleware that can be added to your Express server
+ * to ensure proper handling of authentication requests. It specifically addresses
+ * the form-urlencoded vs JSON issue that causes authentication failures in AWS.
+ */
+
+const { URLSearchParams } = require('url');
+
+/**
+ * Authentication middleware that ensures proper request format for login endpoints
+ */
+function authMiddlewareFix(req, res, next) {
+  // Only process login requests
+  if (req.path === '/login' || req.path === '/api/login') {
+    console.log(`[Auth Fix] Processing ${req.method} request to ${req.path}`);
+    
+    // If the request is using JSON but should be form-urlencoded
+    if (req.method === 'POST' && 
+        req.headers['content-type']?.includes('application/json')) {
+      
+      console.log('[Auth Fix] Converting JSON request to form-urlencoded format');
+      
+      const formData = new URLSearchParams();
+      
+      // Add username and password from JSON body to form data
+      if (req.body.username) {
+        formData.append('username', req.body.username);
+      }
+      
+      if (req.body.password) {
+        formData.append('password', req.body.password);
+      }
+      
+      // Replace the request body and content type
+      req.body = formData;
+      req.headers['content-type'] = 'application/x-www-form-urlencoded';
+      
+      console.log('[Auth Fix] Request converted to form-urlencoded format');
+    }
+  }
+  
+  // Continue processing the request
+  next();
+}
+
+module.exports = {
+  authMiddlewareFix
+};
+EOL
+        
+        log_success "auth-middleware-fix.js created successfully"
+        
+        # Now update server.js to use this middleware
+        if [ -f "server.js" ]; then
+            log_info "Adding authentication middleware fix to server.js"
+            # Add require statement after other imports
+            sed -i '/const express = require/a const { authMiddlewareFix } = require("./auth-middleware-fix");' server.js
+            # Add middleware use statement after other middleware
+            sed -i '/app.use(express.json())/a app.use(authMiddlewareFix); // Auth middleware fix for form-urlencoded conversion' server.js
+            log_success "Authentication middleware fix added to server.js"
+        else
+            log_warning "server.js not found - cannot add authentication middleware fix"
+        fi
+    fi
 }
 
 # Function to test API connectivity and authentication after containers are started

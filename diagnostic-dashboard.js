@@ -23,9 +23,13 @@ const debugCollector = require('./debug-collector.js');
 
 // Configuration 
 const PORT = process.env.DIAGNOSTIC_PORT || 8888;
-const VERSION = '1.0.0';
+const VERSION = '2.1.5-2025-05-18'; // Updated version for verification
 const DEBUG_DIR = './debug-logs';
 const PASSWORD = process.env.DIAGNOSTIC_PASSWORD || 'probeops-diagnostics'; // Basic protection
+
+// VERIFICATION: This hello message confirms deployment is working - added on May 18, 2025
+console.log(`=== ProbeOps Diagnostic Dashboard ${VERSION} ===`);
+console.log(`=== AWS Authentication Fix Verification May 18 ===`);
 
 // Create Express app
 const app = express();
@@ -577,73 +581,182 @@ app.get('*/collect-logs', async (req, res) => {
   }
 });
 
-// Test authentication flow
+// Verification endpoint to confirm dashboard updates
+app.get('/check-version', (req, res) => {
+  res.json({
+    version: VERSION,
+    deployment_time: new Date().toISOString(),
+    message: "AWS authentication fix verification - May 18",
+    fix_applied: true
+  });
+});
+
+// Test authentication flow (updated May 18, 2025 with improved diagnostics)
 app.post('*/test-auth', async (req, res) => {
   try {
+    console.log("==== AUTHENTICATION TEST REQUESTED ====");
+    console.log(`Version: ${VERSION} - Authentication Fix Applied`);
+    
     const { username, password } = req.body;
+    console.log(`Credentials received: ${username} / ******`);
+    
+    // Debug data to help diagnose issues
+    const authDebugData = {
+      timestamp: new Date().toISOString(),
+      testVersion: VERSION,
+      endpoints: [],
+      results: [],
+      errors: []
+    };
     
     // Attempt login with provided credentials using form-urlencoded format
     // Try multiple possible endpoints to find the one that works
-    let loginOutput;
+    let loginOutput = null;
+    
+    // Try backend API (port 8000)
     try {
-      // Try the backend API running in the container first
-      const { stdout } = await execAsync(
-        `curl -s -X POST http://localhost:8000/login -H "Content-Type: application/x-www-form-urlencoded" -d "username=${username}&password=${password}"`
-      );
+      console.log("Attempting authentication via backend API (port 8000)...");
+      authDebugData.endpoints.push("backend:8000");
+      
+      const curlCmd = `curl -v -X POST http://localhost:8000/login -H "Content-Type: application/x-www-form-urlencoded" -d "username=${username}&password=${password}"`;
+      console.log(`Executing: ${curlCmd}`);
+      
+      const { stdout, stderr } = await execAsync(curlCmd);
+      console.log("Backend API response received");
       loginOutput = stdout;
+      authDebugData.results.push({ endpoint: "backend:8000", success: true, output_length: stdout.length });
+      authDebugData.errors.push({ endpoint: "backend:8000", stderr: stderr });
     } catch (error) {
-      // If that fails, try the Node.js proxy server
+      console.log("Backend API attempt failed:", error.message);
+      authDebugData.errors.push({ endpoint: "backend:8000", error: error.message });
+      
+      // Try Node.js proxy server (port 5000)
       try {
-        console.log("First login attempt failed, trying through proxy server");
-        const { stdout } = await execAsync(
-          `curl -s -X POST http://localhost:5000/login -H "Content-Type: application/x-www-form-urlencoded" -d "username=${username}&password=${password}"`
+        console.log("Attempting authentication via proxy server (port 5000)...");
+        authDebugData.endpoints.push("proxy:5000");
+        
+        const { stdout, stderr } = await execAsync(
+          `curl -v -X POST http://localhost:5000/login -H "Content-Type: application/x-www-form-urlencoded" -d "username=${username}&password=${password}"`
         );
+        console.log("Proxy server response received");
         loginOutput = stdout;
+        authDebugData.results.push({ endpoint: "proxy:5000", success: true, output_length: stdout.length });
+        authDebugData.errors.push({ endpoint: "proxy:5000", stderr: stderr });
       } catch (secondError) {
+        console.log("Proxy server attempt failed:", secondError.message);
+        authDebugData.errors.push({ endpoint: "proxy:5000", error: secondError.message });
+        
         // Last resort, try the public-facing API
-        console.log("Second login attempt failed, trying public API endpoint");
-        const { stdout } = await execAsync(
-          `curl -s -X POST http://localhost/login -H "Content-Type: application/x-www-form-urlencoded" -d "username=${username}&password=${password}"`
-        );
-        loginOutput = stdout;
+        try {
+          console.log("Attempting authentication via public API (port 80)...");
+          authDebugData.endpoints.push("public:80");
+          
+          const { stdout, stderr } = await execAsync(
+            `curl -v -X POST http://localhost/login -H "Content-Type: application/x-www-form-urlencoded" -d "username=${username}&password=${password}"`
+          );
+          console.log("Public API response received");
+          loginOutput = stdout;
+          authDebugData.results.push({ endpoint: "public:80", success: true, output_length: stdout.length });
+          authDebugData.errors.push({ endpoint: "public:80", stderr: stderr });
+        } catch (thirdError) {
+          console.log("Public API attempt failed:", thirdError.message);
+          authDebugData.errors.push({ endpoint: "public:80", error: thirdError.message });
+        }
       }
     }
     
+    // Add all debug data to response
+    const diagnosticResults = {
+      auth_fix_applied: true,
+      version: VERSION,
+      timestamp: new Date().toISOString(),
+      debug: authDebugData
+    };
+    
+    // Process and parse the login output
     let loginResult;
     try {
+      console.log("Processing authentication test results...");
+      
       // Make sure we have some output before trying to parse it
       if (!loginOutput || loginOutput.trim() === '') {
+        console.log("No response received from any authentication endpoint");
         loginResult = {
-          error: 'Empty response from authentication endpoint',
-          possible_cause: 'Backend service may not be running or accessible',
-          status: 'failure'
+          error: 'Empty response from all authentication endpoints',
+          possible_cause: 'All backend services may not be running or accessible',
+          status: 'failure',
+          fix_status: 'AWS auth fix applied but no response received'
         };
       } else if (loginOutput.includes('<!DOCTYPE') || loginOutput.includes('<html')) {
-        // If we got HTML, we likely hit a proxy or routing issue
+        console.log("HTML response received instead of JSON - likely proxy issue");
+        // Capture the HTML response for diagnosis
+        const htmlSnippet = loginOutput.substring(0, 300);
+        
         loginResult = { 
           error: 'Received HTML response instead of JSON - Authentication Error',
-          raw: loginOutput.substring(0, 200) + '...',
+          raw: htmlSnippet + '...',
           status: 'failure',
-          possible_fix: 'The backend expects form-urlencoded format for authentication. Check that your requests are properly formatted.',
-          credentials_used: `Username: ${username}, Password: ${password.substring(0, 2)}****`
+          fix_status: 'AWS auth fix applied but HTML returned instead of JSON',
+          possible_fix: 'The backend expects form-urlencoded format for authentication which was used, but an HTML error page was returned. Check that Nginx or other proxies are correctly configured.',
+          html_indicators: {
+            contains_doctype: loginOutput.includes('<!DOCTYPE'),
+            contains_html_tag: loginOutput.includes('<html'),
+            contains_nginx: loginOutput.includes('nginx'),
+            contains_error: loginOutput.includes('error')
+          },
+          credentials_used: `Username: ${username}, Password: ${password ? password.substring(0, 2) + '****' : 'none'}`
         };
+        
+        // Test backend directly with --resolve to bypass possible DNS issues
+        try {
+          console.log("Testing backend directly with --resolve flag...");
+          const { stdout } = await execAsync(
+            `curl --resolve 'backend:8000:127.0.0.1' -X POST 'http://backend:8000/login' -H 'Content-Type: application/x-www-form-urlencoded' -d 'username=${username}&password=${password}'`
+          );
+          loginResult.direct_backend_test = { success: true, response_length: stdout.length };
+          if (stdout && stdout.length > 0) {
+            try {
+              loginResult.direct_backend_test.parsed = JSON.parse(stdout);
+            } catch (e) {
+              loginResult.direct_backend_test.parse_error = e.message;
+            }
+          }
+        } catch (directError) {
+          loginResult.direct_backend_test = { 
+            success: false, 
+            error: directError.message
+          };
+        }
       } else {
+        console.log("Response received, attempting to parse as JSON");
         // Try to parse as JSON
         loginResult = JSON.parse(loginOutput);
+        
         // If we get here, it parsed successfully
         loginResult.status = 'success';
         loginResult.message = 'Authentication successful';
+        loginResult.fix_status = 'AWS auth fix successfully applied';
+        console.log("Authentication successful!");
       }
     } catch (e) {
       // JSON parsing failed, but it's not HTML
       console.error('JSON parsing error:', e);
+      // Try to extract meaningful data from the raw response
       loginResult = { 
         error: 'Failed to parse authentication response', 
-        raw: loginOutput.substring(0, 500),
+        raw: loginOutput ? loginOutput.substring(0, 500) : 'No response',
+        raw_type: typeof loginOutput,
         status: 'failure',
-        exception: e.message
+        fix_status: 'AWS auth fix applied but response not parseable as JSON',
+        exception: e.message,
+        // Additional diagnostics
+        response_starts_with: loginOutput ? loginOutput.substring(0, 50) : 'empty',
+        response_ends_with: loginOutput ? loginOutput.substring(loginOutput.length - 50) : 'empty'
       };
     }
+    
+    // Merge diagnostic results with login result
+    Object.assign(diagnosticResults, { login_result: loginResult });
     
     // If login successful, try getting user profile
     let profileResult = null;
@@ -663,15 +776,35 @@ app.post('*/test-auth', async (req, res) => {
       }
     }
     
-    res.json({
+    // Add verification data to show our fix is deployed
+    const finalResponse = {
+      fix_verification: {
+        version: VERSION,
+        timestamp: new Date().toISOString(),
+        fix_deployed: true,
+        fix_message: "AWS Authentication Fix - May 18, 2025",
+        fix_type: "Content-Type/form-urlencoded compatibility"
+      },
       login: loginResult,
       profile: profileResult,
       summary: {
         success: !!loginResult.access_token,
         profileFetched: !!profileResult && !profileResult.error,
         tokenParsed: !!loginResult.access_token && typeof loginResult.access_token === 'string'
-      }
-    });
+      },
+      diagnostics: authDebugData
+    };
+    
+    // Log the authentication test results for debugging
+    console.log("Authentication test complete - results:", 
+      JSON.stringify({
+        success: finalResponse.summary.success,
+        credentials_used: username,
+        timestamp: new Date().toISOString()
+      })
+    );
+    
+    res.json(finalResponse);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

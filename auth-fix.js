@@ -1,10 +1,13 @@
 /**
- * ProbeOps Authentication Fix Script
+ * ProbeOps Authentication Fix Script - VERSION 2.0 (May 18, 2025)
  * 
  * This script fixes JWT authentication issues by:
  * 1. Creating a properly formatted authentication token for admin
  * 2. Monitoring and logging authentication requests
  * 3. Ensuring the token is properly attached to all API requests
+ * 4. Converting JSON auth requests to form-urlencoded format for backend
+ * 
+ * === FORM-URLENCODED FIX APPLIED FOR AWS ENVIRONMENT ===
  */
 
 const express = require('express');
