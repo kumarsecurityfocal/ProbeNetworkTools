@@ -583,27 +583,66 @@ app.post('*/test-auth', async (req, res) => {
     const { username, password } = req.body;
     
     // Attempt login with provided credentials using form-urlencoded format
-    const { stdout: loginOutput } = await execAsync(
-      `curl -s -X POST http://localhost:8000/login -H "Content-Type: application/x-www-form-urlencoded" -d "username=${username}&password=${password}"`
-    );
+    // Try multiple possible endpoints to find the one that works
+    let loginOutput;
+    try {
+      // Try the backend API running in the container first
+      const { stdout } = await execAsync(
+        `curl -s -X POST http://localhost:8000/login -H "Content-Type: application/x-www-form-urlencoded" -d "username=${username}&password=${password}"`
+      );
+      loginOutput = stdout;
+    } catch (error) {
+      // If that fails, try the Node.js proxy server
+      try {
+        console.log("First login attempt failed, trying through proxy server");
+        const { stdout } = await execAsync(
+          `curl -s -X POST http://localhost:5000/login -H "Content-Type: application/x-www-form-urlencoded" -d "username=${username}&password=${password}"`
+        );
+        loginOutput = stdout;
+      } catch (secondError) {
+        // Last resort, try the public-facing API
+        console.log("Second login attempt failed, trying public API endpoint");
+        const { stdout } = await execAsync(
+          `curl -s -X POST http://localhost/login -H "Content-Type: application/x-www-form-urlencoded" -d "username=${username}&password=${password}"`
+        );
+        loginOutput = stdout;
+      }
+    }
     
     let loginResult;
     try {
-      loginResult = JSON.parse(loginOutput);
-    } catch (e) {
-      // Testing JSON format failed, try examining the raw response
-      if (loginOutput.includes('<!DOCTYPE') || loginOutput.includes('<html')) {
+      // Make sure we have some output before trying to parse it
+      if (!loginOutput || loginOutput.trim() === '') {
+        loginResult = {
+          error: 'Empty response from authentication endpoint',
+          possible_cause: 'Backend service may not be running or accessible',
+          status: 'failure'
+        };
+      } else if (loginOutput.includes('<!DOCTYPE') || loginOutput.includes('<html')) {
+        // If we got HTML, we likely hit a proxy or routing issue
         loginResult = { 
-          error: 'Received HTML response instead of JSON',
-          raw: loginOutput.substring(0, 300) + '...',
-          possible_cause: 'Nginx/proxy configuration issue: API receiving HTML instead of proper JSON response'
+          error: 'Received HTML response instead of JSON - Authentication Error',
+          raw: loginOutput.substring(0, 200) + '...',
+          status: 'failure',
+          possible_fix: 'The backend expects form-urlencoded format for authentication. Check that your requests are properly formatted.',
+          credentials_used: `Username: ${username}, Password: ${password.substring(0, 2)}****`
         };
       } else {
-        loginResult = { 
-          error: 'Failed to parse JSON response', 
-          raw: loginOutput
-        };
+        // Try to parse as JSON
+        loginResult = JSON.parse(loginOutput);
+        // If we get here, it parsed successfully
+        loginResult.status = 'success';
+        loginResult.message = 'Authentication successful';
       }
+    } catch (e) {
+      // JSON parsing failed, but it's not HTML
+      console.error('JSON parsing error:', e);
+      loginResult = { 
+        error: 'Failed to parse authentication response', 
+        raw: loginOutput.substring(0, 500),
+        status: 'failure',
+        exception: e.message
+      };
     }
     
     // If login successful, try getting user profile
