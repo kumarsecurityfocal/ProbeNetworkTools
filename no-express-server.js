@@ -28,6 +28,15 @@ function createToken(email = "admin@probeops.com") {
 function cleanApiPath(originalPath) {
   let result = originalPath;
   
+  // Special handling for auth endpoints
+  if (result.includes('/auth/login') || result.includes('/api/auth/login')) {
+    return '/auth/login';
+  }
+  
+  if (result.includes('/login')) {
+    return '/login'; 
+  }
+  
   // Remove all /api prefixes
   while (result.startsWith('/api')) {
     result = result.substring(4);

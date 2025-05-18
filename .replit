@@ -46,7 +46,7 @@ args = "Fixed Server"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Basic HTTP Server"
+args = "Fixed HTTP Server"
 
 [[workflows.workflow]]
 name = "Server"
@@ -118,7 +118,7 @@ args = "node -e \"const express = require('express'); const path = require('path
 waitForPort = 5000
 
 [[workflows.workflow]]
-name = "Basic HTTP Server"
+name = "Fixed HTTP Server"
 author = "agent"
 
 [[workflows.workflow.tasks]]
