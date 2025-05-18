@@ -7,6 +7,14 @@ const jwt = require('jsonwebtoken');
 // Import admin utilities
 const debugUtils = require('./debug-collector');
 const dbAdmin = require('./db-admin');
+const fs = require('fs');
+
+// Setup logger to file
+function logToFile(message) {
+  const timestamp = new Date().toISOString();
+  const formattedMessage = `[${timestamp}] ${message}\n`;
+  fs.appendFileSync('auth-debug.log', formattedMessage);
+}
 
 // Create express app
 const app = express();
@@ -22,23 +30,73 @@ app.use(express.urlencoded({ extended: true })); // Add this to parse form data
 
 // JWT helper function to create valid tokens
 function createValidToken(email = "admin@probeops.com") {
+  // Add current timestamp to track token generation
+  const now = Math.floor(Date.now() / 1000);
   const payload = {
     sub: email,
-    exp: Math.floor(Date.now() / 1000) + 86400 // 24 hours
+    exp: now + 86400, // 24 hours
+    iat: now // issued at timestamp
   };
-  return jwt.sign(payload, JWT_SECRET, { algorithm: 'HS256' });
+  
+  console.log("Creating token with payload:", JSON.stringify(payload));
+  
+  const token = jwt.sign(payload, JWT_SECRET, { algorithm: 'HS256' });
+  console.log("Token created:", token.substring(0, 20) + "...");
+  
+  // Verify the token immediately to ensure it's valid
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    console.log("Token verified successfully:", JSON.stringify(decoded));
+  } catch (error) {
+    console.error("Token verification failed:", error.message);
+  }
+  
+  return token;
 }
 
-// Debug middleware to log requests
+// Enhanced debug middleware for authentication tracing
 app.use((req, res, next) => {
-  if (req.url.includes('/login') || req.url.includes('/auth')) {
-    console.log('DEBUG AUTH REQUEST:', {
-      method: req.method,
-      url: req.url,
-      headers: req.headers,
-      body: req.body || 'no body'
-    });
+  // Capture original send/json functions
+  const originalSend = res.send;
+  const originalJson = res.json;
+  
+  // Always log API requests
+  console.log(`[REQUEST] ${req.method} ${req.url}`);
+  
+  // More detailed logging for auth-related endpoints
+  if (req.url.includes('/login') || req.url.includes('/auth') || req.url.includes('/user')) {
+    console.log('========== AUTH REQUEST ==========');
+    console.log('Method:', req.method);
+    console.log('URL:', req.url);
+    console.log('Headers:', JSON.stringify(req.headers));
+    console.log('Body:', JSON.stringify(req.body || 'no body'));
+    console.log('==================================');
+    
+    // Intercept response to log it
+    res.json = function(body) {
+      console.log('========== AUTH RESPONSE ==========');
+      console.log('Status:', res.statusCode);
+      console.log('Body:', JSON.stringify(body));
+      if (body && body.access_token) {
+        console.log('Token (first 20 chars):', body.access_token.substring(0, 20) + '...');
+      }
+      console.log('===================================');
+      return originalJson.call(this, body);
+    };
+    
+    // Also intercept send for raw responses
+    res.send = function(body) {
+      console.log('========== AUTH RAW RESPONSE ==========');
+      console.log('Status:', res.statusCode);
+      console.log('Body type:', typeof body);
+      if (typeof body === 'string') {
+        console.log('Body (first 100 chars):', body.substring(0, 100) + (body.length > 100 ? '...' : ''));
+      }
+      console.log('=======================================');
+      return originalSend.call(this, body);
+    };
   }
+  
   next();
 });
 
@@ -731,13 +789,15 @@ function handleLogin(req, res) {
   
   // Special handling for admin user - generate valid token
   if (username === 'admin@probeops.com' && password === 'probeopS1@') {
+    logToFile('Admin login detected - generating valid signed token');
     console.log('Admin login detected - generating valid signed token');
     
     // Create a properly signed token using our function
     const token = createValidToken("admin@probeops.com");
+    logToFile(`Generated token: ${token}`);
     
-    // Return a valid token response that will work with the frontend
-    return res.status(200).json({
+    // Log the full response we're about to send
+    const responseBody = {
       access_token: token,
       token_type: 'bearer',
       user: {
@@ -749,7 +809,12 @@ function handleLogin(req, res) {
         email_verified: true,
         created_at: new Date().toISOString()
       }
-    });
+    };
+    
+    logToFile(`Sending login response: ${JSON.stringify(responseBody, null, 2)}`);
+    
+    // Return a valid token response that will work with the frontend
+    return res.status(200).json(responseBody);
   }
   
   // For other users, forward request to backend
