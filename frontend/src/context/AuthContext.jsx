@@ -5,8 +5,10 @@ import {
   login as loginApi,
   register as registerApi,
   logout as logoutApi,
-  refreshUserProfile
+  refreshUserProfile,
+  setToken
 } from '../services/auth';
+import axios from 'axios';
 
 // Create context
 const AuthContext = createContext(null);
@@ -75,6 +77,9 @@ export const AuthProvider = ({ children }) => {
       // Save token to localStorage and attach it globally
       localStorage.setItem("probeops_token", response.access_token);
       setToken(response.access_token);
+      
+      // Also set token in global axios defaults
+      axios.defaults.headers.common['Authorization'] = `Bearer ${response.access_token}`;
       
       setIsAuthenticated(true);
       
