@@ -744,14 +744,233 @@ else
     fi
 fi
 
-# JWT authentication step removed - fresh deployment no longer requires JWT fix
-log_info "Step 10.6: Authentication check - skipping since we're using a fresh deployment"
-echo "[AUTH] $(date +"%Y-%m-%d %H:%M:%S.%3N") - JWT auth fix skipped for fresh deployment" >> "$LOG_FILE"
+# Step 10.6: Authentication check and JWT token validation
+log_info "Step 10.6: Running authentication check and JWT token validation..."
+
+# Create a function to check and fix JWT authentication issues
+fix_jwt_auth() {
+    log_info "Checking authentication configuration..."
+    
+    # Check if the JWT secret is set in the environment
+    jwt_secret=""
+    if grep -q "JWT_SECRET" backend/.env.backend; then
+        jwt_secret=$(grep "JWT_SECRET" backend/.env.backend | cut -d= -f2-)
+        if [[ -z "$jwt_secret" || "$jwt_secret" == *"CHANGE_ME"* ]]; then
+            log_warning "JWT_SECRET is empty or contains placeholder value"
+            jwt_secret="development_secure_key_for_testing"
+            echo "JWT_SECRET=$jwt_secret" >> backend/.env.backend
+            log_info "Temporary JWT secret added for testing"
+        else
+            log_success "JWT_SECRET is configured properly"
+        fi
+    else
+        log_warning "JWT_SECRET not found in backend configuration"
+        jwt_secret="development_secure_key_for_testing"
+        echo "JWT_SECRET=$jwt_secret" >> backend/.env.backend
+        log_info "JWT_SECRET added to backend/.env.backend"
+    fi
+    
+    # Check if we can connect to the backend API once it's up
+    log_info "Backend authentication check will run after containers are started..."
+    echo "[AUTH] $(date +"%Y-%m-%d %H:%M:%S.%3N") - JWT auth configuration validated, will check endpoints after container startup" >> "$LOG_FILE"
+}
+
+# Function to test API connectivity and authentication after containers are started
+test_auth_endpoints() {
+    log_info "Testing backend API connectivity..."
+    
+    # Wait for backend to be available (max 60 seconds)
+    log_info "Waiting for backend to be available..."
+    for i in {1..12}; do
+        backend_health=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/health 2>/dev/null || echo "failed")
+        if [ "$backend_health" = "200" ]; then
+            log_success "Backend API is accessible (HTTP 200 OK)"
+            break
+        else
+            if [ $i -eq 12 ]; then
+                log_warning "Backend API health check failed after multiple attempts. Status: $backend_health"
+                log_warning "This may cause authentication issues. Proceeding anyway."
+            else
+                log_info "Backend not ready yet (attempt $i/12). Waiting 5 seconds..."
+                sleep 5
+            fi
+        fi
+    done
+    
+    # Generate test JWT token for admin
+    log_info "Generating admin test token..."
+    
+    # Create token payload
+    payload="{\"sub\":\"admin@probeops.com\",\"exp\":$(($(date +%s) + 86400)),\"iat\":$(date +%s)}"
+    
+    # Save the token details for debugging
+    echo "=== JWT TOKEN DEBUG INFORMATION ===" >> "$LOG_FILE"
+    echo "Payload: $payload" >> "$LOG_FILE"
+    echo "Generated: $(date)" >> "$LOG_FILE"
+    echo "Expires: $(date -d @$(($(date +%s) + 86400)))" >> "$LOG_FILE"
+    
+    # Test a login request
+    log_info "Testing authentication with backend API..."
+    login_response=$(curl -s -X POST -H "Content-Type: application/json" -H "Accept: application/json" -d '{"username":"admin@probeops.com","password":"AdminPassword123"}' http://localhost:8000/login 2>/dev/null)
+    login_status=$?
+    
+    # Write response to log file
+    echo "=== LOGIN API RESPONSE ===" >> "$LOG_FILE"
+    echo "$login_response" >> "$LOG_FILE"
+    echo "curl exit status: $login_status" >> "$LOG_FILE"
+    
+    # Check if the response is valid JSON
+    if echo "$login_response" | jq -e . >/dev/null 2>&1; then
+        log_success "Login API returned valid JSON - good sign!"
+        token_from_login=$(echo "$login_response" | jq -r '.access_token // "none"')
+        
+        if [ "$token_from_login" != "none" ]; then
+            log_success "Login successful! Token received from API"
+            echo "JWT authentication is working properly"
+        else
+            log_warning "Login API did not return a token. This may cause authentication issues."
+            echo "Response: $login_response"
+        fi
+    else
+        log_warning "Login API did not return valid JSON! This will likely cause authentication issues."
+        
+        # Check if it's HTML (likely an error page)
+        if [[ "$login_response" == *"<!DOCTYPE"* || "$login_response" == *"<html"* ]]; then
+            log_warning "DETECTED HTML RESPONSE: Authentication API is returning HTML instead of JSON!"
+            echo "[AUTH_WARNING] HTML response detected from authentication endpoint" >> "$LOG_FILE"
+            
+            # Log first 200 characters of the response
+            echo "First 200 characters of response:" | tee -a "$LOG_FILE"
+            echo "${login_response:0:200}..." | tee -a "$LOG_FILE"
+            
+            # Check if we're running in AWS
+            if [[ -n "$EC2_INSTANCE_ID" || -n "$AWS_REGION" || -f "/etc/aws-release" ]]; then
+                log_warning "AWS environment detected - applying authentication middleware fix"
+                echo "[AUTH_FIX] Applying authentication middleware fix for AWS environment" >> "$LOG_FILE"
+                
+                # Create authentication middleware fix
+                cat > auth-middleware-fix.js << 'EOF'
+/**
+ * Authentication Middleware Fix for ProbeOps
+ * 
+ * This middleware ensures proper content-type headers and error handling
+ * for authentication endpoints, preventing HTML responses when JSON is expected.
+ */
+
+// Simple middleware to ensure JSON responses for auth endpoints
+app.use((req, res, next) => {
+  // Store original methods
+  const originalJson = res.json;
+  const originalSend = res.send;
+  
+  // Override json method to add proper Content-Type headers
+  res.json = function(obj) {
+    res.setHeader('Content-Type', 'application/json');
+    return originalJson.call(this, obj);
+  };
+  
+  // Override send method to check for HTML responses on auth endpoints
+  res.send = function(body) {
+    const url = req.url.toLowerCase();
+    const isAuthEndpoint = url.includes('/login') || 
+                           url.includes('/auth') || 
+                           url.includes('/token') ||
+                           url.includes('/users/me');
+    
+    // Check if this is an auth endpoint and response is HTML
+    if (isAuthEndpoint && typeof body === 'string' && 
+        (body.includes('<!DOCTYPE') || body.includes('<html'))) {
+      console.error('HTML response detected for auth endpoint:', req.url);
+      // Convert HTML error to JSON error
+      return res.status(res.statusCode || 500)
+        .json({ 
+          error: 'Authentication error', 
+          status: res.statusCode, 
+          message: 'Authentication API returned HTML instead of JSON. Configure proper Content-Type headers.'
+        });
+    }
+    
+    return originalSend.call(this, body);
+  };
+  
+  next();
+});
+EOF
+                
+                # Add this to server.js right before final app.listen
+                if [ -f "server.js" ]; then
+                    log_info "Adding authentication middleware fix to server.js"
+                    # Find the line with app.listen and insert our middleware before it
+                    listen_line=$(grep -n "app.listen" server.js | head -1 | cut -d':' -f1)
+                    if [ -n "$listen_line" ]; then
+                        # Add the middleware import
+                        sed -i "${listen_line}i // Authentication middleware fix (applied by deploy.sh)" server.js
+                        sed -i "$((listen_line+1))i require('./auth-middleware-fix.js');" server.js
+                        log_success "Authentication middleware fix added to server.js"
+                    else
+                        log_warning "Could not locate app.listen in server.js - fix not applied"
+                    fi
+                fi
+                
+                # Also check if we can find main backend entry point
+                if [ -d "backend" ]; then
+                    possible_main_files=("backend/app/main.py" "backend/app.py" "backend/main.py")
+                    for file in "${possible_main_files[@]}"; do
+                        if [ -f "$file" ]; then
+                            log_info "Found backend main file at $file, adding CORS and content-type headers"
+                            # Add content-type enforcement to FastAPI app
+                            echo -e "\n# Authentication fix - ensure proper content-type headers (applied by deploy.sh)" >> "$file"
+                            echo '@app.middleware("http")' >> "$file"
+                            echo 'async def enforce_content_type(request, call_next):' >> "$file"
+                            echo '    response = await call_next(request)' >> "$file"
+                            echo '    path = request.url.path.lower()' >> "$file"
+                            echo '    if "/login" in path or "/auth" in path or "/token" in path or "/users/me" in path:' >> "$file"
+                            echo '        response.headers["Content-Type"] = "application/json"' >> "$file"
+                            echo '    return response' >> "$file"
+                            log_success "Content-type enforcement added to $file"
+                            break
+                        fi
+                    done
+                fi
+                
+                log_info "Authentication middleware fix applied - restarting containers to apply changes"
+                
+                # Ask user if they want to restart the containers right away
+                echo -e "${BLUE}Would you like to restart the containers to apply the authentication fix now? (y/n)${NC}"
+                read -r restart_containers
+                
+                if [[ "$restart_containers" =~ ^[Yy]$ ]]; then
+                    log_info "Restarting containers to apply authentication fix..."
+                    run_command "docker compose down" "Stopping all containers"
+                    run_command "docker compose up -d" "Starting all containers with authentication fix"
+                    log_success "Containers restarted with authentication fix applied"
+                    
+                    # Wait for services to be available again
+                    log_info "Waiting for services to be available again..."
+                    sleep 15
+                else
+                    log_info "Containers NOT restarted. Please restart them manually to apply the authentication fix."
+                fi
+            fi
+        fi
+    fi
+    
+    echo "[AUTH] $(date +"%Y-%m-%d %H:%M:%S.%3N") - Authentication check complete" >> "$LOG_FILE"
+}
+
+# Run the JWT authentication fix/check now
+fix_jwt_auth
 
 # Step 11: Starting Docker containers
 log_info "Step 11: Starting Docker containers..."
 run_command "docker compose up -d" "Starting all containers in detached mode"
 log_success "All containers started successfully"
+
+# Step 11.1: Run authentication endpoint tests now that containers are started
+log_info "Step 11.1: Testing authentication endpoints..."
+# Wait a bit for services to fully initialize
+sleep 10
+test_auth_endpoints
 
 # Step 11.5: Check if diagnostic tools should be enabled
 log_info "Step 11.5: Checking if diagnostic tools should be enabled..."
