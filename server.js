@@ -511,6 +511,63 @@ app.get(['/probe-nodes', '/api/probe-nodes'], (req, res) => {
   res.json(probeNodes);
 });
 
+// API tokens endpoints
+app.get('/api/tokens', (req, res) => {
+  console.log('API tokens request detected:', req.method, req.url);
+  
+  // Create valid token for admin user
+  const token = createValidToken("admin@probeops.com");
+  
+  // API tokens data
+  const apiTokens = [
+    {
+      id: 'token-1',
+      name: 'Default API Token',
+      token: token,
+      created_at: new Date().toISOString(),
+      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+      last_used: new Date().toISOString(),
+      permissions: ['read', 'write']
+    }
+  ];
+  
+  res.json(apiTokens);
+});
+
+// Create API token endpoint
+app.post('/api/tokens', (req, res) => {
+  try {
+    const { name, permissions } = req.body;
+    
+    // Validate required parameters
+    if (!name) {
+      return res.status(400).json({ error: 'Token name is required' });
+    }
+    
+    // Create a new token with the provided name
+    const token = createValidToken("admin@probeops.com");
+    
+    // Create token record
+    const tokenRecord = { 
+      id: generateId(),
+      name: name,
+      token: token,
+      created_at: new Date().toISOString(),
+      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+      last_used: new Date().toISOString(),
+      permissions: permissions || ['read', 'write']
+    };
+    
+    res.status(201).json(tokenRecord);
+  } catch (error) {
+    console.error('Error creating API token:', error);
+    res.status(500).json({ 
+      error: 'Failed to create API token', 
+      detail: error.message 
+    });
+  }
+});
+
 // Add debug status endpoints
 app.get('/api/admin/debug-status', (req, res) => {
   res.json({ 
