@@ -13,7 +13,7 @@ const port = process.env.PORT || 3000;
 
 // Set up API proxy to forward requests to the backend
 // This assumes the backend is running on port 8000
-const apiProxy = createProxyMiddleware({
+const apiProxy = createProxyMiddleware('/api', {
   target: 'http://127.0.0.1:8000',
   pathRewrite: {
     '^/api': '' // Remove /api prefix when forwarding to backend
