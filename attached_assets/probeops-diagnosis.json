@@ -1,0 +1,125 @@
+{
+  "system": {
+    "hostname": "ip-172-16-0-80",
+    "uname": "Linux ip-172-16-0-80 6.8.0-1029-aws #31~22.04.1-Ubuntu SMP Thu Apr 24 21:16:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
+    "nodeVersion": "v18.20.8",
+    "npmVersion": "10.8.2",
+    "processInfo": "root      176517  0.0  0.3  20200  6124 ?        Ss   13:42   0:00 nginx: master process nginx -g daemon off;\nsystemd+  176634  0.0  0.3  20664  6124 ?        S    13:42   0:00 nginx: worker process\nsystemd+  176635  0.0  0.3  20664  5948 ?        S    13:42   0:00 nginx: worker process\nubuntu    180642  0.0  2.2 332140 43520 pts/0    Sl+  13:54   0:00 node aws-collector.js",
+    "diskSpace": "Filesystem      Size  Used Avail Use% Mounted on\n/dev/root        29G  9.3G   20G  33% /",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:            1910         340         580          15         989        1357\nSwap:           2047          64        1983",
+    "environment": {
+      "NODE_ENV": "Not set",
+      "PORT": "Not set",
+      "BACKEND_PORT": "Not set",
+      "JWT_SECRET": "Not set",
+      "DATABASE_URL": "Not set"
+    },
+    "directories": {
+      "/opt/probeops": {
+        "exists": true,
+        "isDirectory": true,
+        "mode": "755",
+        "owner": "root"
+      },
+      "/opt/probeops/public": {
+        "exists": false,
+        "error": "ENOENT: no such file or directory, stat '/opt/probeops/public'"
+      },
+      "/opt/probeops/logs": {
+        "exists": true,
+        "isDirectory": true,
+        "mode": "755",
+        "owner": "root"
+      }
+    },
+    "files": {
+      "/opt/probeops/server.js": {
+        "exists": false,
+        "error": "ENOENT: no such file or directory, stat '/opt/probeops/server.js'"
+      },
+      "/opt/probeops/package.json": {
+        "exists": false,
+        "error": "ENOENT: no such file or directory, stat '/opt/probeops/package.json'"
+      },
+      "/opt/probeops/public/index.html": {
+        "exists": false,
+        "error": "ENOENT: no such file or directory, stat '/opt/probeops/public/index.html'"
+      }
+    }
+  },
+  "network": {
+    "interfaces": "1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000\n    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00\n    inet 127.0.0.1/8 scope host lo\n       valid_lft forever preferred_lft forever\n    inet6 ::1/128 scope host \n       valid_lft forever preferred_lft forever\n2: ens5: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9001 qdisc mq state UP group default qlen 1000\n    link/ether 02:0d:6b:5c:a8:6b brd ff:ff:ff:ff:ff:ff\n    inet 172.16.0.80/24 metric 100 brd 172.16.0.255 scope global dynamic ens5\n       valid_lft 2234sec preferred_lft 2234sec\n    inet6 fe80::d:6bff:fe5c:a86b/64 scope link \n       valid_lft forever preferred_lft forever\n4: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default \n    link/ether 26:71:ea:0d:90:47 brd ff:ff:ff:ff:ff:ff\n    inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0\n       valid_lft forever preferred_lft forever\n326: br-b419cbef5b02: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default \n    link/ether b6:da:26:30:7f:d1 brd ff:ff:ff:ff:ff:ff\n    inet 172.18.0.1/16 brd 172.18.255.255 scope global br-b419cbef5b02\n       valid_lft forever preferred_lft forever\n    inet6 fe80::b4da:26ff:fe30:7fd1/64 scope link \n       valid_lft forever preferred_lft forever\n327: br-c096e6d6a088: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default \n    link/ether ca:06:1b:d7:ed:50 brd ff:ff:ff:ff:ff:ff\n    inet 172.19.0.1/16 brd 172.19.255.255 scope global br-c096e6d6a088\n       valid_lft forever preferred_lft forever\n    inet6 fe80::c806:1bff:fed7:ed50/64 scope link \n       valid_lft forever preferred_lft forever\n328: vethcf0d98b@if2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master br-b419cbef5b02 state UP group default \n    link/ether 22:84:58:e8:de:83 brd ff:ff:ff:ff:ff:ff link-netnsid 0\n    inet6 fe80::2084:58ff:fee8:de83/64 scope link \n       valid_lft forever preferred_lft forever\n331: vethae9160f@if2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master br-b419cbef5b02 state UP group default \n    link/ether 16:7c:15:ad:54:9b brd ff:ff:ff:ff:ff:ff link-netnsid 3\n    inet6 fe80::147c:15ff:fead:549b/64 scope link \n       valid_lft forever preferred_lft forever\n332: veth7f4dadf@if2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master br-c096e6d6a088 state UP group default \n    link/ether 62:12:57:03:9c:6a brd ff:ff:ff:ff:ff:ff link-netnsid 4\n    inet6 fe80::6012:57ff:fe03:9c6a/64 scope link \n       valid_lft forever preferred_lft forever\n337: veth89096c9@if2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master br-b419cbef5b02 state UP group default \n    link/ether f2:b8:a1:8f:45:7c brd ff:ff:ff:ff:ff:ff link-netnsid 1\n    inet6 fe80::f0b8:a1ff:fe8f:457c/64 scope link \n       valid_lft forever preferred_lft forever",
+    "listening": "tcp        0      0 0.0.0.0:8000            0.0.0.0:*               LISTEN     \ntcp        0      0 127.0.0.53:53           0.0.0.0:*               LISTEN     \ntcp        0      0 0.0.0.0:5432            0.0.0.0:*               LISTEN     \ntcp        0      0 0.0.0.0:443             0.0.0.0:*               LISTEN     \ntcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN     \ntcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN     \ntcp6       0      0 :::8000                 :::*                    LISTEN     \ntcp6       0      0 :::5432                 :::*                    LISTEN     \ntcp6       0      0 :::443                  :::*                    LISTEN     \ntcp6       0      0 :::22                   :::*                    LISTEN     \ntcp6       0      0 :::80                   :::*                    LISTEN",
+    "routes": "Kernel IP routing table\nDestination     Gateway         Genmask         Flags   MSS Window  irtt Iface\n0.0.0.0         172.16.0.1      0.0.0.0         UG        0 0          0 ens5\n172.16.0.0      0.0.0.0         255.255.255.0   U         0 0          0 ens5\n172.16.0.1      0.0.0.0         255.255.255.255 UH        0 0          0 ens5\n172.16.0.2      0.0.0.0         255.255.255.255 UH        0 0          0 ens5\n172.17.0.0      0.0.0.0         255.255.0.0     U         0 0          0 docker0\n172.18.0.0      0.0.0.0         255.255.0.0     U         0 0          0 br-b419cbef5b02\n172.19.0.0      0.0.0.0         255.255.0.0     U         0 0          0 br-c096e6d6a088",
+    "backendConnectivity": {
+      "result": {
+        "statusCode": 200,
+        "headers": {
+          "date": "Sun, 18 May 2025 13:54:14 GMT",
+          "server": "uvicorn",
+          "content-length": "43",
+          "content-type": "application/json",
+          "connection": "close"
+        },
+        "data": {
+          "status": "healthy",
+          "database": "connected"
+        }
+      }
+    },
+    "frontendConnectivity": {
+      "error": "connect ECONNREFUSED 127.0.0.1:5000"
+    }
+  },
+  "paths": {
+    "/api/users/me": {
+      "statusCode": 404,
+      "contentType": "application/json",
+      "responseSize": 22
+    },
+    "/api/api/users/me": {
+      "statusCode": 404,
+      "contentType": "application/json",
+      "responseSize": 22
+    },
+    "/users/me": {
+      "statusCode": 401,
+      "contentType": "application/json",
+      "responseSize": 26
+    },
+    "/api/admin/users": {
+      "statusCode": 404,
+      "contentType": "application/json",
+      "responseSize": 22
+    },
+    "/admin/users": {
+      "statusCode": 404,
+      "contentType": "application/json",
+      "responseSize": 22
+    },
+    "/api/probes": {
+      "statusCode": 404,
+      "contentType": "application/json",
+      "responseSize": 22
+    },
+    "/probes": {
+      "statusCode": 401,
+      "contentType": "application/json",
+      "responseSize": 26
+    }
+  },
+  "authentication": {
+    "login_admin@probeops.com": {
+      "statusCode": 422,
+      "success": false,
+      "hasToken": false
+    },
+    "login_test@probeops.com": {
+      "statusCode": 422,
+      "success": false,
+      "hasToken": false
+    }
+  },
+  "errors": [],
+  "timestamp": "2025-05-18T13:54:15.423Z"
+}
