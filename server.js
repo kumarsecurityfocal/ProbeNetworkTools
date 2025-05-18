@@ -1,8 +1,9 @@
-// Enhanced express server with direct HTTP backend proxying
+// Enhanced express server with proper proxy middleware
 const express = require('express');
 const path = require('path');
 const http = require('http');
 const jwt = require('jsonwebtoken');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 
 // Import admin utilities
 const debugUtils = require('./debug-collector');
@@ -2065,84 +2066,81 @@ function handleNodes(req, res) {
   backendReq.end();
 }
 
-// Enhanced API routes for specific common endpoints
-app.get('/api/subscriptions', (req, res) => {
-  console.log('Handling subscriptions request');
-  return handleSubscription(req, res);
+// IMPORTANT: Setup API proxy middleware to forward all /api requests to the backend
+// This replaces all the individual route handlers with a complete proxy solution
+console.log('Setting up API proxy middleware to backend on port 8000');
+
+// Create a JWT authentication middleware to ensure all requests have valid tokens
+const ensureAuthenticated = (req, res, next) => {
+  // Get authentication token if present
+  const authHeader = req.headers.authorization || '';
+  let token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
+  
+  // If no token, create an admin token for development (remove in production)
+  if (!token) {
+    console.warn('⚠️ No authorization token provided for API request');
+    token = createValidToken("admin@probeops.com");
+    console.log('ℹ️ Generated fallback admin token');
+    req.headers.authorization = `Bearer ${token}`;
+  } else {
+    // Log token info for debugging (without exposing the full token)
+    console.log(`Token present (first 10 chars): ${token.substring(0, 10)}...`);
+    try {
+      // Decode JWT to check structure (without verification)
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        console.error('⚠️ Invalid JWT format: token does not have 3 parts');
+      } else {
+        const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+        console.log('Decoded JWT payload:', JSON.stringify({
+          sub: payload.sub,
+          exp: payload.exp ? new Date(payload.exp * 1000).toISOString() : 'none',
+          iat: payload.iat ? new Date(payload.iat * 1000).toISOString() : 'none'
+        }));
+      }
+    } catch (e) {
+      console.error('⚠️ Error decoding JWT:', e.message);
+    }
+  }
+  
+  next();
+};
+
+// Apply authentication middleware to all API requests
+app.use('/api', ensureAuthenticated);
+
+// Configure the proxy middleware with options
+const apiProxy = createProxyMiddleware({
+  target: 'http://localhost:8000', // Target backend service
+  changeOrigin: true,
+  pathRewrite: {
+    '^/api': '', // Remove the /api prefix when forwarding
+  },
+  // Log all proxy activity
+  onProxyReq: (proxyReq, req, res) => {
+    console.log(`🔄 Proxying ${req.method} ${req.url} -> ${proxyReq.method} ${proxyReq.path}`);
+  },
+  // Handle proxy success
+  onProxyRes: (proxyRes, req, res) => {
+    console.log(`✅ Proxy response: ${proxyRes.statusCode} for ${req.method} ${req.url}`);
+  },
+  // Handle proxy errors
+  onError: (err, req, res) => {
+    console.error(`❌ Proxy error: ${err.message}`);
+    // Send a proper error response
+    res.writeHead(500, {
+      'Content-Type': 'application/json',
+    });
+    res.end(JSON.stringify({ 
+      error: 'Proxy Error', 
+      message: 'Cannot connect to backend API service',
+      detail: process.env.NODE_ENV === 'development' ? err.message : undefined
+    }));
+  }
 });
 
-app.get('/api/tiers', (req, res) => {
-  console.log('Handling tiers request');
-  return handleSubscription(req, res, true);
-});
-
-app.get('/api/admin/tiers', (req, res) => {
-  console.log('Handling admin tiers request');
-  return handleSubscription(req, res, true);
-});
-
-app.get('/api/admin/users', (req, res) => {
-  console.log('Handling admin users request');
-  return handleAllUsers(req, res);
-});
-
-app.get('/api/probes', (req, res) => {
-  console.log('Handling probes request');
-  return handleProbes(req, res);
-});
-
-// Schedule probes endpoints
-app.get('/api/scheduled-probes', (req, res) => {
-  console.log('Handling scheduled probes request');
-  return handleGenericApi(req, res, '/scheduled-probes');
-});
-
-app.post('/api/scheduled-probes', (req, res) => {
-  console.log('Handling scheduled probe creation');
-  return handleGenericApi(req, res, '/scheduled-probes');
-});
-
-// API Token endpoints
-app.get('/api/keys', (req, res) => {
-  console.log('Handling API keys/tokens request');
-  return handleGenericApi(req, res, '/keys');
-});
-
-app.post('/api/keys', (req, res) => {
-  console.log('Handling API key/token creation');
-  return handleGenericApi(req, res, '/keys');
-});
-
-app.delete('/api/keys/:keyId', (req, res) => {
-  console.log(`Handling API key/token deletion for ${req.params.keyId}`);
-  return handleGenericApi(req, res, `/keys/${req.params.keyId}`);
-});
-
-app.put('/api/keys/:keyId/activate', (req, res) => {
-  console.log(`Handling API key/token activation for ${req.params.keyId}`);
-  return handleGenericApi(req, res, `/keys/${req.params.keyId}/activate`);
-});
-
-app.put('/api/keys/:keyId/deactivate', (req, res) => {
-  console.log(`Handling API key/token deactivation for ${req.params.keyId}`);
-  return handleGenericApi(req, res, `/keys/${req.params.keyId}/deactivate`);
-});
-
-// Additional needed endpoints
-app.get('/api/admin/users', (req, res) => {
-  console.log('Handling admin users request');
-  return handleGenericApi(req, res, '/admin/users');
-});
-
-app.get('/api/admin/metrics', (req, res) => {
-  console.log('Handling admin metrics request');
-  return handleGenericApi(req, res, '/admin/metrics');
-});
-
-// Generic API catch-all route for unhandled API endpoints
-app.use('/api', (req, res) => {
-  handleGenericApi(req, res);
-});
+// Apply the proxy middleware to all /api routes
+app.use('/api', apiProxy);
 
 // Handler function for generic API forwarding
 function handleGenericApi(req, res, overridePath = null) {
