@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-
 import { Box, CssBaseline, ThemeProvider } from '@mui/material';
 import { useAuth } from './context/AuthContext';
 import { lightTheme, darkTheme } from './theme/theme';
+import AuthDebugPanel from './components/AuthDebugPanel';
 
 // App Components
 import AuthForm from './components/AuthForm';
@@ -105,6 +106,9 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <div className="min-h-screen flex flex-col">
+        {/* Auth Debug Panel - only visible in development mode */}
+        <AuthDebugPanel />
+        
         {isAppRoute && <Navbar 
           darkMode={darkMode} 
           toggleDarkMode={toggleDarkMode} 

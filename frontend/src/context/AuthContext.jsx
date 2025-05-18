@@ -7,6 +7,7 @@ import {
   logout as logoutApi,
   refreshUserProfile
 } from '../services/auth';
+import { useAuthDebug } from '../hooks/useAuthDebug';
 
 // Create context
 const AuthContext = createContext(null);
@@ -15,6 +16,7 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [token, setTokenState] = useState(localStorage.getItem('probeops_token') || null);
   
   // Initialize auth state
   useEffect(() => {
@@ -95,6 +97,7 @@ export const AuthProvider = ({ children }) => {
         
         // Ensure the token is properly saved
         localStorage.setItem('probeops_token', response.access_token);
+        setTokenState(response.access_token);
         
         // If the user object is nested in the response
         if (response.user) {
@@ -145,7 +148,22 @@ export const AuthProvider = ({ children }) => {
     logoutApi();
     setIsAuthenticated(false);
     setUser(null);
+    setTokenState(null);
   };
+  
+  // Add auth debugging in development mode
+  const isAdmin = user && user.is_admin === true;
+  
+  // Initialize auth debugging tools
+  const authState = {
+    isAuthenticated,
+    user,
+    token,
+    isAdmin
+  };
+  
+  // Use the auth debug hook
+  const { isDebugEnabled } = useAuthDebug(authState);
   
   // Context value
   const value = {
@@ -154,7 +172,10 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     register,
-    logout
+    logout,
+    isAdmin,
+    token,
+    debug: isDebugEnabled
   };
   
   return (

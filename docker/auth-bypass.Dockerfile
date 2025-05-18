@@ -18,6 +18,7 @@ EXPOSE 8000
 # Set environment variables for auth bypass mode
 ENV AUTH_BYPASS_MODE=true
 ENV SQLALCHEMY_WARN_20=ignore
+ENV LOG_LEVEL=DEBUG
 
 # Command to run the application
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
