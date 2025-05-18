@@ -40,6 +40,14 @@ args = "Auth Fixer"
 task = "workflow.run"
 args = "DB Explorer"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Fixed Server"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Basic HTTP Server"
+
 [[workflows.workflow]]
 name = "Server"
 author = "agent"
@@ -99,6 +107,24 @@ author = "agent"
 task = "shell.exec"
 args = "node simple-db-explorer.js"
 waitForPort = 7000
+
+[[workflows.workflow]]
+name = "Fixed Server"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node -e \"const express = require('express'); const path = require('path'); const http = require('http'); const jwt = require('jsonwebtoken'); const app = express(); const PORT = process.env.PORT || 5000; app.use(express.static(path.join(__dirname, 'public'))); app.use(express.json()); function createToken(email) { return jwt.sign({sub: email, exp: Math.floor(Date.now()/1000) + 86400}, 'super-secret-key-change-in-production'); } app.all('/api*', (req, res) => { let backendPath = req.path; while(backendPath.startsWith('/api')) { backendPath = backendPath.substring(4); } backendPath = backendPath || '/'; if(!backendPath.startsWith('/')) backendPath = '/' + backendPath; console.log(`API: ${req.path} → ${backendPath}`); let token = req.headers.authorization; if(!token && !req.path.includes('/login')) { token = 'Bearer ' + createToken('admin@probeops.com'); } const options = { hostname: 'localhost', port: 8000, path: backendPath, method: req.method, headers: {...req.headers, host: 'localhost:8000'} }; if(token) options.headers.authorization = token; const proxyReq = http.request(options, proxyRes => { res.writeHead(proxyRes.statusCode, proxyRes.headers); proxyRes.pipe(res); }); proxyReq.on('error', () => { res.status(503).json({error: 'Backend unavailable', message: 'Please try again'}); }); if(['POST','PUT','PATCH'].includes(req.method) && req.body) { proxyReq.write(typeof req.body === 'string' ? req.body : JSON.stringify(req.body)); } proxyReq.end(); }); app.get('*', (req, res) => { res.sendFile(path.join(__dirname, 'public', 'index.html')); }); app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));\""
+waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Basic HTTP Server"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node no-express-server.js"
+waitForPort = 5000
 
 [deployment]
 run = ["sh", "-c", "cd frontend && npm install && npm run dev"]
