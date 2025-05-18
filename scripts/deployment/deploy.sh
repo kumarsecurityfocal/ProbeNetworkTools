@@ -748,8 +748,13 @@ fi
 log_info "Step 10.6: Authentication check - skipping since we're using a fresh deployment"
 echo "[AUTH] $(date +"%Y-%m-%d %H:%M:%S.%3N") - JWT auth fix skipped for fresh deployment" >> "$LOG_FILE"
 
-# Step 10.7: Check if diagnostic tools should be enabled
-log_info "Step 10.7: Checking if diagnostic tools should be enabled..."
+# Step 11: Starting Docker containers
+log_info "Step 11: Starting Docker containers..."
+run_command "docker compose up -d" "Starting all containers in detached mode"
+log_success "All containers started successfully"
+
+# Step 11.5: Check if diagnostic tools should be enabled
+log_info "Step 11.5: Checking if diagnostic tools should be enabled..."
 echo -e "${BLUE}Would you like to enable the diagnostic dashboard for troubleshooting? (y/n)${NC}"
 read -r enable_diagnostics
 
@@ -767,11 +772,6 @@ if [[ "$enable_diagnostics" =~ ^[Yy]$ ]]; then
 else
     log_info "Diagnostic dashboard not enabled - skipping setup"
 fi
-
-# Step 11: Starting Docker containers
-log_info "Step 11: Starting Docker containers..."
-run_command "docker compose up -d" "Starting all containers in detached mode"
-log_success "All containers started successfully"
 
 # Step 12: Verify deployment
 log_info "Step 12: Verifying deployment..."

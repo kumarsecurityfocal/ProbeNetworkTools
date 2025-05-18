@@ -44,7 +44,12 @@ services:
       - "${DIAG_PORT}:${DIAG_PORT}"
     command: sh -c "npm init -y && npm install express pg && node diagnostic-dashboard.js"
     restart: unless-stopped
-    # Use the default network created by docker-compose
+    networks:
+      - probeops-network
+
+networks:
+  probeops-network:
+    external: true
 EOF
 
 # Add diagnostics to .gitignore if not already there
@@ -79,17 +84,19 @@ mkdir -p ${REPO_ROOT}/nginx/conf.d
 echo "Starting diagnostics service..."
 cd ${REPO_ROOT}
 
-# Check if any containers are running
-if [ "$(docker ps -q)" != "" ]; then
-    # Use the bridge network which is guaranteed to exist
-    echo "Using default bridge network for diagnostics container"
-    docker compose -f docker-compose.diagnostics.yml up -d diagnostics
-else
-    # If this is a first-time deployment with no containers, start with main compose file first
-    echo "No containers running. Starting diagnostics with main services"
-    docker compose up -d
-    docker compose -f docker-compose.diagnostics.yml up -d diagnostics
+# Make sure the main services are running first so the network exists
+echo "Ensuring the probeops-network exists before starting diagnostics..."
+
+# Wait for the network to be created (it's created by the main docker-compose up command)
+echo "Checking if we need to wait for the main services to create the network..."
+if ! docker network ls | grep -q probeops-network; then
+    echo "Network doesn't exist yet. This diagnostic setup should be run AFTER docker compose up in the deploy.sh"
+    echo "The diagnostics container will be set up, but won't start until the main deployment creates the network"
 fi
+
+# Start the diagnostics container
+echo "Starting diagnostics container..."
+docker compose -f docker-compose.diagnostics.yml up -d diagnostics || echo "Diagnostics container will start when the network is available"
 
 echo "================================================"
 echo "ProbeOps Diagnostics setup complete!"
