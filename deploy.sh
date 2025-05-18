@@ -100,6 +100,21 @@ else
   echo "Backend hostname already configured correctly."
 fi
 
+# 8.1 Setup auth-debug.log in logs directory
+echo "Setting up authentication debug logging..."
+# Update server.js to log to the logs directory
+if grep -q "fs.appendFileSync('auth-debug.log'" server.js; then
+  # Create a backup of server.js if not already done
+  if [ ! -f server.js.bak.${TIMESTAMP} ]; then
+    cp server.js server.js.bak.${TIMESTAMP}
+  fi
+  # Replace log path to use LOG_DIR
+  sed -i "s|fs.appendFileSync('auth-debug.log'|fs.appendFileSync('${LOG_DIR}/auth-debug.log'|g" server.js
+  echo "Authentication logs will be written to ${LOG_DIR}/auth-debug.log"
+else
+  echo "Authentication debug logging not found in server.js, skipping."
+fi
+
 # 9. Restart services
 echo "Restarting services..."
 docker-compose down
