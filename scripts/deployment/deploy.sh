@@ -811,7 +811,7 @@ test_auth_endpoints() {
     
     # Test a login request
     log_info "Testing authentication with backend API..."
-    login_response=$(curl -s -X POST -H "Content-Type: application/json" -H "Accept: application/json" -d '{"username":"admin@probeops.com","password":"AdminPassword123"}' http://localhost:8000/login 2>/dev/null)
+    login_response=$(curl -s -X POST -H "Content-Type: application/x-www-form-urlencoded" -H "Accept: application/json" -d 'username=admin@probeops.com&password=probeopS1@' http://localhost:8000/login 2>/dev/null)
     login_status=$?
     
     # Write response to log file

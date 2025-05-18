@@ -8,6 +8,9 @@ const jwt = require('jsonwebtoken');
 const debugUtils = require('./debug-collector');
 const dbAdmin = require('./db-admin');
 
+// Import authentication middleware fix
+const { authMiddlewareFix } = require('./auth-middleware-fix');
+
 // Create express app
 const app = express();
 const port = process.env.PORT || 5000;
@@ -19,6 +22,9 @@ const JWT_SECRET = "super-secret-key-change-in-production";
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Add this to parse form data
+
+// Apply auth middleware fix to handle JSON to form-urlencoded conversion
+app.use(authMiddlewareFix);
 
 // JWT helper function to create valid tokens
 function createValidToken(email = "admin@probeops.com") {

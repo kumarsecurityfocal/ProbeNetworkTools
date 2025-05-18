@@ -333,10 +333,19 @@ const createHtml = (content) => `
 
     // Test authentication flow
     function testAuth() {
-      const username = document.getElementById('test-username').value;
-      const password = document.getElementById('test-password').value;
+      const username = document.getElementById('test-username').value || 'admin@probeops.com';
+      const password = document.getElementById('test-password').value || 'probeopS1@';
       
-      document.getElementById('auth-result').textContent = 'Testing authentication...';
+      // Update the input fields with default values if empty
+      if (!document.getElementById('test-username').value) {
+        document.getElementById('test-username').value = 'admin@probeops.com';
+      }
+      
+      if (!document.getElementById('test-password').value) {
+        document.getElementById('test-password').value = 'probeopS1@';
+      }
+      
+      document.getElementById('auth-result').textContent = 'Testing authentication with form-urlencoded format...';
       
       fetch('/diagnostics/test-auth', {
         method: 'POST',
@@ -573,16 +582,28 @@ app.post('*/test-auth', async (req, res) => {
   try {
     const { username, password } = req.body;
     
-    // Attempt login with provided credentials
+    // Attempt login with provided credentials using form-urlencoded format
     const { stdout: loginOutput } = await execAsync(
-      `curl -s -X POST http://localhost:8000/login -H "Content-Type: application/json" -d '{"username":"${username}","password":"${password}"}'`
+      `curl -s -X POST http://localhost:8000/login -H "Content-Type: application/x-www-form-urlencoded" -d "username=${username}&password=${password}"`
     );
     
     let loginResult;
     try {
       loginResult = JSON.parse(loginOutput);
     } catch (e) {
-      loginResult = { raw: loginOutput };
+      // Testing JSON format failed, try examining the raw response
+      if (loginOutput.includes('<!DOCTYPE') || loginOutput.includes('<html')) {
+        loginResult = { 
+          error: 'Received HTML response instead of JSON',
+          raw: loginOutput.substring(0, 300) + '...',
+          possible_cause: 'Nginx/proxy configuration issue: API receiving HTML instead of proper JSON response'
+        };
+      } else {
+        loginResult = { 
+          error: 'Failed to parse JSON response', 
+          raw: loginOutput
+        };
+      }
     }
     
     // If login successful, try getting user profile
