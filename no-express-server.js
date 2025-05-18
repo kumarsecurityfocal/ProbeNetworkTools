@@ -29,8 +29,14 @@ function logDebug(message, data = null) {
   const logMessage = `[${new Date().toISOString()}] ${message}${data ? ': ' + JSON.stringify(data) : ''}`;
   console.log(logMessage);
   
-  // Optionally write to a file if needed
-  // fs.appendFileSync('/opt/probeops/logs/proxy-debug.log', logMessage + '\n');
+  // Create logs directory if it doesn't exist
+  const logDir = path.join(__dirname, 'logs');
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
+  }
+  
+  // Always write to a file for persistent debugging
+  fs.appendFileSync(path.join(logDir, 'proxy-debug.log'), logMessage + '\n');
 }
 
 // Clean the API path by removing duplicate /api prefixes
