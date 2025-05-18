@@ -46,7 +46,7 @@ args = "Fixed Server"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "ProbeOps Auth Solution"
+args = "Fixed Auth Server"
 
 [[workflows.workflow]]
 name = "Server"
@@ -118,12 +118,12 @@ args = "node -e \"const express = require('express'); const path = require('path
 waitForPort = 5000
 
 [[workflows.workflow]]
-name = "ProbeOps Auth Solution"
+name = "Fixed Auth Server"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node auth-solution.js"
+args = "node fixed-auth-server.js"
 waitForPort = 5000
 
 [deployment]
