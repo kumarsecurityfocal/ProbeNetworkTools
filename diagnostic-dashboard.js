@@ -22,7 +22,7 @@ const execAsync = promisify(exec);
 const debugCollector = require('./debug-collector.js');
 
 // Configuration 
-const PORT = process.env.DIAGNOSTIC_PORT || 7777;
+const PORT = process.env.DIAGNOSTIC_PORT || 8888;
 const VERSION = '1.0.0';
 const DEBUG_DIR = './debug-logs';
 const PASSWORD = process.env.DIAGNOSTIC_PASSWORD || 'probeops-diagnostics'; // Basic protection
@@ -891,9 +891,9 @@ app.post('*/update-script', async (req, res) => {
 });
 
 // Start server on a dedicated diagnostic port 8888
-const DIAGNOSTIC_PORT = process.env.DIAGNOSTIC_PORT || 8888;
-app.listen(DIAGNOSTIC_PORT, '0.0.0.0', () => {
-  console.log(`Diagnostic dashboard running on port ${DIAGNOSTIC_PORT}`);
-  console.log(`Access at: http://your-ip-or-domain:${DIAGNOSTIC_PORT}/`);
+// Use the PORT variable defined at the top of the file
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Diagnostic dashboard running on port ${PORT}`);
+  console.log(`Access at: http://your-ip-or-domain:${PORT}/`);
   console.log('NOTE: Make sure port 8888 is open in your AWS security group');
 });
