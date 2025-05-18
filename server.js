@@ -21,6 +21,9 @@ function logToFile(message) {
 const app = express();
 const port = process.env.PORT || 5000;
 
+// Security flag to disable registration (set to true for production)
+const DISABLE_REGISTRATION = true;
+
 // Secret key for JWT signing - MUST match the backend
 const JWT_SECRET = "super-secret-key-change-in-production";
 
@@ -54,6 +57,22 @@ function createValidToken(email = "admin@probeops.com") {
   
   return token;
 }
+
+// Security middleware to block registration
+app.use((req, res, next) => {
+  // Block any registration attempts if disabled
+  if (DISABLE_REGISTRATION && 
+      (req.path.includes('/register') || 
+       req.path.includes('/signup') || 
+       (req.path.includes('/user') && req.method === 'POST'))) {
+    console.log(`[SECURITY] Registration attempt blocked: ${req.method} ${req.path}`);
+    logToFile(`[SECURITY] Registration attempt blocked: ${req.method} ${req.path}`);
+    return res.status(403).json({ 
+      detail: "Registration is temporarily disabled for security reasons. Please contact an administrator." 
+    });
+  }
+  next();
+});
 
 // Enhanced debug middleware for authentication tracing
 app.use((req, res, next) => {
