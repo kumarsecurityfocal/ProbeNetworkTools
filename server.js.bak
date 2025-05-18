@@ -942,7 +942,7 @@ function handleAllUsers(req, res) {
   
   // Forward request to backend users endpoint
   const options = {
-    hostname: '0.0.0.0',
+    hostname: 'localhost',
     port: 8000,
     path: '/users',
     method: req.method,
@@ -1045,7 +1045,7 @@ function handleUserProfile(req, res) {
   
   // Forward request to backend
   const options = {
-    hostname: '0.0.0.0',
+    hostname: 'localhost',
     port: 8000,
     path: req.url,
     method: req.method,
@@ -1116,7 +1116,7 @@ function handleHistory(req, res) {
   
   // Forward request to backend
   const options = {
-    hostname: '0.0.0.0',
+    hostname: 'localhost',
     port: 8000,
     path: pathWithParams,
     method: req.method,
@@ -1196,7 +1196,7 @@ function handleKeys(req, res) {
   
   // Forward request to backend
   const options = {
-    hostname: '0.0.0.0',
+    hostname: 'localhost',
     port: 8000,
     path: backendPath,
     method: req.method,
@@ -1301,7 +1301,7 @@ function handleSubscription(req, res) {
   
   // Forward request to backend
   const options = {
-    hostname: '0.0.0.0',
+    hostname: 'localhost',
     port: 8000,
     path: backendPath,
     method: req.method,
@@ -1430,7 +1430,7 @@ function handleDiagnostics(req, res) {
   
   // Forward request to backend
   const options = {
-    hostname: '0.0.0.0',
+    hostname: 'localhost',
     port: 8000,
     path: backendPath,
     method: req.method,
@@ -1550,7 +1550,7 @@ function handleProbes(req, res) {
   
   // Forward request to backend
   const options = {
-    hostname: '0.0.0.0',
+    hostname: 'localhost',
     port: 8000,
     path: backendPath,
     method: req.method,
@@ -1694,7 +1694,7 @@ function handleMetrics(req, res) {
   
   // Forward request to backend
   const options = {
-    hostname: '0.0.0.0',
+    hostname: 'localhost',
     port: 8000,
     path: backendPath,
     method: req.method,
@@ -1810,7 +1810,7 @@ function handleGenericApi(req, res) {
   
   // Forward request to backend
   const options = {
-    hostname: '0.0.0.0',
+    hostname: 'localhost',
     port: 8000,
     path: backendPath,
     method: req.method,
@@ -1933,7 +1933,7 @@ function handleNodes(req, res) {
   
   // Forward request to backend
   const options = {
-    hostname: '0.0.0.0',
+    hostname: 'localhost',
     port: 8000,
     path: backendPath,
     method: req.method,
