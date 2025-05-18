@@ -698,14 +698,6 @@ function handleLogin(req, res) {
   return handleGenericApi(req, res);
 }
 
-    return res.status(500).json({ detail: `Authentication server unavailable: ${error.message}` });
-  });
-  
-  // Write body and end request
-  backendReq.write(requestBodyString);
-  backendReq.end();
-}
-
 // Handler for all users endpoint - this is used by admin panel
 function handleAllUsers(req, res) {
   console.log(`All users request: ${req.method} ${req.url} - DETAILED LOG`);
