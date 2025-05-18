@@ -40,10 +40,6 @@ args = "Auth Fixer"
 task = "workflow.run"
 args = "DB Explorer"
 
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "API Fix Server"
-
 [[workflows.workflow]]
 name = "Server"
 author = "agent"
@@ -103,15 +99,6 @@ author = "agent"
 task = "shell.exec"
 args = "node simple-db-explorer.js"
 waitForPort = 7000
-
-[[workflows.workflow]]
-name = "API Fix Server"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node api-fix.js"
-waitForPort = 7001
 
 [deployment]
 run = ["sh", "-c", "cd frontend && npm install && npm run dev"]
