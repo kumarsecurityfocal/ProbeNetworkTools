@@ -760,15 +760,56 @@ read -r enable_diagnostics
 
 if [[ "$enable_diagnostics" =~ ^[Yy]$ ]]; then
     log_info "Setting up diagnostic dashboard..."
-    if [ -f "scripts/deployment/diagnostics-setup.sh" ]; then
-        chmod +x scripts/deployment/diagnostics-setup.sh
-        run_command "./scripts/deployment/diagnostics-setup.sh" "Setting up diagnostic tools"
-        log_success "Diagnostic dashboard setup complete"
-        log_info "You can access the diagnostic dashboard at: https://your-domain.com/diagnostics"
-        log_info "Default password is 'probeops-diagnostics' - please change this in production"
-    else
-        log_warning "Diagnostic setup script not found. Skipping diagnostics setup."
+    
+    # Create diagnostics-package.json if it doesn't exist
+    if [ ! -f "diagnostics-package.json" ]; then
+        log_info "Creating diagnostics-package.json..."
+        cat > diagnostics-package.json << 'EOL'
+{
+  "name": "probeops-diagnostic-dashboard",
+  "version": "1.0.0",
+  "description": "Diagnostic dashboard for ProbeOps system monitoring",
+  "main": "diagnostic-dashboard.js",
+  "scripts": {
+    "start": "node diagnostic-dashboard.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.4.0",
+    "child_process": "^1.0.2",
+    "fs-extra": "^11.1.1"
+  }
+}
+EOL
     fi
+    
+    # Install dependencies
+    log_info "Installing diagnostic dashboard dependencies..."
+    run_command "cp diagnostics-package.json package.json" "Copying diagnostics-package.json to package.json"
+    run_command "npm install" "Installing diagnostic dashboard dependencies"
+    
+    # Check if port 8888 is open in firewall
+    log_info "Checking if port 8888 is open in firewall..."
+    if ! sudo iptables -L | grep -q "dpt:8888"; then
+        log_info "Opening port 8888 in the firewall..."
+        run_command "sudo iptables -A INPUT -p tcp --dport 8888 -j ACCEPT" "Opening port 8888 in the firewall"
+        log_success "Port 8888 opened in the firewall"
+    else
+        log_info "Port 8888 is already open"
+    fi
+    
+    # Setup PM2 to run the diagnostic dashboard as a service
+    log_info "Setting up diagnostic dashboard as a service using PM2..."
+    run_command "npm install -g pm2" "Installing PM2 globally"
+    run_command "pm2 stop probeops-diagnostics 2>/dev/null || true" "Stopping existing diagnostic dashboard (if any)"
+    run_command "pm2 start diagnostic-dashboard.js --name probeops-diagnostics" "Starting diagnostic dashboard as a service"
+    run_command "pm2 save" "Saving PM2 configuration"
+    run_command "pm2 startup" "Setting up PM2 to start on system boot"
+    
+    log_success "Diagnostic dashboard setup complete"
+    log_info "You can access the diagnostic dashboard at: http://$(hostname -I | awk '{print $1}'):8888"
+    log_info "Default password is 'probeops-diagnostics' - please change this in production"
+    log_info "To check logs: pm2 logs probeops-diagnostics"
 else
     log_info "Diagnostic dashboard not enabled - skipping setup"
 fi
