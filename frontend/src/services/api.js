@@ -15,15 +15,14 @@ api.interceptors.request.use(
   (config) => {
     const token = getToken();
     
-    // Filter out hardcoded tokens
-    if (token && token !== 'admin-direct-access-token' && token !== 'admin-direct-access') {
+    if (token) {
       console.log('Attaching JWT token to request');
       config.headers['Authorization'] = `Bearer ${token}`;
       
       // Also update global axios defaults
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     } else {
-      console.warn('Invalid token detected, not sending authorization header');
+      console.warn('No token available, not sending authorization header');
     }
     return config;
   },

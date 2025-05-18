@@ -11,14 +11,6 @@ export const setToken = (token) => {
 
 export const getToken = () => {
   const token = localStorage.getItem(TOKEN_KEY);
-  
-  // Filter out invalid hardcoded tokens
-  if (token === 'admin-direct-access-token' || token === 'admin-direct-access') {
-    console.warn('Found invalid hardcoded token, removing it');
-    localStorage.removeItem(TOKEN_KEY);
-    return null;
-  }
-  
   return token;
 };
 

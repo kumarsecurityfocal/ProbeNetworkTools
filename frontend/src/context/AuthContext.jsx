@@ -5,8 +5,7 @@ import {
   login as loginApi,
   register as registerApi,
   logout as logoutApi,
-  refreshUserProfile,
-  setToken
+  refreshUserProfile
 } from '../services/auth';
 import axios from 'axios';
 
