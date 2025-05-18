@@ -5,7 +5,7 @@ import { getToken, clearToken } from './auth';
 const api = axios.create({
   // Point directly to the backend API
   baseURL: process.env.NODE_ENV === 'production' 
-    ? `${window.location.origin}/api` // For production
+    ? `${window.location.origin}` // For production - removed /api prefix to avoid duplication
     : 'http://localhost:8000', // For development
   timeout: 60000 // 60 second timeout for slower network conditions
 });

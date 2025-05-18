@@ -2115,6 +2115,7 @@ const apiProxy = createProxyMiddleware({
   changeOrigin: true,
   pathRewrite: {
     '^/api': '', // Remove the /api prefix when forwarding
+    '^/api/api/': '/', // Also handle potential double /api prefix from browser
   },
   // Log all proxy activity
   onProxyReq: (proxyReq, req, res) => {
