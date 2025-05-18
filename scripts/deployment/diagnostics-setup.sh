@@ -78,7 +78,18 @@ mkdir -p ${REPO_ROOT}/nginx/conf.d
 
 echo "Starting diagnostics service..."
 cd ${REPO_ROOT}
-docker compose -f docker-compose.yml -f docker-compose.diagnostics.yml up -d diagnostics
+
+# Check if any containers are running
+if [ "$(docker ps -q)" != "" ]; then
+    # Use the bridge network which is guaranteed to exist
+    echo "Using default bridge network for diagnostics container"
+    docker compose -f docker-compose.diagnostics.yml up -d diagnostics
+else
+    # If this is a first-time deployment with no containers, start with main compose file first
+    echo "No containers running. Starting diagnostics with main services"
+    docker compose up -d
+    docker compose -f docker-compose.diagnostics.yml up -d diagnostics
+fi
 
 echo "================================================"
 echo "ProbeOps Diagnostics setup complete!"
