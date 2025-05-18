@@ -6,11 +6,19 @@ APP_DIR="${APP_DIR:-/opt/probeops}"
 BACKUP_DIR="${BACKUP_DIR:-$APP_DIR/backups}"
 LOG_DIR="${LOG_DIR:-$APP_DIR/logs}"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-LOG_FILE="${LOG_DIR}/deploy_${TIMESTAMP}.log"
+LOG_FILE="${LOG_DIR}/deploy/deploy_${TIMESTAMP}.log"
 
-# Create required directories
+# Create required directories with proper structure
 mkdir -p $BACKUP_DIR
-mkdir -p $LOG_DIR
+mkdir -p ${LOG_DIR}/nginx
+mkdir -p ${LOG_DIR}/frontend
+mkdir -p ${LOG_DIR}/backend
+mkdir -p ${LOG_DIR}/express
+mkdir -p ${LOG_DIR}/postgres
+mkdir -p ${LOG_DIR}/deploy
+
+# Set directory permissions to ensure containers can write logs
+chmod -R 777 ${LOG_DIR}
 
 # Start logging
 exec > >(tee -a $LOG_FILE) 2>&1

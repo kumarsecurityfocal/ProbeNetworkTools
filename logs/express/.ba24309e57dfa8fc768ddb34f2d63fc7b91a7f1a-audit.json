@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/home/runner/workspace/logs/express/.ba24309e57dfa8fc768ddb34f2d63fc7b91a7f1a-audit.json",
+    "files": [
+        {
+            "date": 1747544206734,
+            "name": "/home/runner/workspace/logs/express/express-2025-05-18.log",
+            "hash": "a687a7a91fa732c362f1a53d5ea6033ab9ff9a08670992537068119e615a107e"
+        }
+    ],
+    "hashType": "sha256"
+}

@@ -9,11 +9,12 @@ const debugUtils = require('./debug-collector');
 const dbAdmin = require('./db-admin');
 const fs = require('fs');
 
-// Setup logger to file
+// Import enhanced logger
+const { logger, authLogger, logAuth } = require('./express-logger');
+
+// Legacy logger function for backward compatibility
 function logToFile(message) {
-  const timestamp = new Date().toISOString();
-  const formattedMessage = `[${timestamp}] ${message}\n`;
-  fs.appendFileSync('auth-debug.log', formattedMessage);
+  logAuth(message);
 }
 
 // Create express app
