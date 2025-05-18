@@ -83,7 +83,7 @@ EOF
 
 echo "Starting diagnostics service..."
 cd ${REPO_ROOT}
-docker-compose -f docker-compose.yml -f docker-compose.diagnostics.yml up -d diagnostics
+docker compose -f docker-compose.yml -f docker-compose.diagnostics.yml up -d diagnostics
 
 echo "================================================"
 echo "ProbeOps Diagnostics setup complete!"
