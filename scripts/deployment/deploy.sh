@@ -800,11 +800,19 @@ EOL
     
     # Setup PM2 to run the diagnostic dashboard as a service
     log_info "Setting up diagnostic dashboard as a service using PM2..."
-    run_command "npm install -g pm2" "Installing PM2 globally"
+    run_command "sudo npm install -g pm2" "Installing PM2 globally with sudo"
     run_command "pm2 stop probeops-diagnostics 2>/dev/null || true" "Stopping existing diagnostic dashboard (if any)"
     run_command "pm2 start diagnostic-dashboard.js --name probeops-diagnostics" "Starting diagnostic dashboard as a service"
     run_command "pm2 save" "Saving PM2 configuration"
-    run_command "pm2 startup" "Setting up PM2 to start on system boot"
+    
+    # Generate the startup script but execute it with sudo
+    log_info "Setting up PM2 to start on system boot..."
+    pm2_startup=$(pm2 startup | grep "sudo" | tail -n 1)
+    if [ -n "$pm2_startup" ]; then
+        run_command "$pm2_startup" "Running PM2 startup script with proper permissions"
+    else
+        run_command "sudo env PATH=$PATH pm2 startup" "Generating and running PM2 startup script"
+    fi
     
     log_success "Diagnostic dashboard setup complete"
     log_info "You can access the diagnostic dashboard at: http://$(hostname -I | awk '{print $1}'):8888"
