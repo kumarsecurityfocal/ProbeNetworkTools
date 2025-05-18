@@ -26,6 +26,18 @@ app.use(express.urlencoded({ extended: true })); // Add this to parse form data
 // Apply auth middleware fix to handle JSON to form-urlencoded conversion
 app.use(authMiddlewareFix);
 
+// VERSION MARKER: AWS Authentication Fix v2.0 (May 18, 2025)
+// This endpoint allows checking if authentication fix is deployed
+app.get('/auth-fix-version', (req, res) => {
+  res.json({
+    version: "v2.0.0",
+    deployed_at: "May 18, 2025",
+    fix_type: "Form-urlencoded compatibility",
+    fix_applied: true,
+    contact: "admin@probeops.com"
+  });
+});
+
 // JWT helper function to create valid tokens
 function createValidToken(email = "admin@probeops.com") {
   const payload = {
