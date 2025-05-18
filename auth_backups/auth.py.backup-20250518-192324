@@ -16,7 +16,7 @@ from app.config import settings
 from app.database import get_db
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login", auto_error=False)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 logger = logging.getLogger(__name__)
 
 
@@ -129,51 +129,86 @@ def create_api_key(db: Session, name: str, user_id: int, expires_at: Optional[da
     return db_api_key
 
 
-# MODIFIED: Always returns the admin user regardless of token
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    print("🔍 BYPASSED AUTHENTICATION - Using admin account")
-    logger.debug("BYPASSED AUTHENTICATION - Using admin account")
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        # Decode the JWT token
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+        
+        # Print decoded token payload for debugging
+        print("🔍 Decoded JWT payload:", payload)
+        logger.debug(f"Decoded JWT payload: {payload}")
+        
+        # Get the subject from payload and validate it's not None
+        email = payload.get("sub")
+        if email is None:
+            print("❌ Missing 'sub' in JWT payload")
+            logger.error("Missing 'sub' field in JWT payload")
+            raise credentials_exception
+        
+        print(f"📧 Found email in token: {email}")
+        
+        # Safely create TokenPayload with the email
+        token_payload = TokenPayload(sub=email)
+        print("✅ TokenPayload validated:", token_payload.dict())
+        logger.debug(f"TokenPayload validated: {token_payload.dict()}")
+        
+    except JWTError as e:
+        print(f"❌ JWTError: {e}")
+        logger.error(f"JWT decoding error: {str(e)}")
+        raise HTTPException(status_code=401, detail="Invalid token")
+    except ValidationError as ve:
+        print(f"❌ TokenPayload validation error: {ve}")
+        logger.error(f"TokenPayload validation error: {str(ve)}")
+        raise HTTPException(status_code=422, detail="Invalid token schema")
+    except Exception as e:
+        print(f"❌ Unexpected error: {e}")
+        logger.error(f"Unexpected token validation error: {str(e)}")
+        raise credentials_exception
     
-    # Get the admin user
-    admin = get_user_by_email(db, "admin@probeops.com")
-    if not admin:
-        # Create admin if doesn't exist
-        print("⚠️ Admin user not found, creating default admin")
-        initialize_default_users(db)
-        admin = get_user_by_email(db, "admin@probeops.com")
+    # Lookup user by email from token
+    user = get_user_by_email(db, email=token_payload.sub)
+    if user is None:
+        print(f"❌ User not found for email: {token_payload.sub}")
+        logger.error(f"User not found for email: {token_payload.sub}")
+        raise credentials_exception
     
-    if not admin:
-        print("⚠️ Failed to create admin user, this should not happen")
-        raise HTTPException(status_code=500, detail="Failed to create admin user")
-    
-    print(f"✅ Using admin user: {admin.username}")
-    return admin
+    print(f"✅ User found: {user.username} (email: {user.email})")
+    return user
 
 
-# MODIFIED: Always returns the current user as active
 async def get_current_active_user(current_user: User = Depends(get_current_user)):
+    if current_user.is_active is False:  # Explicit check against boolean value
+        raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
 
-# MODIFIED: Always returns the current user as admin
 async def get_admin_user(current_user: User = Depends(get_current_active_user)):
-    """Bypass dependency for admin-only endpoints."""
+    """Dependency for admin-only endpoints."""
+    if current_user.is_admin is False:  # Explicit check against boolean value
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to access this resource"
+        )
     return current_user
 
 
 def validate_api_key(api_key: str, db: Session):
-    """MODIFIED: Always returns admin user regardless of API key."""
-    admin = get_user_by_email(db, "admin@probeops.com")
-    if not admin:
-        # Create admin if doesn't exist
-        initialize_default_users(db)
-        admin = get_user_by_email(db, "admin@probeops.com")
-        
-    if not admin:
-        print("⚠️ Failed to create admin user for API key validation")
+    """Validate API key and return the associated user if valid."""
+    db_api_key = db.query(ApiKey).filter(ApiKey.key == api_key, ApiKey.is_active == True).first()
+    if db_api_key is None:
         return None
         
-    return admin
+    # Check if expires_at is set and if it's in the past
+    if db_api_key.expires_at is not None:
+        if db_api_key.expires_at < datetime.utcnow():
+            return None
+            
+    return db_api_key.user
 
 
 def initialize_default_users(db: Session):
