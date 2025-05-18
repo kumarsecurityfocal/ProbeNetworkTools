@@ -71,6 +71,11 @@ export const AuthProvider = ({ children }) => {
       }
       
       console.log("Login successful, token received");
+      
+      // Save token to localStorage and attach it globally
+      localStorage.setItem("probeops_token", response.access_token);
+      setToken(response.access_token);
+      
       setIsAuthenticated(true);
       
       // Get user data - either from response or fetch profile
