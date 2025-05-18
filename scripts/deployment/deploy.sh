@@ -748,6 +748,26 @@ fi
 log_info "Step 10.6: Authentication check - skipping since we're using a fresh deployment"
 echo "[AUTH] $(date +"%Y-%m-%d %H:%M:%S.%3N") - JWT auth fix skipped for fresh deployment" >> "$LOG_FILE"
 
+# Step 10.7: Check if diagnostic tools should be enabled
+log_info "Step 10.7: Checking if diagnostic tools should be enabled..."
+echo -e "${BLUE}Would you like to enable the diagnostic dashboard for troubleshooting? (y/n)${NC}"
+read -r enable_diagnostics
+
+if [[ "$enable_diagnostics" =~ ^[Yy]$ ]]; then
+    log_info "Setting up diagnostic dashboard..."
+    if [ -f "scripts/deployment/diagnostics-setup.sh" ]; then
+        chmod +x scripts/deployment/diagnostics-setup.sh
+        run_command "./scripts/deployment/diagnostics-setup.sh" "Setting up diagnostic tools"
+        log_success "Diagnostic dashboard setup complete"
+        log_info "You can access the diagnostic dashboard at: https://your-domain.com/diagnostics"
+        log_info "Default password is 'probeops-diagnostics' - please change this in production"
+    else
+        log_warning "Diagnostic setup script not found. Skipping diagnostics setup."
+    fi
+else
+    log_info "Diagnostic dashboard not enabled - skipping setup"
+fi
+
 # Step 11: Starting Docker containers
 log_info "Step 11: Starting Docker containers..."
 run_command "docker compose up -d" "Starting all containers in detached mode"
