@@ -196,17 +196,7 @@ const createHtml = (content) => `
   </style>
 </head>
 <body>
-  <div id="password-modal">
-    <div class="modal-content">
-      <h2>ProbeOps Diagnostics</h2>
-      <p>Enter the diagnostic password to continue:</p>
-      <input type="password" id="password-input" placeholder="Password">
-      <p id="auth-failed" class="hidden">Incorrect password. Please try again.</p>
-      <button id="login-button" onclick="authenticate()">Login</button>
-    </div>
-  </div>
-
-  <div id="main-content" class="hidden">
+  <div id="main-content">
     <header>
       <div>
         <h1>ProbeOps Diagnostic Dashboard</h1>
@@ -304,59 +294,11 @@ const createHtml = (content) => `
   </div>
 
   <script>
-    // Authentication
-    function authenticate() {
-      const password = document.getElementById('password-input').value;
-      fetch('./auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password })
-      })
-      .then(response => {
-        // First check if the response is JSON
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          return response.json().then(data => {
-            if (data.authenticated) {
-              document.getElementById('password-modal').classList.add('hidden');
-              document.getElementById('main-content').classList.remove('hidden');
-              // Initialize dashboard
-              checkStatus();
-              loadRecentLogs();
-            } else {
-              document.getElementById('auth-failed').classList.remove('hidden');
-            }
-          });
-        } else {
-          // Handle non-JSON response (like HTML)
-          document.getElementById('auth-failed').textContent = 'Authentication system error. Using bypass mode.';
-          document.getElementById('auth-failed').classList.remove('hidden');
-          
-          // For diagnostic purposes, allow access anyway since this is an internal tool
-          setTimeout(() => {
-            document.getElementById('password-modal').classList.add('hidden');
-            document.getElementById('main-content').classList.remove('hidden');
-            // Initialize dashboard
-            checkStatus();
-            loadRecentLogs();
-          }, 2000);
-          
-          return null;
-        }
-      })
-      .catch(error => {
-        console.error('Authentication error:', error);
-        document.getElementById('auth-failed').textContent = 'Authentication error: ' + error.message;
-        document.getElementById('auth-failed').classList.remove('hidden');
-      });
-    }
-
-    // Enter key for password
-    document.getElementById('password-input').addEventListener('keyup', function(event) {
-      if (event.key === 'Enter') {
-        authenticate();
-      }
-    });
+    // Initialize dashboard immediately without authentication
+    window.onload = function() {
+      checkStatus();
+      loadRecentLogs();
+    };
 
     // Check system status
     function checkStatus() {
