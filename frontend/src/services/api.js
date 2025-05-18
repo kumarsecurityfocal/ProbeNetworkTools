@@ -5,7 +5,7 @@ import { getToken, clearToken } from './auth';
 const api = axios.create({
   // Point directly to the backend API
   baseURL: process.env.NODE_ENV === 'production' 
-    ? `${window.location.origin}` // For production - removed /api prefix to avoid duplication
+    ? `${window.location.origin}/api` // For production
     : 'http://localhost:8000', // For development
   timeout: 60000 // 60 second timeout for slower network conditions
 });
@@ -14,15 +14,11 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = getToken();
-    
-    if (token) {
-      console.log('Attaching JWT token to request');
+    // Filter out hardcoded tokens
+    if (token && token !== 'admin-direct-access-token' && token !== 'admin-direct-access') {
       config.headers['Authorization'] = `Bearer ${token}`;
-      
-      // Also update global axios defaults
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     } else {
-      console.warn('No token available, not sending authorization header');
+      console.warn('Invalid token detected, not sending authorization header');
     }
     return config;
   },
@@ -107,19 +103,11 @@ export const loginUser = async (username, password) => {
       console.log(`Login successful with endpoint ${endpoint}`);
       console.log("Response data:", response.data);
       
-      // Ensure the token is properly stored in localStorage and used for all requests
+      // Ensure the token is properly stored in localStorage
       if (response.data && response.data.access_token) {
-        const token = response.data.access_token;
-        localStorage.setItem('probeops_token', token);
-        
-        // Set the token for all future axios requests
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
-        // Also set it for our api instance
-        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
-        console.log("Access token stored and applied to all future requests:", 
-          token.substring(0, 10) + '...');
+        localStorage.setItem('probeops_token', response.data.access_token);
+        console.log("Access token stored in localStorage:", 
+          response.data.access_token.substring(0, 10) + '...');
       } else {
         console.error("No access token in response");
       }

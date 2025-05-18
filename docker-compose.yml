@@ -21,13 +21,11 @@ services:
       - PROBE_TIMEOUT=${PROBE_TIMEOUT:-5}
     volumes:
       - backend-data:/app/data
-      - ${LOG_DIR:-/opt/probeops/logs}/backend:/app/logs
-      - ./backend/logging_config.json:/app/logging_config.json
     networks:
       - probeops-network
     depends_on:
       - db
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--log-config", "/app/logging_config.json"]
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health || exit 0"]
       interval: 45s
@@ -48,7 +46,6 @@ services:
     container_name: probeops-frontend-build
     volumes:
       - frontend-build:/app/dist
-      - ${LOG_DIR:-/opt/probeops/logs}/frontend:/app/logs
     environment:
       - VITE_API_URL=https://probeops.com/api
       - NODE_ENV=production
@@ -77,7 +74,6 @@ services:
       - ./nginx/ssl/webroot:/var/www/certbot
       - ./nginx/ssl/ssl-dhparams.pem:/etc/letsencrypt/ssl-dhparams.pem
       - frontend-build:/usr/share/nginx/html
-      - ${LOG_DIR:-/opt/probeops/logs}/nginx:/var/log/nginx
     # The copying of frontend assets is handled by:
     # 1. frontend-build service builds the assets
     # 2. volumes share the built assets with nginx
@@ -115,7 +111,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ${LOG_DIR:-/opt/probeops/logs}/postgres:/var/log/postgresql
     networks:
       - probeops-network
     healthcheck:
