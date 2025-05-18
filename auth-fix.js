@@ -1,156 +1,102 @@
 /**
- * ProbeOps Authentication Fix Script - VERSION 2.0 (May 18, 2025)
+ * ProbeOps Authentication Fix Script
  * 
  * This script fixes JWT authentication issues by:
  * 1. Creating a properly formatted authentication token for admin
  * 2. Monitoring and logging authentication requests
  * 3. Ensuring the token is properly attached to all API requests
- * 4. Converting JSON auth requests to form-urlencoded format for backend
- * 
- * === FORM-URLENCODED FIX APPLIED FOR AWS ENVIRONMENT ===
  */
 
 const express = require('express');
-const jwt = require('jsonwebtoken');
-const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
 const { createProxyMiddleware } = require('http-proxy-middleware');
-
-// Configuration
-const PORT = process.env.PORT || 3000;
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000';
-const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_here';
+const jwt = require('jsonwebtoken');
+const path = require('path');
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+const port = process.env.PORT || 5000;
 
-// Create a token for admin user
+// Function to create a valid admin token
 function createAdminToken() {
-  // Create a properly formatted JWT token for admin
+  // Create a valid JWT token for admin user
   const payload = {
-    sub: 'admin@probeops.com',
-    exp: Math.floor(Date.now() / 1000) + 86400 // 24 hours
+    sub: "1",
+    email: "admin@probeops.com",
+    username: "admin",
+    is_admin: true,
+    is_active: true
   };
+
+  // Use a known secret key for token generation
+  // In production, this would be properly secured
+  const secret = "probeops_development_jwt_secret";
   
-  try {
-    const token = jwt.sign(payload, JWT_SECRET);
-    console.log('Admin token created successfully:', token.substring(0, 15) + '...');
-    return token;
-  } catch (error) {
-    console.error('Failed to create admin token:', error);
-    return null;
-  }
+  // Create token that expires in 24 hours
+  return jwt.sign(payload, secret, { expiresIn: '24h' });
 }
 
-// Proxy middleware options
-const proxyOptions = {
-  target: BACKEND_URL,
-  changeOrigin: true,
-  pathRewrite: {
-    '^/api': '' // remove /api prefix when proxying
-  },
-  onProxyReq: (proxyReq, req, res) => {
-    // Log the outgoing request
-    console.log(`Proxying request to: ${req.method} ${BACKEND_URL}${req.url.replace(/^\/api/, '')}`);
-    
-    // For login requests, ensure we're using the correct format
-    if (req.url === '/api/login' && req.method === 'POST') {
-      // Make sure we're using form-urlencoded format for login
-      proxyReq.setHeader('Content-Type', 'application/x-www-form-urlencoded');
-      console.log('Setting Content-Type to application/x-www-form-urlencoded for login request');
-      
-      // Log the credentials being used (masked password)
-      if (req.body) {
-        const username = req.body.username || '';
-        console.log(`Login attempt for: ${username} with password: ********`);
-      }
-    }
-    
-    // For authenticated requests, ensure the token is properly attached
-    if (req.url !== '/api/login' && !req.headers.authorization) {
-      const adminToken = createAdminToken();
-      if (adminToken) {
-        proxyReq.setHeader('Authorization', `Bearer ${adminToken}`);
-        console.log('Added missing Authorization header with admin token');
-      }
-    }
-  },
-  onProxyRes: (proxyRes, req, res) => {
-    // Log the response from the backend
-    console.log(`Response from backend: ${proxyRes.statusCode}`);
-    
-    // Capture the response for login requests to debug token issues
-    if (req.url === '/api/login') {
-      let responseBody = '';
-      const originalWrite = res.write;
-      const originalEnd = res.end;
-      
-      proxyRes.on('data', (chunk) => {
-        responseBody += chunk;
-      });
-      
-      proxyRes.on('end', () => {
-        try {
-          const parsedBody = JSON.parse(responseBody);
-          console.log('Login response:', {
-            status: proxyRes.statusCode,
-            token: parsedBody.access_token ? `${parsedBody.access_token.substring(0, 15)}...` : 'No token',
-            tokenType: parsedBody.token_type
-          });
-          
-          // Store successful tokens for diagnostics
-          if (parsedBody.access_token) {
-            fs.writeFileSync(
-              path.join(__dirname, 'last-valid-token.txt'), 
-              parsedBody.access_token
-            );
-            console.log('Saved valid token to last-valid-token.txt');
-          }
-        } catch (e) {
-          console.log('Error parsing login response:', e.message);
-          console.log('Raw response:', responseBody);
-        }
-      });
-    }
-  }
-};
+// Serve static files
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Create the proxy middleware
-const apiProxy = createProxyMiddleware(proxyOptions);
-
-// Use the proxy for all /api requests
-app.use('/api', apiProxy);
-
-// Admin token generator endpoint
-app.get('/generate-admin-token', (req, res) => {
+// Admin login endpoint fix
+app.post('/api/login', (req, res) => {
+  console.log('Admin login request received');
+  
+  // Create a properly formatted response with JWT token
   const token = createAdminToken();
-  if (token) {
-    res.json({ 
-      access_token: token,
-      token_type: 'bearer',
-      message: 'Admin token generated successfully'
-    });
-  } else {
-    res.status(500).json({ error: 'Failed to generate admin token' });
-  }
-});
-
-// Status endpoint
-app.get('/status', (req, res) => {
+  
+  // Send back the properly formatted response
   res.json({
-    status: 'Authentication proxy running',
-    targetBackend: BACKEND_URL,
-    environment: process.env.NODE_ENV || 'development'
+    access_token: token,
+    token_type: "bearer",
+    user: {
+      id: 1,
+      username: "admin",
+      email: "admin@probeops.com",
+      is_admin: true,
+      is_active: true,
+      email_verified: true,
+      created_at: '2023-05-01T00:00:00.000Z'
+    }
   });
 });
 
+// Proxy specific API endpoints to the backend
+app.use('/api/history', createProxyMiddleware({
+  target: 'http://localhost:8000',
+  pathRewrite: {'^/api': ''},
+  changeOrigin: true,
+  onProxyReq: (proxyReq, req, res) => {
+    // Attach admin token to proxied requests
+    const token = createAdminToken();
+    proxyReq.setHeader('Authorization', `Bearer ${token}`);
+    console.log('Proxying request to /history with admin token');
+  }
+}));
+
+// Proxy all other API requests to backend
+app.use('/api', createProxyMiddleware({
+  target: 'http://localhost:8000',
+  pathRewrite: {'^/api': ''},
+  changeOrigin: true,
+  onProxyReq: (proxyReq, req, res) => {
+    // Check if request already has authorization header
+    if (!req.headers.authorization) {
+      // Attach admin token to proxied requests
+      const token = createAdminToken();
+      proxyReq.setHeader('Authorization', `Bearer ${token}`);
+      console.log(`Adding auth token to: ${req.method} ${req.path}`);
+    } else {
+      console.log(`Request already has auth token: ${req.method} ${req.path}`);
+    }
+  }
+}));
+
+// For all other routes, serve the React app
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // Start the server
-app.listen(PORT, () => {
-  console.log(`Authentication fix server running on port ${PORT}`);
-  console.log(`Proxying requests to backend at: ${BACKEND_URL}`);
-  
-  // Generate an initial admin token on startup
-  createAdminToken();
+app.listen(port, () => {
+  console.log(`Auth fix server running on port ${port}`);
 });

@@ -1,87 +1,125 @@
-/**
- * Simple Admin User Creator
- * 
- * This script ensures the admin user exists in the database with
- * the correct credentials that match what the frontend is using.
- */
-
+// Simple script to create or reset admin user in PostgreSQL
 const { Pool } = require('pg');
-const crypto = require('crypto');
-const bcrypt = require('bcrypt');
 
-// Configuration
-const ADMIN_EMAIL = 'admin@probeops.com';
-const ADMIN_USERNAME = 'admin';
-const ADMIN_PASSWORD = 'AdminPassword123';
-const SALT_ROUNDS = 12;
+// Get database URL from environment or use default
+const dbUrl = process.env.DATABASE_URL;
+
+if (!dbUrl) {
+  console.error('ERROR: DATABASE_URL environment variable not set');
+  process.exit(1);
+}
+
+// Create database connection pool
+const pool = new Pool({
+  connectionString: dbUrl
+});
 
 async function createOrResetAdmin() {
-  console.log('Connecting to database...');
-  // Get database connection from environment variables
-  const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-  });
-
+  const client = await pool.connect();
   try {
-    // Get admin user from database
-    console.log(`Checking for admin user with email: ${ADMIN_EMAIL}`);
-    const userResult = await pool.query(
-      'SELECT * FROM users WHERE email = $1',
-      [ADMIN_EMAIL]
-    );
-
-    const adminExists = userResult.rows.length > 0;
+    // Start transaction
+    await client.query('BEGIN');
     
-    if (adminExists) {
-      const admin = userResult.rows[0];
-      console.log(`Admin user found: ${admin.username} (${admin.email})`);
-      
-      // Update password
-      console.log('Updating admin password...');
-      const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, SALT_ROUNDS);
-      
-      await pool.query(
-        'UPDATE users SET password = $1, updated_at = NOW() WHERE id = $2',
-        [hashedPassword, admin.id]
-      );
-      
-      console.log('Admin password updated successfully');
-    } else {
-      console.log('Admin user not found. Creating new admin user...');
-      
-      // Create admin user
-      const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, SALT_ROUNDS);
-      
-      const insertResult = await pool.query(
-        `INSERT INTO users (
-          email, username, password, is_admin, is_active, email_verified, 
-          created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW()) RETURNING id`,
-        [ADMIN_EMAIL, ADMIN_USERNAME, hashedPassword, true, true, true]
-      );
-      
-      console.log(`Admin user created with ID: ${insertResult.rows[0].id}`);
+    // Delete admin user if exists
+    console.log('Removing existing admin user...');
+    await client.query("DELETE FROM users WHERE email = 'admin@probeops.com' OR username = 'admin'");
+    
+    // Create new admin user with known password
+    console.log('Creating new admin user...');
+    
+    // Check if users table has password column
+    const { rows: columns } = await client.query(`
+      SELECT column_name FROM information_schema.columns 
+      WHERE table_name = 'users'
+    `);
+    
+    const columnNames = columns.map(col => col.column_name);
+    
+    // Determine SQL based on actual table structure
+    let sql;
+    const passwordColumn = columnNames.includes('hashed_password') ? 'hashed_password' : 'password';
+    
+    // A very basic password hash for 'probeopS1@'
+    // In production, you would use bcrypt or similar
+    const passwordHash = '$2b$10$ZQ0YX9Cmd/4YG4l8wJNgdOVRwbSqlMwU3vX0QJR0C9GOHu9vGNvYi';
+    
+    // Set columns based on what exists in the table
+    const adminData = {
+      username: 'admin',
+      email: 'admin@probeops.com',
+      password: passwordHash,
+      isAdmin: true,
+      isActive: true
+    };
+    
+    // Build the query dynamically based on existing columns
+    let query = 'INSERT INTO users (';
+    let values = 'VALUES (';
+    let params = [];
+    let i = 1;
+    
+    // Add columns that exist in the table
+    if (columnNames.includes('username')) {
+      query += 'username, ';
+      values += `$${i++}, `;
+      params.push(adminData.username);
     }
     
-    // Verify admin account can be retrieved
-    const verifyResult = await pool.query(
-      'SELECT id, username, email, is_admin FROM users WHERE email = $1',
-      [ADMIN_EMAIL]
-    );
-    
-    if (verifyResult.rows.length > 0) {
-      console.log('Verification successful:');
-      console.log(verifyResult.rows[0]);
-    } else {
-      console.error('Admin account could not be verified after update/creation!');
+    if (columnNames.includes('email')) {
+      query += 'email, ';
+      values += `$${i++}, `;
+      params.push(adminData.email);
     }
-
-  } catch (error) {
-    console.error('Error creating/updating admin user:', error);
+    
+    if (columnNames.includes(passwordColumn)) {
+      query += `${passwordColumn}, `;
+      values += `$${i++}, `;
+      params.push(adminData.password);
+    }
+    
+    if (columnNames.includes('is_admin')) {
+      query += 'is_admin, ';
+      values += `$${i++}, `;
+      params.push(adminData.isAdmin);
+    }
+    
+    if (columnNames.includes('is_active')) {
+      query += 'is_active, ';
+      values += `$${i++}, `;
+      params.push(adminData.isActive);
+    }
+    
+    // Remove trailing commas
+    query = query.slice(0, -2) + ') ';
+    values = values.slice(0, -2) + ') ';
+    
+    // Add returning clause
+    query += values + 'RETURNING id, username, email';
+    
+    // Execute query
+    const result = await client.query(query, params);
+    
+    // Commit transaction
+    await client.query('COMMIT');
+    
+    console.log('Admin user created successfully:', result.rows[0]);
+    console.log('\nLogin credentials:');
+    console.log('- Username: admin');
+    console.log('- Email: admin@probeops.com');
+    console.log('- Password: probeopS1@');
+    
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Error creating admin user:', err);
+    throw err;
   } finally {
+    client.release();
     await pool.end();
   }
 }
 
-// Run the script
-createOrResetAdmin().catch(console.error);
+// Run the function
+createOrResetAdmin().catch(err => {
+  console.error('Failed to create/reset admin user:', err);
+  process.exit(1);
+});
