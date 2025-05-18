@@ -76,9 +76,8 @@ export const AuthProvider = ({ children }) => {
       
       // Save token to localStorage and attach it globally
       localStorage.setItem("probeops_token", response.access_token);
-      setToken(response.access_token);
       
-      // Also set token in global axios defaults
+      // Set token in global axios defaults for all requests
       axios.defaults.headers.common['Authorization'] = `Bearer ${response.access_token}`;
       
       setIsAuthenticated(true);
