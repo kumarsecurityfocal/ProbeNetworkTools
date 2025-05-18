@@ -24,27 +24,51 @@ function createToken(email = "admin@probeops.com") {
   return token;
 }
 
+// Enhanced logging for diagnostics
+function logDebug(message, data = null) {
+  const logMessage = `[${new Date().toISOString()}] ${message}${data ? ': ' + JSON.stringify(data) : ''}`;
+  console.log(logMessage);
+  
+  // Optionally write to a file if needed
+  // fs.appendFileSync('/opt/probeops/logs/proxy-debug.log', logMessage + '\n');
+}
+
 // Clean the API path by removing duplicate /api prefixes
 function cleanApiPath(originalPath) {
   let result = originalPath;
   
+  // Log the original path for debugging
+  logDebug(`Cleaning path`, { original: originalPath });
+  
   // Special handling for auth endpoints
   if (result.includes('/auth/login') || result.includes('/api/auth/login')) {
+    logDebug(`Auth login endpoint detected`, { result: '/auth/login' });
     return '/auth/login';
   }
   
   if (result.includes('/login')) {
+    logDebug(`Login endpoint detected`, { result: '/login' });
     return '/login'; 
   }
   
-  // Remove all /api prefixes
-  while (result.startsWith('/api')) {
-    result = result.substring(4);
-  }
+  // IMPORTANT FIX: Additional handling for specific endpoints that might have /api hardcoded
+  // e.g., /api/api/users, /api/api/probes, etc.
   
-  // Ensure path starts with /
-  if (!result.startsWith('/')) {
-    result = '/' + result;
+  // Better handling for /api prefixes - use regex to match all occurrences
+  const apiRegex = /^(\/api)+/;
+  if (apiRegex.test(result)) {
+    // Replace all consecutive /api prefixes with a single empty string
+    result = result.replace(apiRegex, '');
+    
+    // Ensure path starts with /
+    if (!result.startsWith('/')) {
+      result = '/' + result;
+    }
+    
+    logDebug(`Fixed multiple /api prefixes`, { 
+      original: originalPath,
+      cleaned: result 
+    });
   }
   
   return result;
@@ -58,11 +82,14 @@ const server = http.createServer(async (req, res) => {
   
   // Handle API proxy requests
   if (pathname.startsWith('/api')) {
-    console.log(`[API REQUEST] ${req.method} ${pathname}`);
+    logDebug(`[API REQUEST] ${req.method} ${pathname}`);
     
     // Clean the path for backend
     const backendPath = cleanApiPath(pathname);
-    console.log(`Cleaned path: ${pathname} → ${backendPath}`);
+    logDebug(`Cleaned path for backend request`, { 
+      original: pathname, 
+      cleaned: backendPath 
+    });
     
     // Collect request body for POST/PUT/PATCH
     let body = '';
@@ -73,20 +100,65 @@ const server = http.createServer(async (req, res) => {
         });
         req.on('end', resolve);
       });
+      
+      // Log the request body for debugging (but don't log passwords)
+      try {
+        const bodyObj = JSON.parse(body);
+        if (bodyObj.password) {
+          bodyObj.password = '********'; // Mask password
+        }
+        logDebug(`Request body`, bodyObj);
+      } catch (e) {
+        // Not JSON or other parsing error
+        logDebug(`Request body not JSON or error parsing`, { error: e.message });
+      }
     }
     
-    // Get auth token if present or create one
+    // Get auth token from request headers
     let token = req.headers.authorization;
-    if (!token && 
-        !pathname.includes('/login') && 
+    
+    // Debug token information
+    if (token) {
+      logDebug(`Using existing authorization token`, { 
+        hasToken: true,
+        tokenStart: token.substring(0, 20) + '...' 
+      });
+      
+      // Analyze token structure
+      try {
+        const tokenParts = token.split('.');
+        if (tokenParts.length === 3) {
+          // This is a JWT token, decode the payload (middle part)
+          const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+          logDebug(`Token payload`, {
+            sub: payload.sub,
+            exp: payload.exp ? new Date(payload.exp * 1000).toISOString() : 'none',
+            iat: payload.iat ? new Date(payload.iat * 1000).toISOString() : 'none'
+          });
+        }
+      } catch (e) {
+        logDebug(`Error analyzing token`, { error: e.message });
+      }
+    } else if (!pathname.includes('/login') && 
         !pathname.includes('/auth') && 
         !pathname.includes('/register')) {
+      // Create fallback token for non-auth endpoints
       token = 'Bearer ' + createToken();
+      logDebug(`Created fallback token`, { tokenCreated: true });
     }
     
-    // Prepare headers
-    const headers = { ...req.headers };
+    // Prepare headers - copy them all except host
+    const headers = {};
+    Object.keys(req.headers).forEach(key => {
+      if (key.toLowerCase() !== 'host') {
+        headers[key] = req.headers[key];
+      }
+    });
+    
+    // Set correct host header for backend
     headers.host = `localhost:${BACKEND_PORT}`;
+    
+    // Add authorization if needed
     if (token) {
       headers.authorization = token;
     }
@@ -113,16 +185,78 @@ const server = http.createServer(async (req, res) => {
       proxyRes.pipe(res);
     });
     
-    // Handle proxy errors
+    // Enhanced error handling with reconnection logic
     proxyReq.on('error', (err) => {
-      console.error(`Backend error: ${err.message}`);
+      logDebug(`Backend connection error`, { 
+        error: err.message,
+        path: backendPath,
+        method: req.method
+      });
       
-      res.statusCode = 503;
-      res.setHeader('Content-Type', 'application/json');
-      res.end(JSON.stringify({
-        error: 'Service Unavailable',
-        message: 'Backend service is temporarily unavailable. Please try again in a moment.'
-      }));
+      // Try reconnecting to the backend with a health check
+      http.get(`http://localhost:${BACKEND_PORT}/health`, (healthRes) => {
+        if (healthRes.statusCode === 200) {
+          logDebug(`Backend is healthy despite connection error`, { 
+            statusCode: healthRes.statusCode 
+          });
+          
+          // Collect health check data
+          let healthData = '';
+          healthRes.on('data', chunk => { healthData += chunk; });
+          healthRes.on('end', () => {
+            try {
+              // Parse health response
+              const healthInfo = JSON.parse(healthData);
+              logDebug(`Backend health info`, healthInfo);
+              
+              // Send a specialized error for auth issues
+              if (backendPath.includes('/login') || backendPath.includes('/auth')) {
+                res.statusCode = 503;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({
+                  error: 'Authentication Service Unavailable',
+                  message: 'The authentication service is restarting. Please try again in a moment.',
+                  details: 'Backend is healthy but auth service may be initializing.',
+                  retry_after: 2
+                }));
+              } else {
+                // General error for other endpoints
+                res.statusCode = 503;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({
+                  error: 'Service Temporarily Unavailable',
+                  message: 'The requested service is restarting. Please refresh or try again.',
+                  health_status: healthInfo.status,
+                  retry_after: 2
+                }));
+              }
+            } catch (e) {
+              // Health check response wasn't valid JSON
+              logDebug(`Error parsing health check data`, { error: e.message });
+              sendDefaultErrorResponse();
+            }
+          });
+        } else {
+          // Health check failed
+          logDebug(`Backend health check failed`, { statusCode: healthRes.statusCode });
+          sendDefaultErrorResponse();
+        }
+      }).on('error', () => {
+        // Health check request failed completely
+        logDebug(`Backend is down - health check request failed`);
+        sendDefaultErrorResponse();
+      });
+      
+      // Default error response function
+      function sendDefaultErrorResponse() {
+        res.statusCode = 503;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({
+          error: 'Service Unavailable',
+          message: 'Backend service is temporarily unavailable. Please try again in a moment.',
+          retry_after: 5
+        }));
+      }
     });
     
     // Send body data if present

@@ -1,0 +1,49 @@
+1. Duplicate /api/api Path Issue
+We noticed that even after multiple fixes, many API requests are still being routed as /api/api/..., which causes 404s or incorrect forwarding.
+
+➤ Observations:
+In frontend/src/services/api.js, the baseURL is set to window.location.origin in production, which is correct.
+
+However, many endpoints like /api/probes or /api/keys are still hardcoded in downstream functions, leading to final URLs like window.location.origin/api/probes → which becomes /api/api/probes when proxied.
+
+✅ What we need:
+Please do a sweep across all API calls in api.js and related files to ensure:
+
+No endpoint begins with /api/...
+
+All should be relative like /probes, /keys, etc.
+
+Since baseURL already appends /api, we should avoid adding /api manually in the paths.
+
+🔄 2. Backend Restart → Login Breaks
+After we run docker restart probeops-backend, the following happens:
+
+The user token is still available in localStorage
+
+But login immediately breaks or requests get 401 Unauthorized
+
+Logs show: fastapi.exceptions.ResponseValidationError or Invalid token
+
+This implies that either:
+
+The backend isn't validating tokens consistently after restart, or
+
+Sessions/tokens are being cached or tied to memory
+
+✅ What we need:
+Please help us ensure the FastAPI backend is fully stateless and does not require persistent session memory
+
+It should validate JWT tokens on each request independently using the JWT_SECRET_KEY and not expect in-memory session info
+
+If any sessions table or token cache is being used, please confirm its persistence or help disable it for pure JWT
+
+✅ Summary of Fixes Requested
+Area	Action
+🔁 /api/api	Refactor all endpoint calls to not manually prepend /api
+🔐 Token Breakage	Validate if backend is incorrectly session-dependent
+🧹 Axios cleanup	Rely only on Axios interceptors for token auth (avoid axios.defaults overrides)
+🌐 Proxy Path Fix	Confirm that the proxy (Express or HTTP server) cleans paths like /api/api/... → /api/... cleanly
+🧪 Testcase	Please restart the backend and verify if login + /users/me call succeeds with stored JWT
+
+If it helps, I can share updated auth.js and api.js where I found some inconsistencies. Let me know if I should provide those too.
+
