@@ -37,6 +37,16 @@ if (!fs.existsSync(DEBUG_DIR)) {
   fs.mkdirSync(DEBUG_DIR, { recursive: true });
 }
 
+// Add a simple health check endpoint for monitoring
+app.get('/ping', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok',
+    version: VERSION,
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
 // Create basic HTML template
 const createHtml = (content) => `
 <!DOCTYPE html>

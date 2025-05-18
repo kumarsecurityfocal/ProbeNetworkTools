@@ -17,7 +17,15 @@ const path = require('path');
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const execAsync = promisify(exec);
-const { Pool } = require('pg');
+// Only import pg if DATABASE_URL is available
+let Pool;
+try {
+  if (process.env.DATABASE_URL) {
+    Pool = require('pg').Pool;
+  }
+} catch (err) {
+  console.log('PostgreSQL module not available, database checks will be skipped');
+}
 
 // Configuration
 const DEBUG_DIR = './debug-logs';
@@ -106,14 +114,22 @@ async function collectSystemInfo() {
 async function collectContainerLogs() {
   log('===== COLLECTING CONTAINER LOGS =====');
   
-  for (const container of CONTAINERS) {
-    try {
-      log(`Getting logs for container: ${container}`);
-      const { stdout: logs } = await execAsync(`docker logs ${container} --tail 1000 2>&1`);
-      log(`Container Logs (${container}):`, logs);
-    } catch (error) {
-      log(`Error getting logs for container ${container}:`, error.message);
+  try {
+    // First check if Docker is available
+    await execAsync('command -v docker');
+    
+    // If Docker is available, collect container logs
+    for (const container of CONTAINERS) {
+      try {
+        log(`Getting logs for container: ${container}`);
+        const { stdout: logs } = await execAsync(`docker logs ${container} --tail 1000 2>&1`);
+        log(`Container Logs (${container}):`, logs);
+      } catch (error) {
+        log(`Error getting logs for container ${container}:`, error.message);
+      }
     }
+  } catch (error) {
+    log(`Docker not installed or not available, skipping container logs`);
   }
 }
 
@@ -122,23 +138,52 @@ async function collectNetworkInfo() {
   log('===== COLLECTING NETWORK INFORMATION =====');
   
   try {
-    const { stdout: dockerNetworks } = await execAsync('docker network ls');
-    log('Docker Networks:', dockerNetworks);
-    
-    const { stdout: networkInspect } = await execAsync('docker network inspect probenetworktools_default');
-    log('ProbeOps Network Details:', networkInspect);
-    
-    // Get container IPs
-    for (const container of CONTAINERS) {
+    // Check if Docker is available
+    try {
+      await execAsync('command -v docker');
+      
+      // Docker is available, collect Docker network info
       try {
-        const { stdout: containerIp } = await execAsync(`docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${container}`);
-        log(`${container} IP Address:`, containerIp.trim());
+        const { stdout: dockerNetworks } = await execAsync('docker network ls');
+        log('Docker Networks:', dockerNetworks);
+        
+        const { stdout: networkInspect } = await execAsync('docker network inspect probenetworktools_default 2>/dev/null || echo "Network not found"');
+        log('ProbeOps Network Details:', networkInspect);
+        
+        // Get container IPs
+        for (const container of CONTAINERS) {
+          try {
+            const { stdout: containerIp } = await execAsync(`docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${container} 2>/dev/null || echo "Not found"`);
+            log(`${container} IP Address:`, containerIp.trim());
+          } catch (error) {
+            log(`Error getting IP for ${container}:`, error.message);
+          }
+        }
       } catch (error) {
-        log(`Error getting IP for ${container}:`, error.message);
+        log('Error collecting Docker network information:', error.message);
+      }
+    } catch (dockerError) {
+      // Docker not available, collect basic network info
+      log('Docker not found, collecting basic network information');
+      
+      try {
+        // Get network interfaces
+        const { stdout: interfaces } = await execAsync('ip -brief addr 2>/dev/null || ifconfig 2>/dev/null || echo "Network interface commands not available"');
+        log('Network Interfaces:', interfaces);
+        
+        // Check ports
+        const { stdout: ports } = await execAsync('netstat -tulpn 2>/dev/null || ss -tulpn 2>/dev/null || echo "Port checking commands not available"');
+        log('Open Ports:', ports);
+        
+        // Check diagnostic port
+        const { stdout: diagnosticPort } = await execAsync('netstat -tulpn 2>/dev/null | grep 8888 || ss -tulpn 2>/dev/null | grep 8888 || echo "Port 8888 not found in listening ports"');
+        log('Diagnostic Port Status:', diagnosticPort);
+      } catch (netError) {
+        log('Error collecting basic network information:', netError.message);
       }
     }
   } catch (error) {
-    log('Error collecting network information:', error.message);
+    log('Error in network information collection:', error.message);
   }
 }
 
@@ -180,49 +225,127 @@ async function collectFileSystemInfo() {
 async function checkDatabaseConnection() {
   log('===== CHECKING DATABASE CONNECTION =====');
   
+  // First check environment variables
+  const dbUrlEnv = process.env.DATABASE_URL || '';
+  const maskedDbUrl = dbUrlEnv.replace(/\/\/([^:]+):([^@]+)@/, '//***USERNAME***:***PASSWORD***@');
+  log('Database URL (masked):', maskedDbUrl || 'Not found in environment variables');
+  
   try {
-    // Try to get database connection string from backend container
-    const { stdout: dbUrl } = await execAsync(
-      `docker exec probenetworktools-backend-1 bash -c 'echo $DATABASE_URL' 2>/dev/null || echo "Not found"`
-    );
-    
-    log('Database URL (masked):', dbUrl.includes('@') 
-      ? dbUrl.replace(/\/\/[^:]+:[^@]+@/, '//USERNAME:PASSWORD@').trim()
-      : 'Not found or malformed');
-    
-    // Check if we can connect directly to the database container
-    const { stdout: pgVersion } = await execAsync(`docker exec probenetworktools-db-1 psql -V 2>/dev/null || echo "PostgreSQL not found"`);
-    log('PostgreSQL Version:', pgVersion.trim());
-    
-    // Check database tables (safely)
-    try {
-      const { stdout: tables } = await execAsync(
-        `docker exec probenetworktools-db-1 psql -U postgres -c "\\dt" 2>/dev/null || echo "Could not list tables"`
-      );
-      log('Database Tables:', tables);
-      
-      // Check users table structure (without exposing data)
-      const { stdout: userTableStructure } = await execAsync(
-        `docker exec probenetworktools-db-1 psql -U postgres -c "\\d users" 2>/dev/null || echo "Could not describe users table"`
-      );
-      log('Users Table Structure:', userTableStructure);
-      
-      // Count users safely
-      const { stdout: userCount } = await execAsync(
-        `docker exec probenetworktools-db-1 psql -U postgres -c "SELECT COUNT(*) FROM users;" 2>/dev/null || echo "Could not count users"`
-      );
-      log('User Count:', userCount);
-      
-      // Check admin users (safely, without exposing passwords)
-      const { stdout: adminUsers } = await execAsync(
-        `docker exec probenetworktools-db-1 psql -U postgres -c "SELECT email, is_admin FROM users WHERE is_admin = TRUE;" 2>/dev/null || echo "Could not list admin users"`
-      );
-      log('Admin Users:', adminUsers);
-    } catch (error) {
-      log('Error querying database:', error.message);
+    // METHOD 1: Try direct connection using node-postgres if available
+    if (Pool && process.env.DATABASE_URL) {
+      try {
+        log('Attempting direct database connection using node-postgres...');
+        const pool = new Pool();
+        const client = await pool.connect();
+        log('✅ Direct database connection successful');
+        
+        try {
+          // Check database tables
+          const tablesResult = await client.query(`
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public'`);
+          
+          if (tablesResult.rows.length > 0) {
+            log('Database Tables:', tablesResult.rows.map(row => row.table_name).join(', '));
+            
+            // Check if users table exists
+            if (tablesResult.rows.some(row => row.table_name === 'users')) {
+              // Count users
+              const userCountResult = await client.query('SELECT COUNT(*) FROM users');
+              log('User Count:', userCountResult.rows[0].count);
+              
+              // Check admin users
+              const adminUsersResult = await client.query(`
+                SELECT email, username, is_admin 
+                FROM users 
+                WHERE is_admin = TRUE 
+                LIMIT 5`);
+              
+              log('Admin Users:', JSON.stringify(adminUsersResult.rows, null, 2));
+            } else {
+              log('Users table not found in database');
+            }
+          } else {
+            log('No tables found in the public schema');
+          }
+        } catch (queryError) {
+          log('Error querying database:', queryError.message);
+        }
+        
+        client.release();
+        await pool.end();
+      } catch (pgError) {
+        log('Direct database connection failed:', pgError.message);
+        tryBackupMethods();
+      }
+    } else {
+      log('PostgreSQL client not available or DATABASE_URL not set, trying backup methods');
+      tryBackupMethods();
     }
   } catch (error) {
-    log('Error checking database connection:', error.message);
+    log('Error in database connection check:', error.message);
+    tryBackupMethods();
+  }
+  
+  // Try alternative methods if direct connection fails
+  async function tryBackupMethods() {
+    try {
+      // METHOD 2: Try local psql command
+      try {
+        const { stdout: pgVersion } = await execAsync('psql -V 2>/dev/null');
+        log('PostgreSQL client found:', pgVersion.trim());
+        
+        if (process.env.PGDATABASE && process.env.PGUSER) {
+          log('PostgreSQL environment variables found, attempting direct psql connection');
+          
+          try {
+            const { stdout: tables } = await execAsync('psql -c "\\dt" 2>/dev/null');
+            log('Database Tables (from psql):', tables);
+            
+            const { stdout: userCount } = await execAsync('psql -c "SELECT COUNT(*) FROM users;" 2>/dev/null');
+            log('User Count (from psql):', userCount);
+          } catch (psqlError) {
+            log('Error using local psql:', psqlError.message);
+          }
+        } else {
+          log('PostgreSQL environment variables not set for direct psql connection');
+        }
+      } catch (psqlNotFound) {
+        log('PostgreSQL client not found locally');
+      }
+      
+      // METHOD 3: Try Docker container connection if Docker is available
+      try {
+        const { stdout: dockerCheck } = await execAsync('command -v docker');
+        if (dockerCheck) {
+          log('Docker found, attempting to check database via container');
+          
+          try {
+            const { stdout: dbContainer } = await execAsync('docker ps | grep postgres');
+            if (dbContainer) {
+              const containerName = dbContainer.split(/\s+/)[0];
+              log('Found PostgreSQL container:', containerName);
+              
+              try {
+                const { stdout: tables } = await execAsync(`docker exec ${containerName} psql -U postgres -c "\\dt" 2>/dev/null`);
+                log('Database Tables (from container):', tables);
+              } catch (containerError) {
+                log('Error querying database from container:', containerError.message);
+              }
+            } else {
+              log('No PostgreSQL container found running');
+            }
+          } catch (dockerPsError) {
+            log('Error checking for PostgreSQL containers:', dockerPsError.message);
+          }
+        }
+      } catch (dockerNotFound) {
+        log('Docker not available on this system');
+      }
+    } catch (backupError) {
+      log('All database connection methods failed:', backupError.message);
+    }
   }
 }
 

@@ -777,11 +777,16 @@ if [[ "$enable_diagnostics" =~ ^[Yy]$ ]]; then
     "express": "^4.18.2",
     "axios": "^1.4.0",
     "child_process": "^1.0.2",
-    "fs-extra": "^11.1.1"
+    "fs-extra": "^11.1.1",
+    "pg": "^8.11.0"
   }
 }
 EOL
     fi
+    
+    # Make sure debug-logs directory exists
+    log_info "Creating debug logs directory..."
+    run_command "mkdir -p debug-logs" "Creating debug-logs directory"
     
     # Install dependencies
     log_info "Installing diagnostic dashboard dependencies..."
