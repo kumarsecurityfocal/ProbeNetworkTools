@@ -129,6 +129,27 @@ mkdir -p ${LOG_DIR}/backend
 chmod -R 777 ${LOG_DIR}/backend
 echo "Backend logging directory setup complete at ${LOG_DIR}/backend"
 
+# 8.3 Ensure SECRET_KEY is persistent across deployments
+echo "Setting up persistent SECRET_KEY..."
+if [ ! -f "${APP_DIR}/secret_key.txt" ]; then
+  # Generate a secure random key if it doesn't exist
+  openssl rand -hex 32 > "${APP_DIR}/secret_key.txt"
+  echo "Generated new SECRET_KEY and saved to secret_key.txt"
+else
+  echo "Using existing SECRET_KEY from secret_key.txt"
+fi
+
+# Update .env.backend file with the persistent SECRET_KEY
+SECRET_KEY=$(cat "${APP_DIR}/secret_key.txt")
+if grep -q "^SECRET_KEY=" "${APP_DIR}/backend/.env.backend"; then
+  # Replace existing SECRET_KEY entry
+  sed -i "s/^SECRET_KEY=.*/SECRET_KEY=${SECRET_KEY}/" "${APP_DIR}/backend/.env.backend"
+else
+  # Add SECRET_KEY if it doesn't exist
+  echo "SECRET_KEY=${SECRET_KEY}" >> "${APP_DIR}/backend/.env.backend"
+fi
+echo "SECRET_KEY updated in backend/.env.backend"
+
 # 9. Restart services
 echo "Restarting services..."
 docker-compose down
