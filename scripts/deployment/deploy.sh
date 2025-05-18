@@ -748,31 +748,9 @@ fi
 log_info "Step 10.6: Running authentication check and JWT token validation..."
 
 # Create a function to check and fix JWT authentication issues
-fix_jwt_auth() {
-    log_info "Checking authentication configuration..."
-    
-    # Check if the JWT secret is set in the environment
-    jwt_secret=""
-    if grep -q "JWT_SECRET" backend/.env.backend; then
-        jwt_secret=$(grep "JWT_SECRET" backend/.env.backend | cut -d= -f2-)
-        if [[ -z "$jwt_secret" || "$jwt_secret" == *"CHANGE_ME"* ]]; then
-            log_warning "JWT_SECRET is empty or contains placeholder value"
-            jwt_secret="development_secure_key_for_testing"
-            echo "JWT_SECRET=$jwt_secret" >> backend/.env.backend
-            log_info "Temporary JWT secret added for testing"
-        else
-            log_success "JWT_SECRET is configured properly"
-        fi
-    else
-        log_warning "JWT_SECRET not found in backend configuration"
-        jwt_secret="development_secure_key_for_testing"
-        echo "JWT_SECRET=$jwt_secret" >> backend/.env.backend
-        log_info "JWT_SECRET added to backend/.env.backend"
-    fi
-    
-    # Check if we can connect to the backend API once it's up
-    log_info "Backend authentication check will run after containers are started..."
-    echo "[AUTH] $(date +"%Y-%m-%d %H:%M:%S.%3N") - JWT auth configuration validated, will check endpoints after container startup" >> "$LOG_FILE"
+# JWT authentication is now handled by the auth middleware
+jwt_helper() {
+    log_info "JWT authentication is now handled by auth middleware"
 }
 
 # Function to test API connectivity and authentication after containers are started
@@ -959,7 +937,7 @@ EOF
 }
 
 # Run the JWT authentication fix/check now
-fix_jwt_auth
+jwt_helper
 
 # Step 11: Starting Docker containers
 log_info "Step 11: Starting Docker containers..."
