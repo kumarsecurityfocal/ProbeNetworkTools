@@ -2109,6 +2109,68 @@ const ensureAuthenticated = (req, res, next) => {
 // Apply authentication middleware to all API requests
 app.use('/api', ensureAuthenticated);
 
+// Function to check if backend is ready
+async function checkBackendReadiness() {
+  return new Promise((resolve) => {
+    console.log('Checking if backend is ready...');
+    
+    // Try to connect to the backend health check endpoint
+    const options = {
+      hostname: 'localhost',
+      port: 8000,
+      path: '/health',
+      method: 'GET',
+      timeout: 3000
+    };
+    
+    const req = http.request(options, (res) => {
+      if (res.statusCode === 200) {
+        console.log('✅ Backend is ready!');
+        resolve(true);
+      } else {
+        console.log(`❌ Backend returned status ${res.statusCode}`);
+        resolve(false);
+      }
+    });
+    
+    req.on('error', (err) => {
+      console.log(`❌ Backend connectivity check failed: ${err.message}`);
+      resolve(false);
+    });
+    
+    req.on('timeout', () => {
+      console.log('❌ Backend connectivity check timed out');
+      req.destroy();
+      resolve(false);
+    });
+    
+    req.end();
+  });
+}
+
+// Function to retry until backend is ready
+async function waitForBackend(maxRetries = 10, delay = 3000) {
+  console.log(`Waiting for backend to be ready (max ${maxRetries} attempts)...`);
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    console.log(`Attempt ${attempt}/${maxRetries} to connect to backend...`);
+    
+    // First try the health endpoint
+    const isReady = await checkBackendReadiness();
+    if (isReady) {
+      console.log('Backend ready, setting up proxy middleware.');
+      return true;
+    }
+    
+    // If not ready, wait before trying again
+    console.log(`Backend not ready, waiting ${delay}ms before retry...`);
+    await new Promise(resolve => setTimeout(resolve, delay));
+  }
+  
+  console.error(`❌ Maximum retries (${maxRetries}) reached. Proceeding anyway but proxy may fail.`);
+  return false;
+}
+
 // Configure the proxy middleware with options
 const apiProxy = createProxyMiddleware({
   target: 'http://localhost:8000', // Target backend service
@@ -2117,6 +2179,11 @@ const apiProxy = createProxyMiddleware({
     '^/api': '', // Remove the /api prefix when forwarding
     '^/api/api/': '/', // Also handle potential double /api prefix from browser
   },
+  // Important: Add connection retry logic
+  secure: false,
+  ws: true, // support websockets
+  xfwd: true, // add x-forwarded headers
+  proxyTimeout: 30000, // 30 seconds timeout
   // Log all proxy activity
   onProxyReq: (proxyReq, req, res) => {
     console.log(`🔄 Proxying ${req.method} ${req.url} -> ${proxyReq.method} ${proxyReq.path}`);
@@ -2125,23 +2192,99 @@ const apiProxy = createProxyMiddleware({
   onProxyRes: (proxyRes, req, res) => {
     console.log(`✅ Proxy response: ${proxyRes.statusCode} for ${req.method} ${req.url}`);
   },
-  // Handle proxy errors
+  // Handle proxy errors with better error information and fallback
   onError: (err, req, res) => {
     console.error(`❌ Proxy error: ${err.message}`);
+    
+    // Try to reconnect to backend in the background
+    checkBackendReadiness().then(isReady => {
+      console.log(`Backend readiness after error: ${isReady ? 'READY' : 'NOT READY'}`);
+    });
+    
     // Send a proper error response
     res.writeHead(500, {
       'Content-Type': 'application/json',
     });
     res.end(JSON.stringify({ 
       error: 'Proxy Error', 
-      message: 'Cannot connect to backend API service',
+      message: 'Cannot connect to backend API service. The backend might still be starting up.',
       detail: process.env.NODE_ENV === 'development' ? err.message : undefined
     }));
   }
 });
 
-// Apply the proxy middleware to all /api routes
-app.use('/api', apiProxy);
+// Setup a basic health check endpoint for the Express server itself
+app.get('/server-health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    server: 'express',
+    started_at: serverStartTime,
+    uptime: Math.floor((Date.now() - serverStartTime) / 1000),
+    backend_connection_attempts: backendConnectionAttempts
+  });
+});
+
+// Initialize connection tracking
+const serverStartTime = Date.now();
+let backendConnectionAttempts = 0;
+let backendReady = false;
+
+// Start the server immediately but delay applying the API proxy until backend is ready
+console.log('Starting server immediately while checking backend readiness...');
+
+// Apply the proxy middleware to all /api routes AFTER checking backend readiness
+(async function initializeBackendConnection() {
+  try {
+    // Wait for backend to be ready with retries
+    backendReady = await waitForBackend(15, 2000); // 15 attempts, 2 second delay
+    backendConnectionAttempts += 15; // Update the counter
+    
+    if (backendReady) {
+      console.log('✅ Backend connection established successfully, proxy is now active');
+      // Apply the proxy middleware to all /api routes
+      app.use('/api', apiProxy);
+    } else {
+      console.warn('⚠️ Backend connection could not be established after multiple retries');
+      console.warn('⚠️ Applying proxy middleware anyway but expect errors until backend is available');
+      
+      // Apply the proxy anyway, but with a warning
+      app.use('/api', (req, res, next) => {
+        if (!backendReady) {
+          console.log('🔄 Checking backend readiness again before proxying request...');
+          checkBackendReadiness().then(isReady => {
+            backendReady = isReady;
+            if (isReady) {
+              console.log('✅ Backend is now ready, forwarding request');
+              apiProxy(req, res, next);
+            } else {
+              console.error('❌ Backend still not ready, returning error');
+              res.status(503).json({
+                error: 'Service Unavailable',
+                message: 'Backend service is not ready yet. Please try again in a few moments.'
+              });
+            }
+          });
+        } else {
+          apiProxy(req, res, next);
+        }
+      });
+      
+      // Start a background process to keep checking backend readiness
+      setInterval(async () => {
+        const isReady = await checkBackendReadiness();
+        if (isReady && !backendReady) {
+          console.log('✅ Backend is now ready (background check)');
+          backendReady = true;
+        }
+        backendConnectionAttempts++;
+      }, 10000); // Check every 10 seconds
+    }
+  } catch (error) {
+    console.error('❌ Error during backend readiness check:', error);
+    // Apply proxy anyway as fallback
+    app.use('/api', apiProxy);
+  }
+})();
 
 // Handler function for generic API forwarding
 function handleGenericApi(req, res, overridePath = null) {
