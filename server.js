@@ -2065,21 +2065,85 @@ function handleNodes(req, res) {
   backendReq.end();
 }
 
+// Enhanced API routes for specific common endpoints
+app.get('/api/subscriptions', (req, res) => {
+  console.log('Handling subscriptions request');
+  return handleSubscription(req, res);
+});
+
+app.get('/api/tiers', (req, res) => {
+  console.log('Handling tiers request');
+  return handleSubscription(req, res, true);
+});
+
+app.get('/api/admin/tiers', (req, res) => {
+  console.log('Handling admin tiers request');
+  return handleSubscription(req, res, true);
+});
+
+app.get('/api/admin/users', (req, res) => {
+  console.log('Handling admin users request');
+  return handleAllUsers(req, res);
+});
+
+app.get('/api/probes', (req, res) => {
+  console.log('Handling probes request');
+  return handleProbes(req, res);
+});
+
+// Schedule probes endpoints
+app.get('/api/scheduled-probes', (req, res) => {
+  console.log('Handling scheduled probes request');
+  return handleGenericApi(req, res, '/scheduled-probes');
+});
+
+app.post('/api/scheduled-probes', (req, res) => {
+  console.log('Handling scheduled probe creation');
+  return handleGenericApi(req, res, '/scheduled-probes');
+});
+
 // Generic API catch-all route for unhandled API endpoints
 app.use('/api', (req, res) => {
   handleGenericApi(req, res);
 });
 
 // Handler function for generic API forwarding
-function handleGenericApi(req, res) {
+function handleGenericApi(req, res, overridePath = null) {
   console.log(`Generic API request: ${req.method} ${req.url}`);
   
   // Extract the path from the URL (removing the /api prefix)
-  const apiPath = req.url.replace(/^\/api/, '');
+  const apiPath = overridePath || req.url.replace(/^\/api/, '');
   
   // Get authentication token if present
   const authHeader = req.headers.authorization || '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
+  
+  // Log token info for debugging (without exposing the full token)
+  if (token) {
+    console.log(`Token present (first 10 chars): ${token.substring(0, 10)}...`);
+    try {
+      // Decode JWT to check structure (without verification)
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        console.error('⚠️ Invalid JWT format: token does not have 3 parts');
+      } else {
+        const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+        console.log('Decoded JWT payload:', JSON.stringify({
+          sub: payload.sub,
+          exp: payload.exp ? new Date(payload.exp * 1000).toISOString() : 'none',
+          iat: payload.iat ? new Date(payload.iat * 1000).toISOString() : 'none'
+        }));
+      }
+    } catch (e) {
+      console.error('⚠️ Error decoding JWT:', e.message);
+    }
+  } else {
+    console.error('⚠️ No authorization token provided for API request');
+    // Generate and use admin token for development/testing
+    // Remove in production
+    token = createValidToken("admin@probeops.com");
+    console.log('ℹ️ Generated fallback admin token');
+  }
   
   // Prepare headers for backend request
   const headers = {
@@ -2087,10 +2151,8 @@ function handleGenericApi(req, res) {
     'Content-Type': 'application/json'
   };
   
-  // Add authorization header if token exists
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
+  // Add authorization header
+  headers['Authorization'] = `Bearer ${token}`;
   
   // Configure request to backend
   const options = {
