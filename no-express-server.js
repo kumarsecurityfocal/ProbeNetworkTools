@@ -40,19 +40,55 @@ function cleanApiPath(originalPath) {
   // Log the original path for debugging
   logDebug(`Cleaning path`, { original: originalPath });
   
-  // Special handling for auth endpoints
+  // Special handling for login/auth endpoints - critical for consistent authentication
   if (result.includes('/auth/login') || result.includes('/api/auth/login')) {
     logDebug(`Auth login endpoint detected`, { result: '/auth/login' });
     return '/auth/login';
   }
   
   if (result.includes('/login')) {
-    logDebug(`Login endpoint detected`, { result: '/login' });
+    // Handle both /api/login and /login consistently
+    logDebug(`Standard login endpoint detected`, { result: '/login' });
     return '/login'; 
   }
   
-  // IMPORTANT FIX: Additional handling for specific endpoints that might have /api hardcoded
-  // e.g., /api/api/users, /api/api/probes, etc.
+  // Special handling for authentication-related endpoints
+  if (result.includes('/users/me') || result.includes('/api/users/me')) {
+    logDebug(`User profile endpoint detected`, { result: '/users/me' });
+    return '/users/me';
+  }
+  
+  // Special handling for admin endpoints which need to be preserved with correct structure
+  if (result.includes('/admin/') || result.endsWith('/admin')) {
+    // For admin endpoints, ensure we keep a single /api prefix
+    const adminPath = result.replace(/^(\/api)+/, '/api');
+    logDebug(`Admin endpoint detected and preserved`, { 
+      original: originalPath, 
+      cleaned: adminPath
+    });
+    return adminPath;
+  }
+  
+  // Special handling for probes endpoint which seems to cause null issues
+  if (result.includes('/probes')) {
+    // We need to preserve the original structure but ensure consistency
+    let probePath;
+    
+    // If it's directly in the API path, keep the /api prefix for admin
+    if (result.includes('/api/probes') && result.includes('/admin')) {
+      probePath = '/api/probes' + (result.split('/probes')[1] || '');
+    } else {
+      // For standard probe paths, normalize
+      probePath = '/probes' + (result.split('/probes')[1] || '');
+    }
+    
+    logDebug(`Probes endpoint detected`, { 
+      original: originalPath, 
+      cleaned: probePath,
+      isAdmin: result.includes('/admin')
+    });
+    return probePath;
+  }
   
   // Better handling for /api prefixes - use regex to match all occurrences
   const apiRegex = /^(\/api)+/;
@@ -81,7 +117,7 @@ const server = http.createServer(async (req, res) => {
   const pathname = parsedUrl.pathname;
   
   // Handle API proxy requests
-  if (pathname.startsWith('/api')) {
+  if (pathname.startsWith('/api') || pathname === '/login') {
     logDebug(`[API REQUEST] ${req.method} ${pathname}`);
     
     // Clean the path for backend
