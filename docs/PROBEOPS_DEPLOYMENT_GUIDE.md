@@ -60,9 +60,31 @@ For production environments:
 3. Never commit secrets to version control
 4. Rotate passwords and tokens regularly
 
-## Deployment Process
+## AWS Deployment Guidelines
 
-### Initial Setup
+### Core Principle: No Ad-hoc Changes
+
+For AWS production environments, we follow strict guidelines to ensure system stability and consistency:
+
+1. **No direct server modifications**
+   - Never run ad-hoc scripts or commands directly on AWS instances
+   - All changes must flow through version control and our CI/CD pipeline
+   - Even "quick fixes" must be properly committed and deployed through the pipeline
+
+2. **Use deploy.sh exclusively**
+   - The deploy.sh script is the ONLY approved method for deploying changes
+   - This script handles pulling code, building containers, and applying migrations
+   - For any special operations, extend deploy.sh rather than running manual commands
+
+3. **Fix process for urgent issues**
+   - Never make emergency changes directly on production servers
+   - Create a hotfix branch when needed for critical issues
+   - Commit changes to the repository and deploy through the normal pipeline
+   - Use feature flags to disable problematic features temporarily if needed
+
+### Deployment Process
+
+#### Initial Setup
 
 1. Clone the repository:
    ```bash
