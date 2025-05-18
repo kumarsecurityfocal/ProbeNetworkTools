@@ -57,6 +57,9 @@ if ! grep -q "diagnostics/debug-logs" ${REPO_ROOT}/.gitignore; then
   echo "diagnostics/debug-logs" >> ${REPO_ROOT}/.gitignore
 fi
 
+# Make sure the conf.d directory exists first
+mkdir -p ${REPO_ROOT}/nginx/conf.d
+
 # Create an instruction file for Nginx configuration
 cat > ${REPO_ROOT}/nginx/conf.d/diagnostics.conf << EOF
 # ProbeOps Diagnostics Dashboard
@@ -77,9 +80,6 @@ location /diagnostics/ {
     proxy_set_header X-Forwarded-Proto \$scheme;
 }
 EOF
-
-# Make sure the conf.d directory exists
-mkdir -p ${REPO_ROOT}/nginx/conf.d
 
 echo "Starting diagnostics service..."
 cd ${REPO_ROOT}
