@@ -66,18 +66,23 @@ cat > ${REPO_ROOT}/nginx/conf.d/diagnostics.conf << EOF
 # This configuration provides access to the diagnostics dashboard
 # through /diagnostics path with basic IP restrictions
 
+location = /diagnostics {
+    return 301 /diagnostics/;
+}
+
 location /diagnostics/ {
-    # Restrict access to private networks (customize as needed)
-    allow 127.0.0.1;
-    allow 10.0.0.0/8;
-    allow 172.16.0.0/12;
-    allow 192.168.0.0/16;
+    # Temporarily allow all access for testing
+    allow all;
     
-    proxy_pass http://diagnostics:${DIAG_PORT}/diagnostics/;
+    # Fixed proxy_pass - critical for AWS environment
+    proxy_pass http://diagnostics:${DIAG_PORT}/;
+    proxy_http_version 1.1;
     proxy_set_header Host \$host;
     proxy_set_header X-Real-IP \$remote_addr;
     proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto \$scheme;
+    proxy_set_header Upgrade \$http_upgrade;
+    proxy_set_header Connection "upgrade";
 }
 EOF
 

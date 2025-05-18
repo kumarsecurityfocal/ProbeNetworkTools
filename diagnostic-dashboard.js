@@ -297,7 +297,7 @@ const createHtml = (content) => `
     // Authentication
     function authenticate() {
       const password = document.getElementById('password-input').value;
-      fetch('/diagnostics/auth', {
+      fetch('./auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password })
@@ -325,7 +325,7 @@ const createHtml = (content) => `
 
     // Check system status
     function checkStatus() {
-      fetch('/diagnostics/status')
+      fetch('./status')
         .then(response => response.json())
         .then(data => {
           for (const [service, status] of Object.entries(data)) {
@@ -498,19 +498,33 @@ const createHtml = (content) => `
 </html>
 `;
 
-// Routes
-app.get('/diagnostics', (req, res) => {
+// Handle ALL routes - this makes it work in every environment
+app.use('*', (req, res, next) => {
+  // If this is an API request, continue to the correct handler
+  if (req.path.includes('/auth') || 
+      req.path.includes('/status') || 
+      req.path.includes('/collect-logs') ||
+      req.path.includes('/logs') || 
+      req.path.includes('/test-') || 
+      req.path.includes('/check-') ||
+      req.path.includes('/container-') ||
+      req.path.includes('/restart-') ||
+      req.path.includes('/update-')) {
+    return next();
+  }
+  
+  // Otherwise, serve the dashboard HTML
   res.send(createHtml());
 });
 
 // Authentication
-app.post('/diagnostics/auth', (req, res) => {
+app.post('*/auth', (req, res) => {
   const { password } = req.body;
   res.json({ authenticated: password === PASSWORD });
 });
 
 // System status check
-app.get('/diagnostics/status', async (req, res) => {
+app.get('*/status', async (req, res) => {
   try {
     const status = {
       backend: 'red',
@@ -562,7 +576,7 @@ app.get('/diagnostics/status', async (req, res) => {
 });
 
 // Collect logs
-app.get('/diagnostics/collect-logs', async (req, res) => {
+app.get('*/collect-logs', async (req, res) => {
   try {
     const logLevel = req.query.level || 'standard';
     const timestamp = new Date().toISOString().replace(/:/g, '-');
@@ -578,7 +592,7 @@ app.get('/diagnostics/collect-logs', async (req, res) => {
 });
 
 // Test authentication flow
-app.post('/diagnostics/test-auth', async (req, res) => {
+app.post('*/test-auth', async (req, res) => {
   try {
     const { username, password } = req.body;
     
@@ -627,7 +641,7 @@ app.post('/diagnostics/test-auth', async (req, res) => {
 });
 
 // Get list of log files
-app.get('/diagnostics/logs', (req, res) => {
+app.get('*/logs', (req, res) => {
   try {
     const logs = fs.readdirSync(DEBUG_DIR)
       .filter(file => file.startsWith('probeops-debug-'))
@@ -641,7 +655,7 @@ app.get('/diagnostics/logs', (req, res) => {
 });
 
 // Get specific log file content
-app.get('/diagnostics/logs/:filename', (req, res) => {
+app.get('*/logs/:filename', (req, res) => {
   try {
     const filePath = path.join(DEBUG_DIR, req.params.filename);
     
@@ -658,7 +672,7 @@ app.get('/diagnostics/logs/:filename', (req, res) => {
 });
 
 // Download log file
-app.get('/diagnostics/download/:filename', (req, res) => {
+app.get('*/download/:filename', (req, res) => {
   try {
     const filePath = path.join(DEBUG_DIR, req.params.filename);
     
@@ -674,7 +688,7 @@ app.get('/diagnostics/download/:filename', (req, res) => {
 });
 
 // Check JWT configuration
-app.get('/diagnostics/check-jwt', async (req, res) => {
+app.get('*/check-jwt', async (req, res) => {
   try {
     let jwtInfo = {
       secret: 'MASKED',
@@ -711,7 +725,7 @@ app.get('/diagnostics/check-jwt', async (req, res) => {
 });
 
 // Test database connection
-app.get('/diagnostics/test-db', async (req, res) => {
+app.get('*/test-db', async (req, res) => {
   try {
     let dbInfo = {
       connection: false,
@@ -771,7 +785,7 @@ app.get('/diagnostics/test-db', async (req, res) => {
 });
 
 // Check container health
-app.get('/diagnostics/container-health', async (req, res) => {
+app.get('*/container-health', async (req, res) => {
   try {
     const containers = [
       'probenetworktools-backend-1',
@@ -830,7 +844,7 @@ app.get('/diagnostics/container-health', async (req, res) => {
 });
 
 // Restart services
-app.post('/diagnostics/restart-services', async (req, res) => {
+app.post('*/restart-services', async (req, res) => {
   try {
     // Restart Docker Compose services
     await execAsync('docker compose restart');
@@ -845,7 +859,7 @@ app.post('/diagnostics/restart-services', async (req, res) => {
 });
 
 // Update diagnostic script
-app.post('/diagnostics/update-script', async (req, res) => {
+app.post('*/update-script', async (req, res) => {
   try {
     const { url } = req.body;
     const defaultUrl = 'https://raw.githubusercontent.com/probeops/diagnostics/main/debug-collector.js';
