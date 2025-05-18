@@ -21,32 +21,10 @@ export const AuthProvider = ({ children }) => {
     const initAuth = async () => {
       console.log("DEBUG AUTH CONTEXT: Initializing authentication state");
       
-      // First check for direct authentication method (for admin)
-      const directAuth = localStorage.getItem('isAuthenticated');
-      if (directAuth === 'true') {
-        console.log("DEBUG AUTH CONTEXT: Found direct authentication flag");
-        const userJson = localStorage.getItem('probeops_user');
-        
-        if (userJson) {
-          try {
-            const directUser = JSON.parse(userJson);
-            console.log("DEBUG AUTH CONTEXT: User found via direct auth:", directUser.email);
-            setUser(directUser);
-            setIsAuthenticated(true);
-            
-            // Make sure isAdmin is explicitly set
-            if (directUser.email === 'admin@probeops.com') {
-              directUser.is_admin = true;
-              // Update storage with the fixed object
-              localStorage.setItem('probeops_user', JSON.stringify(directUser));
-            }
-            
-            setLoading(false);
-            return; // Skip the rest of the auth flow
-          } catch (e) {
-            console.error("DEBUG AUTH CONTEXT: Error parsing direct auth user:", e);
-          }
-        }
+      // Remove any legacy direct authentication flags
+      if (localStorage.getItem('isAuthenticated') === 'true') {
+        console.log("DEBUG AUTH CONTEXT: Removing legacy direct authentication");
+        localStorage.removeItem('isAuthenticated');
       }
       
       // Regular token-based authentication flow
