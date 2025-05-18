@@ -2102,6 +2102,43 @@ app.post('/api/scheduled-probes', (req, res) => {
   return handleGenericApi(req, res, '/scheduled-probes');
 });
 
+// API Token endpoints
+app.get('/api/keys', (req, res) => {
+  console.log('Handling API keys/tokens request');
+  return handleGenericApi(req, res, '/keys');
+});
+
+app.post('/api/keys', (req, res) => {
+  console.log('Handling API key/token creation');
+  return handleGenericApi(req, res, '/keys');
+});
+
+app.delete('/api/keys/:keyId', (req, res) => {
+  console.log(`Handling API key/token deletion for ${req.params.keyId}`);
+  return handleGenericApi(req, res, `/keys/${req.params.keyId}`);
+});
+
+app.put('/api/keys/:keyId/activate', (req, res) => {
+  console.log(`Handling API key/token activation for ${req.params.keyId}`);
+  return handleGenericApi(req, res, `/keys/${req.params.keyId}/activate`);
+});
+
+app.put('/api/keys/:keyId/deactivate', (req, res) => {
+  console.log(`Handling API key/token deactivation for ${req.params.keyId}`);
+  return handleGenericApi(req, res, `/keys/${req.params.keyId}/deactivate`);
+});
+
+// Additional needed endpoints
+app.get('/api/admin/users', (req, res) => {
+  console.log('Handling admin users request');
+  return handleGenericApi(req, res, '/admin/users');
+});
+
+app.get('/api/admin/metrics', (req, res) => {
+  console.log('Handling admin metrics request');
+  return handleGenericApi(req, res, '/admin/metrics');
+});
+
 // Generic API catch-all route for unhandled API endpoints
 app.use('/api', (req, res) => {
   handleGenericApi(req, res);
@@ -2116,7 +2153,7 @@ function handleGenericApi(req, res, overridePath = null) {
   
   // Get authentication token if present
   const authHeader = req.headers.authorization || '';
-  const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
+  let token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
   
   // Log token info for debugging (without exposing the full token)
   if (token) {
@@ -2154,9 +2191,9 @@ function handleGenericApi(req, res, overridePath = null) {
   // Add authorization header
   headers['Authorization'] = `Bearer ${token}`;
   
-  // Configure request to backend
+  // Configure request to backend - changed from 0.0.0.0 to localhost for cleaner networking
   const options = {
-    hostname: '0.0.0.0',
+    hostname: 'localhost',
     port: 8000,
     path: apiPath,
     method: req.method,
