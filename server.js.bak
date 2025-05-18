@@ -9,16 +9,20 @@ const debugUtils = require('./debug-collector');
 const dbAdmin = require('./db-admin');
 const fs = require('fs');
 
-// Setup logger to file
+// Import enhanced logger
+const { logger, authLogger, logAuth } = require('./express-logger');
+
+// Legacy logger function for backward compatibility
 function logToFile(message) {
-  const timestamp = new Date().toISOString();
-  const formattedMessage = `[${timestamp}] ${message}\n`;
-  fs.appendFileSync('auth-debug.log', formattedMessage);
+  logAuth(message);
 }
 
 // Create express app
 const app = express();
 const port = process.env.PORT || 5000;
+
+// Security flag to disable registration (set to true for production)
+const DISABLE_REGISTRATION = true;
 
 // Secret key for JWT signing - MUST match the backend
 const JWT_SECRET = "super-secret-key-change-in-production";
@@ -53,6 +57,22 @@ function createValidToken(email = "admin@probeops.com") {
   
   return token;
 }
+
+// Security middleware to block registration
+app.use((req, res, next) => {
+  // Block any registration attempts if disabled
+  if (DISABLE_REGISTRATION && 
+      (req.path.includes('/register') || 
+       req.path.includes('/signup') || 
+       (req.path.includes('/user') && req.method === 'POST'))) {
+    console.log(`[SECURITY] Registration attempt blocked: ${req.method} ${req.path}`);
+    logToFile(`[SECURITY] Registration attempt blocked: ${req.method} ${req.path}`);
+    return res.status(403).json({ 
+      detail: "Registration is temporarily disabled for security reasons. Please contact an administrator." 
+    });
+  }
+  next();
+});
 
 // Enhanced debug middleware for authentication tracing
 app.use((req, res, next) => {
@@ -942,7 +962,7 @@ function handleAllUsers(req, res) {
   
   // Forward request to backend users endpoint
   const options = {
-    hostname: 'localhost',
+    hostname: '0.0.0.0',
     port: 8000,
     path: '/users',
     method: req.method,
@@ -1045,7 +1065,7 @@ function handleUserProfile(req, res) {
   
   // Forward request to backend
   const options = {
-    hostname: 'localhost',
+    hostname: '0.0.0.0',
     port: 8000,
     path: req.url,
     method: req.method,
@@ -1116,7 +1136,7 @@ function handleHistory(req, res) {
   
   // Forward request to backend
   const options = {
-    hostname: 'localhost',
+    hostname: '0.0.0.0',
     port: 8000,
     path: pathWithParams,
     method: req.method,
@@ -1196,7 +1216,7 @@ function handleKeys(req, res) {
   
   // Forward request to backend
   const options = {
-    hostname: 'localhost',
+    hostname: '0.0.0.0',
     port: 8000,
     path: backendPath,
     method: req.method,
@@ -1301,7 +1321,7 @@ function handleSubscription(req, res) {
   
   // Forward request to backend
   const options = {
-    hostname: 'localhost',
+    hostname: '0.0.0.0',
     port: 8000,
     path: backendPath,
     method: req.method,
@@ -1430,7 +1450,7 @@ function handleDiagnostics(req, res) {
   
   // Forward request to backend
   const options = {
-    hostname: 'localhost',
+    hostname: '0.0.0.0',
     port: 8000,
     path: backendPath,
     method: req.method,
@@ -1550,7 +1570,7 @@ function handleProbes(req, res) {
   
   // Forward request to backend
   const options = {
-    hostname: 'localhost',
+    hostname: '0.0.0.0',
     port: 8000,
     path: backendPath,
     method: req.method,
@@ -1694,7 +1714,7 @@ function handleMetrics(req, res) {
   
   // Forward request to backend
   const options = {
-    hostname: 'localhost',
+    hostname: '0.0.0.0',
     port: 8000,
     path: backendPath,
     method: req.method,
@@ -1810,7 +1830,7 @@ function handleGenericApi(req, res) {
   
   // Forward request to backend
   const options = {
-    hostname: 'localhost',
+    hostname: '0.0.0.0',
     port: 8000,
     path: backendPath,
     method: req.method,
@@ -1933,7 +1953,7 @@ function handleNodes(req, res) {
   
   // Forward request to backend
   const options = {
-    hostname: 'localhost',
+    hostname: '0.0.0.0',
     port: 8000,
     path: backendPath,
     method: req.method,
@@ -1985,6 +2005,95 @@ function handleNodes(req, res) {
     res.status(500).json({ detail: 'Nodes API server unavailable' });
   });
   
+  backendReq.end();
+}
+
+// Generic API catch-all route for unhandled API endpoints
+app.use('/api', (req, res) => {
+  handleGenericApi(req, res);
+});
+
+// Handler function for generic API forwarding
+function handleGenericApi(req, res) {
+  console.log(`Generic API request: ${req.method} ${req.url}`);
+  
+  // Extract the path from the URL (removing the /api prefix)
+  const apiPath = req.url.replace(/^\/api/, '');
+  
+  // Get authentication token if present
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
+  
+  // Prepare headers for backend request
+  const headers = {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json'
+  };
+  
+  // Add authorization header if token exists
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  // Configure request to backend
+  const options = {
+    hostname: '0.0.0.0',
+    port: 8000,
+    path: apiPath,
+    method: req.method,
+    headers: headers
+  };
+  
+  console.log(`Forwarding to backend: ${req.method} ${apiPath}`);
+  
+  // Create backend request
+  const backendReq = http.request(options, (backendRes) => {
+    // Collect response data
+    let responseData = '';
+    backendRes.on('data', chunk => {
+      responseData += chunk;
+    });
+    
+    backendRes.on('end', () => {
+      // Set content type and status code
+      res.setHeader('Content-Type', 'application/json');
+      res.status(backendRes.statusCode);
+      
+      // If we have response data, try to parse it
+      if (responseData) {
+        try {
+          const jsonData = JSON.parse(responseData);
+          res.json(jsonData);
+          console.log(`API response: ${req.method} ${apiPath} - Status: ${backendRes.statusCode}`);
+        } catch (e) {
+          console.error(`Error parsing API response for ${apiPath}:`, e);
+          res.send(responseData); // Send as-is if not JSON
+        }
+      } else {
+        // No data, send empty JSON
+        res.json({});
+      }
+    });
+  });
+  
+  // Handle request errors
+  backendReq.on('error', error => {
+    console.error(`Error with API request to ${apiPath}:`, error);
+    res.status(500).json({ 
+      detail: `Backend API server error: ${error.message}`,
+      path: apiPath,
+      method: req.method
+    });
+  });
+  
+  // Write body data for POST/PUT/PATCH requests
+  if (['POST', 'PUT', 'PATCH'].includes(req.method) && req.body) {
+    const bodyData = JSON.stringify(req.body);
+    backendReq.write(bodyData);
+    console.log(`Request body sent for ${req.method} ${apiPath}: ${bodyData.substring(0, 200)}${bodyData.length > 200 ? '...' : ''}`);
+  }
+  
+  // End the request
   backendReq.end();
 }
 

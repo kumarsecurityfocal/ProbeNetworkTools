@@ -2008,6 +2008,95 @@ function handleNodes(req, res) {
   backendReq.end();
 }
 
+// Generic API catch-all route for unhandled API endpoints
+app.use('/api', (req, res) => {
+  handleGenericApi(req, res);
+});
+
+// Handler function for generic API forwarding
+function handleGenericApi(req, res) {
+  console.log(`Generic API request: ${req.method} ${req.url}`);
+  
+  // Extract the path from the URL (removing the /api prefix)
+  const apiPath = req.url.replace(/^\/api/, '');
+  
+  // Get authentication token if present
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
+  
+  // Prepare headers for backend request
+  const headers = {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json'
+  };
+  
+  // Add authorization header if token exists
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  // Configure request to backend
+  const options = {
+    hostname: '0.0.0.0',
+    port: 8000,
+    path: apiPath,
+    method: req.method,
+    headers: headers
+  };
+  
+  console.log(`Forwarding to backend: ${req.method} ${apiPath}`);
+  
+  // Create backend request
+  const backendReq = http.request(options, (backendRes) => {
+    // Collect response data
+    let responseData = '';
+    backendRes.on('data', chunk => {
+      responseData += chunk;
+    });
+    
+    backendRes.on('end', () => {
+      // Set content type and status code
+      res.setHeader('Content-Type', 'application/json');
+      res.status(backendRes.statusCode);
+      
+      // If we have response data, try to parse it
+      if (responseData) {
+        try {
+          const jsonData = JSON.parse(responseData);
+          res.json(jsonData);
+          console.log(`API response: ${req.method} ${apiPath} - Status: ${backendRes.statusCode}`);
+        } catch (e) {
+          console.error(`Error parsing API response for ${apiPath}:`, e);
+          res.send(responseData); // Send as-is if not JSON
+        }
+      } else {
+        // No data, send empty JSON
+        res.json({});
+      }
+    });
+  });
+  
+  // Handle request errors
+  backendReq.on('error', error => {
+    console.error(`Error with API request to ${apiPath}:`, error);
+    res.status(500).json({ 
+      detail: `Backend API server error: ${error.message}`,
+      path: apiPath,
+      method: req.method
+    });
+  });
+  
+  // Write body data for POST/PUT/PATCH requests
+  if (['POST', 'PUT', 'PATCH'].includes(req.method) && req.body) {
+    const bodyData = JSON.stringify(req.body);
+    backendReq.write(bodyData);
+    console.log(`Request body sent for ${req.method} ${apiPath}: ${bodyData.substring(0, 200)}${bodyData.length > 200 ? '...' : ''}`);
+  }
+  
+  // End the request
+  backendReq.end();
+}
+
 // Start server
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
