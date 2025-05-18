@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # Database service
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-probeopsdev}
+      - POSTGRES_USER=${POSTGRES_USER:-probeops}
+      - POSTGRES_DB=${POSTGRES_DB:-probeops}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U probeops"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Backend API with auth bypass
+  backend:
+    build:
+      context: .
+      dockerfile: docker/auth-bypass.Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-probeops}:${POSTGRES_PASSWORD:-probeopsdev}@db/${POSTGRES_DB:-probeops}
+      - SECRET_KEY=${SECRET_KEY:-super-secret-key-change-in-production}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=1440
+      - JWT_ALGORITHM=HS256
+      - DEBUG=True
+      - AUTH_BYPASS_MODE=True
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Frontend (direct, no NGINX)
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend-direct.Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
