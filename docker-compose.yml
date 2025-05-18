@@ -22,6 +22,7 @@ services:
     volumes:
       - backend-data:/app/data
       - ${LOG_DIR:-/opt/probeops/logs}/backend:/app/logs
+      - ./backend/logging_config.json:/app/logging_config.json
     networks:
       - probeops-network
     depends_on:

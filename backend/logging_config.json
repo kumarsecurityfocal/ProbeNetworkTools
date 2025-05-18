@@ -2,67 +2,53 @@
   "version": 1,
   "disable_existing_loggers": false,
   "formatters": {
-    "standard": {
-      "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    "default": {
+      "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+      "datefmt": "%Y-%m-%d %H:%M:%S"
     },
-    "detailed": {
-      "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(filename)s:%(lineno)d"
+    "access": {
+      "format": "%(asctime)s - %(name)s - %(levelname)s - %(client_addr)s - %(request_line)s - %(status_code)s",
+      "datefmt": "%Y-%m-%d %H:%M:%S"
     }
   },
   "handlers": {
     "console": {
       "class": "logging.StreamHandler",
       "level": "INFO",
-      "formatter": "standard",
+      "formatter": "default",
       "stream": "ext://sys.stdout"
     },
     "file": {
-      "class": "logging.handlers.RotatingFileHandler",
-      "level": "DEBUG",
-      "formatter": "detailed",
-      "filename": "/app/logs/backend.log",
-      "maxBytes": 10485760,
-      "backupCount": 5,
-      "encoding": "utf8"
+      "class": "logging.handlers.TimedRotatingFileHandler",
+      "level": "INFO",
+      "formatter": "default",
+      "filename": "/app/logs/app.log",
+      "when": "midnight",
+      "backupCount": 14
     },
-    "auth_file": {
-      "class": "logging.handlers.RotatingFileHandler",
-      "level": "DEBUG",
-      "formatter": "detailed",
-      "filename": "/app/logs/auth.log",
-      "maxBytes": 10485760,
-      "backupCount": 5,
-      "encoding": "utf8"
-    },
-    "error_file": {
-      "class": "logging.handlers.RotatingFileHandler",
-      "level": "ERROR",
-      "formatter": "detailed",
-      "filename": "/app/logs/error.log",
-      "maxBytes": 10485760,
-      "backupCount": 5,
-      "encoding": "utf8"
+    "access_file": {
+      "class": "logging.handlers.TimedRotatingFileHandler",
+      "level": "INFO",
+      "formatter": "access",
+      "filename": "/app/logs/access.log",
+      "when": "midnight",
+      "backupCount": 14
     }
   },
   "loggers": {
-    "uvicorn": {
-      "handlers": ["console", "file"],
-      "level": "INFO",
-      "propagate": false
-    },
     "app": {
+      "level": "INFO",
       "handlers": ["console", "file"],
-      "level": "DEBUG",
       "propagate": false
     },
-    "app.auth": {
-      "handlers": ["console", "auth_file", "file"],
-      "level": "DEBUG",
+    "uvicorn.access": {
+      "level": "INFO",
+      "handlers": ["access_file"],
       "propagate": false
     }
   },
   "root": {
-    "handlers": ["console", "file", "error_file"],
-    "level": "INFO"
+    "level": "INFO",
+    "handlers": ["console", "file"]
   }
 }

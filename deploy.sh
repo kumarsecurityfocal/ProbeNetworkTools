@@ -123,6 +123,12 @@ else
   echo "Authentication debug logging not found in server.js, skipping."
 fi
 
+# 8.2 Ensure backend logs directory exists and has correct permissions
+echo "Setting up backend logging directory..."
+mkdir -p ${LOG_DIR}/backend
+chmod -R 777 ${LOG_DIR}/backend
+echo "Backend logging directory setup complete at ${LOG_DIR}/backend"
+
 # 9. Restart services
 echo "Restarting services..."
 docker-compose down
