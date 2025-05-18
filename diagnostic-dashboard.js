@@ -890,8 +890,10 @@ app.post('*/update-script', async (req, res) => {
   }
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Diagnostic dashboard running on port ${PORT}`);
-  console.log(`Access at: http://localhost:${PORT}/diagnostics`);
+// Start server on a dedicated diagnostic port 8888
+const DIAGNOSTIC_PORT = process.env.DIAGNOSTIC_PORT || 8888;
+app.listen(DIAGNOSTIC_PORT, '0.0.0.0', () => {
+  console.log(`Diagnostic dashboard running on port ${DIAGNOSTIC_PORT}`);
+  console.log(`Access at: http://your-ip-or-domain:${DIAGNOSTIC_PORT}/`);
+  console.log('NOTE: Make sure port 8888 is open in your AWS security group');
 });
