@@ -28,8 +28,6 @@ cp ${REPO_ROOT}/diagnostic-dashboard.js ${REPO_ROOT}/diagnostics/
 
 # Create Docker Compose override file for diagnostics
 cat > ${REPO_ROOT}/docker-compose.diagnostics.yml << EOF
-version: '3.8'
-
 services:
   diagnostics:
     image: node:20-alpine
@@ -46,12 +44,7 @@ services:
       - "${DIAG_PORT}:${DIAG_PORT}"
     command: sh -c "npm init -y && npm install express pg && node diagnostic-dashboard.js"
     restart: unless-stopped
-    networks:
-      - probeops-network
-
-networks:
-  probeops-network:
-    external: true
+    # Use the default network created by docker-compose
 EOF
 
 # Add diagnostics to .gitignore if not already there
@@ -60,7 +53,7 @@ if ! grep -q "diagnostics/debug-logs" ${REPO_ROOT}/.gitignore; then
 fi
 
 # Create an instruction file for Nginx configuration
-cat > ${REPO_ROOT}/nginx/diagnostics.conf << EOF
+cat > ${REPO_ROOT}/nginx/conf.d/diagnostics.conf << EOF
 # ProbeOps Diagnostics Dashboard
 # This configuration provides access to the diagnostics dashboard
 # through /diagnostics path with basic IP restrictions
@@ -71,7 +64,6 @@ location /diagnostics/ {
     allow 10.0.0.0/8;
     allow 172.16.0.0/12;
     allow 192.168.0.0/16;
-    deny all;
     
     proxy_pass http://diagnostics:${DIAG_PORT}/diagnostics/;
     proxy_set_header Host \$host;
@@ -80,6 +72,9 @@ location /diagnostics/ {
     proxy_set_header X-Forwarded-Proto \$scheme;
 }
 EOF
+
+# Make sure the conf.d directory exists
+mkdir -p ${REPO_ROOT}/nginx/conf.d
 
 echo "Starting diagnostics service..."
 cd ${REPO_ROOT}
