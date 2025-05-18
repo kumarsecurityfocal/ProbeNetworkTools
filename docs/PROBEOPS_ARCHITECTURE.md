@@ -382,6 +382,16 @@ The ProbeOps application is deployed using a combination of Docker containers an
    - Check backend logs for errors
    - Ensure backend port (8000) is accessible
    - Check network configuration between services
+   - Ensure hostname is configured correctly:
+     ```javascript
+     // Correct configuration
+     const options = {
+       hostname: '0.0.0.0',  // Use 0.0.0.0 instead of localhost
+       port: 8000,
+       path: '/endpoint',
+       // other options...
+     };
+     ```
 
 2. **Server Proxy Issues**
    - The Express server proxies requests to the backend
