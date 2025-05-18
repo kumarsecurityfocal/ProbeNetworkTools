@@ -736,8 +736,8 @@ function handleLogin(req, res) {
     // Create a properly signed token using our function
     const token = createValidToken("admin@probeops.com");
     
-    // Return a valid token response
-    return res.json({
+    // Return a valid token response that will work with the frontend
+    return res.status(200).json({
       access_token: token,
       token_type: 'bearer',
       user: {
