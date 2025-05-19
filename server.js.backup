@@ -761,13 +761,11 @@ function handleLogin(req, res) {
   const backendReq = http.request(options, (backendRes) => {
     // Collect response data
     let responseData = '';
-    backendRes.on('data', chunk => {
-      console.log("🧱 RAW BACKEND CHUNK:", chunk.toString());
+    console.log("Modifying login handler"); backendRes.on('data', chunk => {
       responseData += chunk;
     });
     
     backendRes.on('end', () => {
-      console.log("✅ BACKEND RESPONSE COMPLETE");
       res.setHeader('Content-Type', 'application/json');
       res.status(backendRes.statusCode);
       
