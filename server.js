@@ -777,24 +777,8 @@ function handleLogin(req, res) {
       try {
         const jsonData = JSON.parse(responseData);
         
-        // Replace the token with our properly signed one
-        if (jsonData.access_token) {
-          // Extract the email from the token if possible
-          let userEmail = username;
-          try {
-            const decodedToken = jwt.decode(jsonData.access_token);
-            if (decodedToken && decodedToken.sub) {
-              userEmail = decodedToken.sub;
-            }
-          } catch (error) {
-            console.error('Error decoding token:', error);
-          }
-          
-          // Replace with properly signed token
-          jsonData.access_token = createValidToken(userEmail);
-        }
-        
-        console.log('Login successful, returning token with proper signature');
+        // Use the backend-generated token without modification
+        console.log('Login successful, using backend-generated token');
         return res.json(jsonData);
       } catch (e) {
         console.error('Error parsing login response:', e);
