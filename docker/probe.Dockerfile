@@ -1,32 +1,33 @@
-FROM python:3.11-slim
+FROM node:20-slim
 
 WORKDIR /app
 
-# Install system dependencies for network tools
-RUN apt-get update && apt-get install -y \
-    iputils-ping \
-    dnsutils \
-    traceroute \
-    nmap \
-    net-tools \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# Set environment variables
+ENV NODE_ENV=development \
+    AUTH_BYPASS=true \
+    PROBE_ID=dev-probe-01
 
-# Copy probe requirements
-COPY probe/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy probe package.json
+COPY probe/package*.json ./
+
+# Install dependencies
+RUN npm install
 
 # Copy the probe code
-COPY probe/ .
+COPY probe/ ./
 
-# Expose the probe service port
+# Install additional diagnostic tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    iputils-ping \
+    traceroute \
+    dnsutils \
+    curl \
+    net-tools \
+    nmap \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 EXPOSE 9000
 
-# Set environment variables for development mode
-ENV DEV_MODE=true
-ENV AUTH_BYPASS=true
-ENV NODE_UUID=dev-probe-node
-ENV NODE_NAME=Development Probe
-
-# Command to run the probe service
-CMD ["python", "run.py"]
+# Start the probe service
+CMD ["node", "probe.js"]

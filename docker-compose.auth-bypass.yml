@@ -1,88 +1,122 @@
 version: '3.8'
 
 services:
-  # Backend API with Auth Bypass enabled
+  # PostgreSQL Database
+  db:
+    image: postgres:14
+    container_name: probeops_db
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-probeops}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-probeopspassword}
+      POSTGRES_DB: ${POSTGRES_DB:-probeops_db}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-probeops}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - probeops_network
+
+  # Backend API (FastAPI) with Auth Bypass
   backend:
     build:
       context: .
-      dockerfile: docker/auth-bypass.Dockerfile
+      dockerfile: docker/backend-auth-bypass.Dockerfile
+    container_name: probeops_backend
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
-      - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-probeops}:${POSTGRES_PASSWORD:-probeopspassword}@db:5432/${POSTGRES_DB:-probeops_db}
+      - JWT_SECRET=${JWT_SECRET:-dev_secret_key_not_for_production}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-3600}
       - AUTH_BYPASS=true
-      - JWT_SECRET_KEY=dev-jwt-secret-key
-      - AUTH_BYPASS_MODE=true
-      - SQLALCHEMY_WARN_20=ignore
-      - LOG_LEVEL=DEBUG
     ports:
-      - "8000:8000"
+      - "${API_PORT:-8000}:8000"
     volumes:
       - ./backend:/app
     networks:
       - probeops_network
-    restart: unless-stopped
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
-  # Clean API Proxy Server
+  # API Proxy (Node.js Express) with Clean Proxy
   proxy:
     build:
       context: .
-      dockerfile: docker/proxy.Dockerfile
-    environment:
-      - BACKEND_URL=http://backend:8000
-      - PORT=5000
-    ports:
-      - "5000:5000"
-    volumes:
-      - ./public:/app/public
-      - ./server.clean.js:/app/server.js
-    networks:
-      - probeops_network
+      dockerfile: docker/proxy-auth-bypass.Dockerfile
+    container_name: probeops_proxy
+    restart: always
     depends_on:
       - backend
-    restart: unless-stopped
+    environment:
+      - PORT=5000
+      - BACKEND_URL=http://backend:8000
+      - NODE_ENV=development
+      - AUTH_BYPASS=true
+    ports:
+      - "${PROXY_PORT:-5000}:5000"
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    networks:
+      - probeops_network
+    command: node server.clean.js
 
-  # Direct Frontend Development
+  # Frontend (React)
   frontend:
     build:
       context: .
       dockerfile: docker/frontend.Dockerfile
+    container_name: probeops_frontend
+    restart: always
+    depends_on:
+      - proxy
     environment:
-      - VITE_API_URL=http://localhost:5000/api
-      - VITE_DIRECT_BACKEND_URL=http://localhost:8000
-      - VITE_DEV_MODE=true
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:5000
       - VITE_AUTH_BYPASS=true
     ports:
-      - "3000:3000"
+      - "${FRONTEND_PORT:-3000}:3000"
     volumes:
       - ./frontend:/app
       - /app/node_modules
     networks:
       - probeops_network
     command: npm run dev
-    depends_on:
-      - proxy
-    restart: unless-stopped
 
-  # Probe Node (for development testing)
+  # Probe Node
   probe:
     build:
       context: .
       dockerfile: docker/probe.Dockerfile
+    container_name: probeops_probe
+    restart: always
+    depends_on:
+      - proxy
     environment:
-      - API_URL=http://backend:8000
+      - PROXY_URL=http://proxy:5000
+      - NODE_ENV=development
+      - PROBE_ID=dev-probe-01
       - AUTH_BYPASS=true
-      - DEV_MODE=true
-      - NODE_UUID=dev-probe-node
-      - NODE_NAME=Development Probe
     ports:
-      - "9000:9000"
+      - "${PROBE_PORT:-9000}:9000"
     volumes:
       - ./probe:/app
+      - /app/node_modules
     networks:
       - probeops_network
-    depends_on:
-      - backend
-    restart: unless-stopped
+    command: node probe.js
 
 networks:
   probeops_network:
     driver: bridge
+
+volumes:
+  postgres_data:

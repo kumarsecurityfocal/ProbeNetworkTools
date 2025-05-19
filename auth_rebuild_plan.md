@@ -1,179 +1,234 @@
-# Final Containerized Authentication Rebuild Plan
+# ProbeOps Authentication System Rebuild Plan
 
-## Infrastructure Components
+## Overview
 
-1. **AWS RDS PostgreSQL Database**
-   - Managed PostgreSQL instance with proper VPC security
-   - Connection via DATABASE_URL environment variable
-   - Backup strategy for migration safety
+This document outlines the comprehensive plan for rebuilding the ProbeOps authentication system. The current JWT-based authentication system has several issues that need to be addressed, including token handling, security concerns, and integration with other services.
 
-2. **Backend Container with Auth Bypass**
-   - Python 3.11 + FastAPI
-   - Auth bypass controlled strictly via `AUTH_BYPASS=true` environment variable
-   - Clear isolation between dev and production builds
-   - Connects to AWS RDS
+## Current Issues
 
-3. **Clean API Proxy Container**
-   - Node.js proxy server
-   - Simple request forwarding without auth logic
-   - Exposed on port 5000
+1. **Token Management**: Inconsistent token handling between frontend and backend
+2. **Security Vulnerabilities**: Improper JWT validation and secret management
+3. **Role-Based Access Control**: Insufficient permission checking
+4. **Probe Authentication**: Insecure probe registration and communication
+5. **Database Migrations**: Schema version mismatches and migration failures
+6. **Error Handling**: Poor error reporting for authentication failures
 
-4. **Direct Frontend Container**
-   - Node.js + Vite for development
-   - Development-specific authentication debugging tools
-   - Mock login flows and token inspection in development
+## Rebuild Approach
 
-5. **Probe Node Container**
-   - Network diagnostic capabilities
-   - Secure API communication
-   - Deployment flexibility
+The authentication rebuild will follow a phased approach to minimize disruption to existing services while implementing a more robust and secure system.
 
-6. **AWS Application Load Balancer**
-   - Production traffic routing
-   - SSL termination
-   - Path-based routing
+### Phase 1: Development Environment with Auth Bypass
 
-## Role-Based Access Control (RBAC)
+**Objective**: Create a containerized development environment that bypasses authentication for easier development and testing.
 
-1. **Role Definitions**
-   - Admin: Full system access
-   - Standard: Limited user functionality
-   - Probe: Network diagnostic permissions only
+**Components**:
 
-2. **Permission Implementation**
-   - Pydantic token payloads with role and scope fields
-   - FastAPI dependency injection based on permission requirements
-   - Clear permission boundaries between roles
-   - Role validation on all protected endpoints
+1. **Auth Bypass System**:
+   - Backend (`auth_bypass.py`): Auto-authenticates all requests as admin
+   - Proxy (`server.clean.js`): Simple API forwarding without token handling
+   - Frontend debugging tools to visualize authentication state
 
-3. **Token Structure**
-   - JWT with role, scope, and permission claims
-   - Consistent token structure across all authentication types
-   - Proper token validation and security measures
+2. **Containerized Setup**:
+   - Docker Compose configuration for isolated development
+   - Separate containers for Backend, API Proxy, Frontend, and Probe Node
+   - Environment variables to control auth bypass mode
 
-## Database Migration Strategy with Alembic
+3. **Toggle Scripts**:
+   - `activate_auth_bypass.sh`: Enables auth bypass mode
+   - `deactivate_auth_bypass.sh`: Restores standard authentication
+   - `toggle_auth_bypass.sh`: Toggles between modes
 
-1. **Alembic Configuration**
-   - Automatic revision hash generation
-   - Pre-validation of migrations before deployment
-   - Auto-merging of Alembic heads when needed
-
-2. **Migration Safety**
-   - Pre-migration database backup
-   - Transaction-based migrations with rollback
-   - Explicit validation steps in CI/CD
-   - Migration failure detection and recovery
-
-3. **Migration Process**
-   - CI/CD integration with migration validation
-   - Alembic checks before deployment
-   - Automated rollback on failure
-   - Migration success verification
-
-## Layer Rebuilding Approach
-
-### Phase 1: Development Environment Setup
-
-1. **Docker Compose for Development**
-   - Complete development environment with `docker-compose.dev.yml`
-   - `AUTH_BYPASS=true` only in development composition
-   - AWS RDS connection configuration
-   - Local probe node for testing
-
-2. **Backend Auth Bypass Implementation**
-   - Environment-controlled bypass via `AUTH_BYPASS=true`
-   - Never deployable to production environments
-   - Admin authentication for development
-   - Comprehensive authentication logging
-
-3. **Frontend Auth Debugging Tools**
-   - Token inspection via browser console
-   - Development-only `/debug-auth` UI route
-   - Mock login flows for testing
-   - Authentication state visualization
-
-4. **Probe Node Development Setup**
-   - Local testing configuration
-   - Authentication bypass clearly marked for development
+4. **Documentation**:
+   - Usage instructions for auth bypass
+   - Development workflow guidelines
+   - Deployment guidance for EC2
 
 ### Phase 2: Clean Authentication Implementation
 
-1. **Backend Auth Layer**
-   - Comprehensive JWT implementation
-   - Token validation with proper security
-   - RBAC via Pydantic models and dependency injection
-   - Token management for all user types
+**Objective**: Implement a properly designed authentication system with secure token handling and role-based access control.
 
-2. **Frontend Auth Layer**
-   - Robust AuthContext provider
-   - Secure token storage strategy
-   - Clear authentication state management
-   - Protected route implementation
+**Components**:
 
-3. **Probe Node Authentication**
-   - Initial registration using admin-issued token
-   - JWT-based authentication consistent with main application
-   - Certificate or API key exchange during registration
-   - Secure communication channel establishment
-   - Limited permission scope for probe operations
+1. **Backend Authentication**:
+   - JWT implementation with proper validation
+   - Secure secret management
+   - Token refresh mechanism
+   - Rate limiting for login endpoints
 
-### Phase 3: Production Configuration
+2. **Role-Based Access Control**:
+   - Admin role with full system access
+   - Standard user role with limited permissions
+   - Probe role for network diagnostic nodes
+   - Permission middleware for API routes
 
-1. **Production Docker Compose**
-   - `docker-compose.prod.yml` with production settings
-   - Auth bypass explicitly disabled
-   - Health check implementation
-   - Resource limit configuration
+3. **Frontend Authentication**:
+   - Proper token storage and management
+   - Automatic token refresh
+   - Role-based UI rendering
+   - Session timeout handling
 
-2. **CI/CD Pipeline Updates**
-   - Automated build and test processes
-   - AWS deployment configuration
-   - Alembic migration validation and execution
-   - Probe node deployment automation
+4. **Probe Authentication**:
+   - Secure probe registration process
+   - Dedicated probe authentication flow
+   - Probe-specific token management
 
-3. **AWS Deployment Configuration**
-   - ECS task definitions
-   - Load balancer configuration
-   - Auto-scaling policies
-   - Monitoring setup
+5. **Database Schema**:
+   - Updated user model with role information
+   - Permission table for fine-grained access control
+   - Token tracking for auditing purposes
 
-### Phase 4: Probe Node Network
+### Phase 3: Production Deployment with Migration Path
 
-1. **Probe Node Registration**
-   - Admin-generated registration tokens
-   - Secure registration workflow
-   - Certificate or API key exchange
-   - Automated authentication configuration
+**Objective**: Deploy the new authentication system to production with a smooth migration path from the old system.
 
-2. **Probe Management Interface**
-   - Administrative UI for probe management
-   - Deployment and configuration tools
-   - Authentication and access control
-   - Monitoring dashboards
+**Components**:
 
-3. **Probe API Security**
-   - Rate limiting on registration endpoints
-   - Secure API endpoints for probe communication
-   - Authentication token validation
-   - Data validation and sanitization
+1. **Migration Tools**:
+   - Database schema migration scripts
+   - Token conversion utilities
+   - User role assignment tool
 
-### Phase 5: Deployment & Verification
+2. **Deployment Process**:
+   - Blue-green deployment strategy
+   - Monitoring for authentication failures
+   - Rollback procedure
 
-1. **Database Migration Automation**
-   - Alembic integration in CI/CD
-   - Pre-deployment validation
-   - Automatic rollback procedures
-   - Schema verification steps
+3. **Security Enhancements**:
+   - API rate limiting
+   - Account lockout after failed attempts
+   - Audit logging for authentication events
 
-2. **Deployment Process**
-   - Blue/green deployment strategy
-   - Automated testing
-   - Gradual traffic shifting
-   - Connection verification
+4. **Documentation**:
+   - Admin user guides
+   - Security practices
+   - Maintenance procedures
 
-3. **Security Measures**
-   - Rate limiting on login and registration endpoints
-   - Token handling security audit
-   - Database access control verification
-   - Probe communication security validation
-   - Regular security scanning
+## Implementation Details
+
+### Auth Bypass Mode
+
+Auth bypass mode enables development without authentication by:
+
+1. Replacing `auth.py` with `auth_bypass.py` that auto-authenticates as admin
+2. Using `server.clean.js` as a simple proxy without token validation
+3. Setting `AUTH_BYPASS=true` in environment variables
+
+To activate:
+```bash
+./activate_auth_bypass.sh
+```
+
+To deactivate:
+```bash
+./deactivate_auth_bypass.sh
+```
+
+### New Authentication System
+
+The new system will use:
+
+1. **JWT Tokens**:
+   - Short-lived access tokens (1 hour)
+   - Longer-lived refresh tokens (7 days)
+   - Proper signature validation
+
+2. **Token Storage**:
+   - Access token in memory (or secure cookie)
+   - Refresh token in HTTP-only cookie
+   - No sensitive data in localStorage
+
+3. **Role-Based Permissions**:
+   - Each route explicitly defines required permissions
+   - Permission checking middleware
+   - Role hierarchy (admin > standard > probe)
+
+### Database Schema Changes
+
+```sql
+-- User schema with role information
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    is_admin BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
+    role VARCHAR(50) NOT NULL DEFAULT 'standard',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Permissions table
+CREATE TABLE permissions (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Role permissions mapping
+CREATE TABLE role_permissions (
+    role VARCHAR(50) NOT NULL,
+    permission_id INTEGER REFERENCES permissions(id),
+    PRIMARY KEY (role, permission_id)
+);
+
+-- Refresh tokens table
+CREATE TABLE refresh_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    token VARCHAR(255) UNIQUE NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    revoked BOOLEAN DEFAULT FALSE
+);
+```
+
+## Timeline
+
+1. **Phase 1** (Week 1-2):
+   - Containerized development environment
+   - Auth bypass implementation
+   - Development tools and scripts
+
+2. **Phase 2** (Week 3-5):
+   - Backend JWT implementation
+   - Role-based access control
+   - Frontend authentication
+   - Probe authentication
+
+3. **Phase 3** (Week 6-7):
+   - Migration tools
+   - Testing in staging environment
+   - Production deployment
+   - Documentation and training
+
+## Risk Management
+
+1. **Data Migration**:
+   - Backup all user data before migration
+   - Test migration process in staging
+   - Provide rollback capability
+
+2. **Service Disruption**:
+   - Implement changes during low-traffic periods
+   - Use blue-green deployment to minimize downtime
+   - Monitor authentication metrics closely
+
+3. **Security Risks**:
+   - Conduct security audit before production
+   - Implement rate limiting to prevent brute force
+   - Set up monitoring for suspicious activities
+
+## Success Criteria
+
+1. All authentication-related errors are resolved
+2. Role-based access control works correctly
+3. Probe nodes authenticate securely
+4. Database migrations run successfully
+5. No disruption to user experience during transition
+6. Improved security posture
+
+## Conclusion
+
+This authentication rebuild plan provides a structured approach to addressing the current issues while maintaining system stability. By following the phased implementation, we can ensure a smooth transition to a more robust and secure authentication system.
