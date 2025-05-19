@@ -7,7 +7,6 @@ import {
   logout as logoutApi,
   refreshUserProfile
 } from '../services/auth';
-import { useAuthDebug } from '../hooks/useAuthDebug';
 
 // Create context
 const AuthContext = createContext(null);
@@ -16,14 +15,41 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [token, setTokenState] = useState(localStorage.getItem('probeops_token') || null);
   
   // Initialize auth state
   useEffect(() => {
     const initAuth = async () => {
       console.log("DEBUG AUTH CONTEXT: Initializing authentication state");
       
-      // Regular token-based authentication flow - no more direct auth
+      // First check for direct authentication method (for admin)
+      const directAuth = localStorage.getItem('isAuthenticated');
+      if (directAuth === 'true') {
+        console.log("DEBUG AUTH CONTEXT: Found direct authentication flag");
+        const userJson = localStorage.getItem('probeops_user');
+        
+        if (userJson) {
+          try {
+            const directUser = JSON.parse(userJson);
+            console.log("DEBUG AUTH CONTEXT: User found via direct auth:", directUser.email);
+            setUser(directUser);
+            setIsAuthenticated(true);
+            
+            // Make sure isAdmin is explicitly set
+            if (directUser.email === 'admin@probeops.com') {
+              directUser.is_admin = true;
+              // Update storage with the fixed object
+              localStorage.setItem('probeops_user', JSON.stringify(directUser));
+            }
+            
+            setLoading(false);
+            return; // Skip the rest of the auth flow
+          } catch (e) {
+            console.error("DEBUG AUTH CONTEXT: Error parsing direct auth user:", e);
+          }
+        }
+      }
+      
+      // Regular token-based authentication flow
       const authenticated = checkAuth();
       console.log("DEBUG AUTH CONTEXT: Is authenticated from token check:", authenticated);
       setIsAuthenticated(authenticated);
@@ -97,7 +123,6 @@ export const AuthProvider = ({ children }) => {
         
         // Ensure the token is properly saved
         localStorage.setItem('probeops_token', response.access_token);
-        setTokenState(response.access_token);
         
         // If the user object is nested in the response
         if (response.user) {
@@ -148,22 +173,7 @@ export const AuthProvider = ({ children }) => {
     logoutApi();
     setIsAuthenticated(false);
     setUser(null);
-    setTokenState(null);
   };
-  
-  // Add auth debugging in development mode
-  const isAdmin = user && user.is_admin === true;
-  
-  // Initialize auth debugging tools
-  const authState = {
-    isAuthenticated,
-    user,
-    token,
-    isAdmin
-  };
-  
-  // Use the auth debug hook
-  const { isDebugEnabled } = useAuthDebug(authState);
   
   // Context value
   const value = {
@@ -172,10 +182,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     register,
-    logout,
-    isAdmin,
-    token,
-    debug: isDebugEnabled
+    logout
   };
   
   return (
