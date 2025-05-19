@@ -729,27 +729,9 @@ function handleLogin(req, res) {
     return res.status(400).json({ detail: 'Username and password are required' });
   }
   
-  // Special handling for admin user - generate valid token
-  if (username === 'admin@probeops.com' && password === 'probeopS1@') {
-    console.log('Admin login detected - generating valid signed token');
-    
-    // Create a properly signed token using our function
-    const token = createValidToken("admin@probeops.com");
-    
-    // Return a valid token response
-    return res.json({
-      access_token: token,
-      token_type: 'bearer',
-      user: {
-        id: 1,
-        username: 'admin',
-        email: 'admin@probeops.com',
-        is_admin: true,
-        is_active: true,
-        email_verified: true,
-        created_at: new Date().toISOString()
-      }
-    });
+  // No special handling for admin user, all requests go through the backend
+  if (username === 'admin@probeops.com') {
+    console.log('Admin login detected - forwarding to backend authentication');
   }
   
   // For other users, forward request to backend
@@ -829,27 +811,8 @@ function handleLogin(req, res) {
       // If we couldn't connect to the backend API, log details
       console.error(`Failed to connect to backend API at ${options.hostname}:${options.port} - service may be down or not started`);
       
-      // Use dev bypass auth for admin login when backend is down (for debugging only)
-      if (username === 'admin@probeops.com' && password === 'probeopS1@') {
-        console.log('Using development fallback for admin login');
-        
-        // Generate a proper token
-        const token = createValidToken("admin@probeops.com");
-        
-        return res.json({
-          access_token: token,
-          token_type: 'bearer',
-          user: {
-            id: 1,
-            username: 'admin',
-            email: 'admin@probeops.com',
-            is_admin: true,
-            is_active: true,
-            email_verified: true,
-            created_at: new Date().toISOString()
-          }
-        });
-      }
+      // No fallback handling - if backend is down, authentication should fail
+      console.log('Authentication failed: Backend API is unavailable');
     }
     
     return res.status(500).json({ detail: `Authentication server unavailable: ${error.message}` });
